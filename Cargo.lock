@@ -3496,6 +3496,8 @@ name = "rich_darts"
 version = "0.1.0"
 dependencies = [
  "dioxus",
+ "dioxus-logger",
+ "tracing-wasm",
 ]
 
 [[package]]
