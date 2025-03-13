@@ -71,5 +71,11 @@ fn get_new_score(count: &Signal<Vec<CurrentScore>>, val: u16) -> CurrentScore {
     let generational_ref = count.read();
     let last = generational_ref.last().unwrap();
     let last_remaining = last.remaining;
-    CurrentScore { remaining: last_remaining - val, thrown: val }
+    let new_remaining: u16;
+    if val <= last_remaining {
+        new_remaining = last_remaining - val;
+    } else {
+        new_remaining = last_remaining;
+    }
+    CurrentScore { remaining: new_remaining, thrown: val }
 }
