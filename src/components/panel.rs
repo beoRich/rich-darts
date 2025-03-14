@@ -44,14 +44,24 @@ pub fn Panel() -> Element {
 
         div { id: "numbers",
             table {
+                thead {
+                    tr {
+                        th {
+                            "Thrown"
+                        },
+                        th {
+                            "Remaining"
+                        }
+                    }
+                }
             for a in count.iter() {
                 tr {
                         td {
-                            style:"white-space: pre; text-align: right;",
+                            style:"white-space: pre; text-align: center;",
                             {format!("{:>3}", a.thrown.to_string())}
                         },
                         td {
-                            style:"white-space: pre; text-align: right;",
+                            style:"white-space: pre; text-align: center;",
                             {format!("{:>3}", a.remaining.to_string())}
                         },
                 }
