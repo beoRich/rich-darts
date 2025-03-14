@@ -18,17 +18,6 @@ pub fn Panel() -> Element {
     let mut count = use_signal(|| init_count_vector);
     let is_wrong = use_signal(|| false);
     rsx! {
-        div { id: "numbers",
-            for a in count.iter() {
-                div {
-                    {a.thrown.to_string()}
-                    "     "
-                    {a.remaining.to_string()}
-                }
-            }
-        }
-
-
         "Enter your latest result:",
         div {
             id: "panelDiv",
@@ -40,7 +29,11 @@ pub fn Panel() -> Element {
                     }
                 }
             }
-            button {id: "confirmButton", class: "bg-purple-200 px-4 py-2 rounded-lg border border-black hover:border-indigo-500 active:scale-95 transition-all", "Ok" }
+            button {id: "confirmButton",
+                onclick: move |_| {
+                        input_changed(count, is_wrong, raw_input)
+                },
+                class: "bg-purple-200 px-4 py-2 rounded-lg border border-black hover:border-indigo-500 active:scale-95 transition-all", "Ok" }
         }
         div {
             id: "displayError",
@@ -48,6 +41,26 @@ pub fn Panel() -> Element {
                 "Please enter a valid number"
             }
         }
+
+        div { id: "numbers",
+            table {
+            for a in count.iter() {
+                tr {
+                        td {
+                            style:"white-space: pre; text-align: right;",
+                            {format!("{:>3}", a.thrown.to_string())}
+                        },
+                        td {
+                            style:"white-space: pre; text-align: right;",
+                            {format!("{:>3}", a.remaining.to_string())}
+                        },
+                }
+            }
+
+            }
+        }
+
+
     }
 }
 
