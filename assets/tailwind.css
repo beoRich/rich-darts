@@ -1,4 +1,7 @@
 /*! tailwindcss v4.0.13 | MIT License | https://tailwindcss.com */
+.collapse {
+  visibility: collapse;
+}
 .visible {
   visibility: visible;
 }
@@ -62,6 +65,9 @@
 .table {
   display: table;
 }
+.w-full {
+  width: 100%;
+}
 .flex-shrink {
   flex-shrink: 1;
 }
@@ -74,6 +80,9 @@
 .grow {
   flex-grow: 1;
 }
+.border-collapse {
+  border-collapse: collapse;
+}
 .transform {
   transform: var(--tw-rotate-x) var(--tw-rotate-y) var(--tw-rotate-z) var(--tw-skew-x) var(--tw-skew-y);
 }
@@ -85,9 +94,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.overflow-x-auto {
+  overflow-x: auto;
+}
 .border {
   border-style: var(--tw-border-style);
   border-width: 1px;
+}
+.border-b {
+  border-bottom-style: var(--tw-border-style);
+  border-bottom-width: 1px;
+}
+.text-left {
+  text-align: left;
 }
 .lowercase {
   text-transform: lowercase;
@@ -132,6 +151,11 @@
     --tw-scale-y: 95%;
     --tw-scale-z: 95%;
     scale: var(--tw-scale-x) var(--tw-scale-y);
+  }
+}
+.rtl\:text-right {
+  &:where(:dir(rtl), [dir="rtl"], [dir="rtl"] *) {
+    text-align: right;
   }
 }
 @property --tw-rotate-x {

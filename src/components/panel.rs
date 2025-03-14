@@ -43,29 +43,41 @@ pub fn Panel() -> Element {
         }
 
         div { id: "numbers",
+            class:"relative overflow-x-auto",
             table {
+                class: "w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400",
                 thead {
+                    class: "text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400",
                     tr {
                         th {
+                            scope:"col",
+                            class:"px-6 py-3",
                             "Thrown"
                         },
                         th {
+                            scope:"col",
+                            class:"px-6 py-3",
                             "Remaining"
                         }
                     }
                 }
-            for a in count.iter() {
-                tr {
-                        td {
-                            style:"white-space: pre; text-align: center;",
-                            {format!("{:>3}", a.thrown.to_string())}
-                        },
-                        td {
-                            style:"white-space: pre; text-align: center;",
-                            {format!("{:>3}", a.remaining.to_string())}
-                        },
+                tbody {
+                    for a in count.iter() {
+                        tr {
+                                class:"bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200",
+                                td {
+                                    class:"px-6 py-4",
+                                    style:"white-space: pre; text-align: center;",
+                                    {format!("{:>3}", a.thrown.to_string())}
+                                },
+                                td {
+                                    class:"px-6 py-4",
+                                    style:"white-space: pre; text-align: center;",
+                                    {format!("{:>3}", a.remaining.to_string())}
+                                },
+                        }
+                    }
                 }
-            }
 
             }
         }
