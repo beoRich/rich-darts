@@ -5,7 +5,7 @@ If you chose to develop with the router feature, you will also have a `views` fo
 
 ### Tailwind
 1. Install npm: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
-2. Install the Tailwind CSS CLI: https://tailwindcss.com/docs/installation
+2. Install the Tailwind CSS CLI: https://tailwindcss.com/docs/installation REQUIRES TAILWIND 3, DOES NOT WORK with TAILWIND 4
 3. Run the following command in the root of the project to start the Tailwind CSS compiler:
 
 ```bash

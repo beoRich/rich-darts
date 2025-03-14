@@ -41,17 +41,16 @@ pub fn Panel() -> Element {
                 "Please enter a valid number"
             }
         }
-
         div { id: "numbers",
             class:"relative overflow-x-auto",
             table {
-                class: "w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400",
+                //class: "w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400",
                 thead {
-                    class: "text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400",
+                    //class: "text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400",
                     tr {
                         th {
                             scope:"col",
-                            class:"px-6 py-3",
+                            class:"text-blue-600 px-6 py-3",
                             "Thrown"
                         },
                         th {
