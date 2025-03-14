@@ -17,8 +17,10 @@ fn App() -> Element {
 
     rsx! {
         // Global app resources
-        document::Link { rel: "icon", href: FAVICON }
-        document::Link { rel: "stylesheet", href: TAILWIND_CSS }
+        document::Stylesheet {
+            // Urls are relative to your Cargo.toml file
+            href: TAILWIND_CSS
+        }
 
         Panel {}
     }

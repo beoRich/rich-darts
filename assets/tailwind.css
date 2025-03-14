@@ -1,7 +1,4 @@
 /*! tailwindcss v4.0.13 | MIT License | https://tailwindcss.com */
-.collapse {
-  visibility: collapse;
-}
 .visible {
   visibility: visible;
 }
@@ -20,32 +17,8 @@
 .sticky {
   position: sticky;
 }
-.\!z-4 {
-  z-index: 4 !important;
-}
-.z-0 {
-  z-index: 0;
-}
-.z-2 {
-  z-index: 2;
-}
-.z-3 {
-  z-index: 3;
-}
-.z-4 {
-  z-index: 4;
-}
-.z-5 {
-  z-index: 5;
-}
-.z-8 {
-  z-index: 8;
-}
-.z-9 {
-  z-index: 9;
-}
-.z-92 {
-  z-index: 92;
+.z-1 {
+  z-index: 1;
 }
 .container {
   width: 100%;
@@ -79,9 +52,6 @@
 }
 .grow {
   flex-grow: 1;
-}
-.border-collapse {
-  border-collapse: collapse;
 }
 .transform {
   transform: var(--tw-rotate-x) var(--tw-rotate-y) var(--tw-rotate-z) var(--tw-skew-x) var(--tw-skew-y);
@@ -137,13 +107,6 @@
   transition-property: all;
   transition-timing-function: var(--tw-ease, ease);
   transition-duration: var(--tw-duration, 0s);
-}
-.hover\:border-transparent {
-  &:hover {
-    @media (hover: hover) {
-      border-color: transparent;
-    }
-  }
 }
 .active\:scale-95 {
   &:active {
