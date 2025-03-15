@@ -57,13 +57,6 @@ pub fn Panel() -> Element {
 
     }
         div {
-            style: "text-align:center",
-            p {
-                "Enter your latest result:",
-            }
-
-        }
-        div {
             id: "displayError",
             if is_wrong() {
                 p {
@@ -152,4 +145,3 @@ fn get_new_score(count: &Signal<Vec<CurrentScore>>, val: u16) -> CurrentScore {
         thrown: val,
     }
 }
-
