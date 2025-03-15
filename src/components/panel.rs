@@ -1,27 +1,40 @@
-use std::cell::Ref;
-use std::num::ParseIntError;
 use dioxus::dioxus_core::internal::generational_box::GenerationalRef;
 use dioxus::prelude::*;
+use dioxus_elements::style;
 use dioxus_logger::tracing;
+use std::cell::Ref;
+use std::num::ParseIntError;
 
 #[derive(Props, PartialEq, Clone)]
 struct CurrentScore {
     remaining: u16,
-    thrown: u16
+    thrown: u16,
 }
 
 #[component]
 pub fn Panel() -> Element {
     let mut raw_input = use_signal(|| "".to_string());
-    let init_score = CurrentScore { remaining: 501, thrown: 0 };
+    let init_score = CurrentScore {
+        remaining: 501,
+        thrown: 0,
+    };
     let init_count_vector = vec![init_score];
     let mut count = use_signal(|| init_count_vector);
     let is_wrong = use_signal(|| false);
     rsx! {
-        "Enter your latest result:",
+      div {
+            class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
         div {
-            id: "panelDiv",
-            input {id: "numberField", type: "number", maxlength:10, min:0, oninput: move |e| raw_input.set(e.value()),
+            class:"mb-4",
+                label {
+                    class:"block text-gray-700 text-sm font-bold mb-2",
+                    for: "numberField",
+                    "Enter the score"
+                    }
+
+            input {id: "numberField",
+                class:"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"a,
+                type: "number", maxlength:10, min:0, oninput: move |e| raw_input.set(e.value()),
                 onkeypress: move |e| {
                     if e.key() == Key::Enter {
                         //tracing::info!("he11o");
@@ -29,32 +42,51 @@ pub fn Panel() -> Element {
                     }
                 }
             }
+
+        }
+
+        div {
+            class:"flex items-center justify-between",
+
             button {id: "confirmButton",
                 onclick: move |_| {
-                        input_changed(count, is_wrong, raw_input)
+                        //input_changed(count, is_wrong, raw_input)
                 },
-                class: "bg-purple-200 px-4 py-2 rounded-lg border border-black hover:border-indigo-500 active:scale-95 transition-all", "Ok" }
+                class:"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" , "Ok" },
+        }
+
+    }
+        div {
+            style: "text-align:center",
+            p {
+                "Enter your latest result:",
+            }
+
         }
         div {
             id: "displayError",
             if is_wrong() {
-                "Please enter a valid number"
+                p {
+                class: "text-xs text-red-700",
+                "Please enter a valid number" }
             }
         }
         div { id: "numbers",
-            class:"relative overflow-x-auto",
+            //class:"relative overflow-x-auto",
             table {
-                //class: "w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400",
+                class: "w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400",
                 thead {
-                    //class: "text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400",
+                    class: "text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400",
                     tr {
                         th {
                             scope:"col",
+                            style:"white-space: pre; text-align: center;",
                             class:"text-blue-600 px-6 py-3",
                             "Thrown"
                         },
                         th {
                             scope:"col",
+                            style:"white-space: pre; text-align: center;",
                             class:"px-6 py-3",
                             "Remaining"
                         }
@@ -63,7 +95,7 @@ pub fn Panel() -> Element {
                 tbody {
                     for a in count.iter() {
                         tr {
-                                class:"bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200",
+                                class:"bg-white border-b dark:bg-white-800 dark:border-gray-700 border-gray-200",
                                 td {
                                     class:"px-6 py-4",
                                     style:"white-space: pre; text-align: center;",
@@ -85,7 +117,11 @@ pub fn Panel() -> Element {
     }
 }
 
-fn input_changed(mut count: Signal<Vec<CurrentScore>>, mut is_wrong: Signal<bool>, input_ref: Signal<String>) {
+fn input_changed(
+    mut count: Signal<Vec<CurrentScore>>,
+    mut is_wrong: Signal<bool>,
+    input_ref: Signal<String>,
+) {
     let result = input_ref.read().parse();
     match result {
         Ok(val) => {
@@ -97,7 +133,7 @@ fn input_changed(mut count: Signal<Vec<CurrentScore>>, mut is_wrong: Signal<bool
                 is_wrong.set(true)
             }
         }
-        Err(_) => { is_wrong.set(true)}
+        Err(_) => is_wrong.set(true),
     }
 }
 
@@ -111,5 +147,9 @@ fn get_new_score(count: &Signal<Vec<CurrentScore>>, val: u16) -> CurrentScore {
     } else {
         new_remaining = last_remaining;
     }
-    CurrentScore { remaining: new_remaining, thrown: val }
+    CurrentScore {
+        remaining: new_remaining,
+        thrown: val,
+    }
 }
+

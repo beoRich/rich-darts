@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use components::{Panel};
+use components::Panel;
 
 mod components;
 
@@ -13,8 +13,6 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    // Build cool things ✌️
-
     rsx! {
         // Global app resources
         document::Stylesheet {
