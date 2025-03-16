@@ -50,9 +50,9 @@ pub fn Panel() -> Element {
 
             button {id: "confirmButton",
                 onclick: move |_| {
-                        //input_changed(count, is_wrong, raw_input)
+                        input_changed(count, is_wrong, raw_input)
                 },
-                class:"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" , "Ok" },
+                class:"btn btn-primary" , "Ok" },
         }
 
     }

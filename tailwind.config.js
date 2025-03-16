@@ -4,7 +4,9 @@ module.exports = {
   theme: {
     extend: {},
   },
-  plugins: [],
+  plugins: [
+    require('daisyui'),
+  ],
   safelist: [
     { pattern: /.*/ }, // (Optional) Forces Tailwind to include all classes, useful for debugging.
   ],
