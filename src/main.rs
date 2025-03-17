@@ -4,8 +4,9 @@ use components::Panel;
 
 mod components;
 
-const FAVICON: Asset = asset!("/assets/favicon.ico");
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
+const CUSTOM_CSS: Asset = asset!("/assets/main.css");
+
 
 fn main() {
     dioxus::launch(App);
@@ -16,8 +17,10 @@ fn App() -> Element {
     rsx! {
         // Global app resources
         document::Stylesheet {
-            // Urls are relative to your Cargo.toml file
             href: TAILWIND_CSS
+        }
+        document::Stylesheet {
+            href: CUSTOM_CSS
         }
 
 
