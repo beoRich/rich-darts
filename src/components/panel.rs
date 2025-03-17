@@ -4,7 +4,7 @@ use dioxus_elements::style;
 use dioxus_logger::tracing;
 use std::cell::Ref;
 use std::num::ParseIntError;
-use crate::components::panel::ScoreMessageMode::{NewScore, ResetLastScore};
+use crate::components::panel::ScoreMessageMode::{GameFinished, NewScore, ResetLastScore};
 
 #[derive(Props, PartialEq, Clone)]
 struct CurrentScore {
@@ -16,14 +16,16 @@ struct CurrentScore {
 #[derive(Clone, PartialEq)]
 enum ScoreMessageMode {
     NewScore,
-    ResetLastScore{ last_score: u16}
+    ResetLastScore{ last_score: u16},
+    GameFinished
 }
 
 impl ScoreMessageMode {
     fn value(&self) -> String {
         match self {
             NewScore => "Enter the new score".to_string(),
-            ResetLastScore{last_score} => format!("{} {}", "Correct last entered Score: ".to_string(), last_score.to_string())
+            ResetLastScore{last_score} => format!("{} {}", "Correct last entered Score: ".to_string(), last_score.to_string()),
+            ScoreMessageMode::GameFinished => "Game finished".to_string(),
         }
 
     }
@@ -62,7 +64,6 @@ pub fn Panel() -> Element {
                 type: "number", maxlength:10, min:0, oninput: move |e| raw_input.set(e.value()),
                 onkeypress: move |e| {
                     if e.key() == Key::Enter {
-                        //tracing::info!("he11o");
                         input_changed(count, is_wrong, raw_input, score_message)
                     }
                 }
@@ -84,6 +85,7 @@ pub fn Panel() -> Element {
                 onclick: move |_| {
                         reset_last_score(count, is_wrong, score_message)
                 },
+                disabled: if count.read().len() < 2 {true},
                 class:"btn btn-primary" , "Reset Last Score" },
 
             button {id: "newGameButton",
@@ -180,20 +182,24 @@ fn input_changed(
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>
 ) {
-    let generational_ref = score_message();
-    match generational_ref {
+    let score_message_mode = score_message();
+    match score_message_mode {
         ResetLastScore {last_score: _}=>  {
             count.write().pop();
             score_message.set(NewScore)
         },
-        NewScore => {}
+        NewScore => {},
+        ScoreMessageMode::GameFinished => {is_wrong.set(true)}
     }
     let result = input_ref.read().parse();
     match result {
         Ok(val) => {
             if val <= 180 {
                 let new_score = get_new_score(&count, val);
-                count.write().push(new_score);
+                count.write().push(new_score.clone());
+                if new_score.remaining == 0 {
+                    score_message.set(GameFinished)
+                }
                 is_wrong.set(false)
             } else {
                 is_wrong.set(true)
