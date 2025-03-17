@@ -7,7 +7,7 @@ use std::num::ParseIntError;
 use dioxus::events::Key::New;
 use crate::components::calculations;
 use crate::components::domain::{CurrentScore, ScoreMessageMode};
-use crate::components::domain::ScoreMessageMode::{GameFinished, NewScore, UndoLastScore};
+use crate::components::domain::ScoreMessageMode::{GameFinished, NewShot, UndoLastShot};
 
 
 #[component]
@@ -19,7 +19,7 @@ pub fn Panel() -> Element {
     };
     let init_count_vector = vec![init_current_score];
     let mut count = use_signal(|| init_count_vector);
-    let mut score_message = use_signal(|| NewScore);
+    let mut score_message = use_signal(|| NewShot);
     let is_wrong = use_signal(|| false);
 
     rsx! {
@@ -94,12 +94,13 @@ pub fn Panel() -> Element {
                     class:"col-span-8 grid grid-cols-subgrid gap-4",
                     div {
                         class:"col-start-8",
-                        button {id: "newGameButton",
+                        button {id: "newLegButton",
                             onclick: move |_| {
-                                    new_game(count, is_wrong, score_message);
+                                    new_leg(count, is_wrong, score_message);
+                                    document::eval(&"document.getElementById('numberField').value = ' '".to_string());
                                     document::eval(&"document.getElementById('numberField').select()".to_string());
                             },
-                            class:"btn btn-secondary" , "New Game" },
+                            class:"btn btn-secondary" , "New Leg" },
                     }
                 }
         }
@@ -179,13 +180,13 @@ fn undo_wrapper(
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 
-fn new_game(
+fn new_leg(
     mut count: Signal<Vec<CurrentScore>>,
     mut is_wrong: Signal<bool>,
     mut score_message: Signal<ScoreMessageMode>
 ) {
     is_wrong.set(false);
-    score_message.set(NewScore);
+    score_message.set(NewShot);
     count.write().clear();
     let init_score = CurrentScore {
         remaining: 501,
@@ -205,7 +206,7 @@ fn undo_last_score(
     match last_score {
         Some(val) => {
             let last_thrown = val.thrown;
-            score_message.set(UndoLastScore { last_score: last_thrown });
+            score_message.set(UndoLastShot { last_score: last_thrown });
             last_thrown
         },
         None => {0}
@@ -220,11 +221,11 @@ fn input_changed(
 ) -> bool {
     let score_message_mode = score_message();
     match score_message_mode {
-        UndoLastScore {last_score: _}=>  {
+        UndoLastShot {last_score: _}=>  {
             count.write().pop();
-            score_message.set(NewScore)
+            score_message.set(NewShot)
         },
-        NewScore => {},
+        NewShot => {},
         GameFinished => {is_wrong.set(true)}
     }
     let result = input_ref.read().parse();

@@ -34,9 +34,8 @@ pub fn calculate_remaining(count: &Vec<CurrentScore>, val: u16) -> CurrentScore 
     let last = count.last().unwrap();
     let last_remaining = last.remaining;
     let new_remaining: u16;
-    let possible_remaining = last_remaining - val;
-    if val <= last_remaining && check_possible_remaining(possible_remaining, val) {
-        new_remaining = possible_remaining;
+    if val <= last_remaining && check_possible_remaining(last_remaining - val, val) {
+        new_remaining = last_remaining -val;
     } else {
         new_remaining = last_remaining;
     }
@@ -102,6 +101,16 @@ mod test {
                                               CurrentScore { remaining: 141, thrown: 180 }
         ];
         let thrown = 140;
+        let result = calculate_remaining(&input, thrown);
+        assert_eq!(result, CurrentScore{remaining: 141, thrown })
+    }
+
+    #[test]
+    fn should_not_end_on_negative() {
+        let input: &Vec<CurrentScore> = &vec![CurrentScore{remaining:501, thrown: 180}, CurrentScore{remaining:321, thrown: 180},
+                                              CurrentScore { remaining: 141, thrown: 180 }
+        ];
+        let thrown = 150;
         let result = calculate_remaining(&input, thrown);
         assert_eq!(result, CurrentScore{remaining: 141, thrown })
     }
