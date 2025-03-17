@@ -4,38 +4,11 @@ use dioxus_elements::style;
 use dioxus_logger::tracing;
 use std::cell::Ref;
 use std::num::ParseIntError;
-use crate::components::panel::ScoreMessageMode::{GameFinished, NewScore, ResetLastScore};
+use dioxus::events::Key::New;
+use crate::components::calculations;
+use crate::components::domain::{CurrentScore, ScoreMessageMode};
+use crate::components::domain::ScoreMessageMode::{GameFinished, NewScore, ResetLastScore};
 
-#[derive(Props, PartialEq, Clone)]
-struct CurrentScore {
-    remaining: u16,
-    thrown: u16,
-}
-
-
-#[derive(Clone, PartialEq)]
-enum ScoreMessageMode {
-    NewScore,
-    ResetLastScore{ last_score: u16},
-    GameFinished
-}
-
-impl ScoreMessageMode {
-    fn value(&self) -> String {
-        match self {
-            NewScore => "Enter the new score".to_string(),
-            ResetLastScore{last_score} => format!("{} {}", "Correct last entered Score: ".to_string(), last_score.to_string()),
-            ScoreMessageMode::GameFinished => "Game finished".to_string(),
-        }
-
-    }
-}
-
-#[derive(Props, PartialEq, Clone)]
-struct ScoreMessage {
-    score_message_mode: ScoreMessageMode,
-    score_message_label: u16,
-}
 
 #[component]
 pub fn Panel() -> Element {
@@ -78,6 +51,7 @@ pub fn Panel() -> Element {
                 onclick: move |_| {
                         input_changed(count, is_wrong, raw_input, score_message)
                 },
+                disabled: if {score_message}.read().to_owned() == ScoreMessageMode::GameFinished {true},
                 class:"btn btn-primary" , "Ok" },
 
 
@@ -90,7 +64,7 @@ pub fn Panel() -> Element {
 
             button {id: "newGameButton",
                 onclick: move |_| {
-                        new_game(count, is_wrong)
+                        new_game(count, is_wrong, score_message)
                 },
                 class:"btn btn-secondary" , "New Game" },
         }
@@ -152,8 +126,10 @@ pub fn Panel() -> Element {
 fn new_game(
     mut count: Signal<Vec<CurrentScore>>,
     mut is_wrong: Signal<bool>,
+    mut score_message: Signal<ScoreMessageMode>
 ) {
     is_wrong.set(false);
+    score_message.set(NewScore);
     count.write().clear();
     let init_score = CurrentScore {
         remaining: 501,
@@ -189,13 +165,13 @@ fn input_changed(
             score_message.set(NewScore)
         },
         NewScore => {},
-        ScoreMessageMode::GameFinished => {is_wrong.set(true)}
+        GameFinished => {is_wrong.set(true)}
     }
     let result = input_ref.read().parse();
     match result {
         Ok(val) => {
             if val <= 180 {
-                let new_score = get_new_score(&count, val);
+                let new_score = calculations::calculate_remaining(&count.read().to_owned(), val);
                 count.write().push(new_score.clone());
                 if new_score.remaining == 0 {
                     score_message.set(GameFinished)
@@ -209,18 +185,3 @@ fn input_changed(
     }
 }
 
-fn get_new_score(count: &Signal<Vec<CurrentScore>>, val: u16) -> CurrentScore {
-    let generational_ref = count.read();
-    let last = generational_ref.last().unwrap();
-    let last_remaining = last.remaining;
-    let new_remaining: u16;
-    if val <= last_remaining {
-        new_remaining = last_remaining - val;
-    } else {
-        new_remaining = last_remaining;
-    }
-    CurrentScore {
-        remaining: new_remaining,
-        thrown: val,
-    }
-}
