@@ -25,7 +25,7 @@ impl ScoreMessageMode {
         match self {
             ScoreMessageMode::NewShot => "Enter Shot".to_string(),
             ScoreMessageMode::UndoLastShot {last_score} => format!("{} {}", "Correct last Shot: ".to_string(), last_score.to_string()),
-            ScoreMessageMode::GameFinished => "Game finished".to_string(),
+            ScoreMessageMode::GameFinished => "Leg finished".to_string(),
         }
 
     }
