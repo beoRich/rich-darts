@@ -33,7 +33,6 @@ pub fn Panel() -> Element {
                     {score_message.read().value()}
                     }
 
-
             div {
                 class:"grid grid-cols-10 gap-4",
                 input {id: "numberField",
@@ -44,19 +43,30 @@ pub fn Panel() -> Element {
                             document::eval(&"document.getElementById('numberField').select()".to_string());
                         },
                     onkeypress: move |e| {
-                        if e.key() == Key::Enter && {score_message}.read().to_owned() != GameFinished {
-                            input_changed(count, is_wrong, raw_input, score_message);
-                            document::eval(&"document.getElementById('numberField').value = ' '".to_string());
-                            raw_input.set(" ".to_string());
-                            document::eval(&"document.getElementById('numberField').select()".to_string());
-                        }
+                            let key = e.key();
+                            if key == Key::Enter && {score_message}.read().to_owned() != GameFinished {
+                                    input_wrapper(raw_input, count, is_wrong, raw_input, score_message)
+                                //not working properly
+                            } else if key == Key::Home  {
+                                undo_wrapper(count, is_wrong, score_message);
+                            };
                     },
 
                 }
+
+                div {
+                    id: "displayError",
+                    if is_wrong() {
+                        p {
+                        class: "text-xs text-error",
+                        "Please enter a valid number" }
+                    }
+                }
+
+
             }
 
         }
-
         div {
             class:"grid grid-cols-10 gap-4",
 
@@ -64,10 +74,7 @@ pub fn Panel() -> Element {
                     class:"col-span-1 grid ",
                     button {id: "confirmButton",
                         onclick: move |_| {
-                                input_changed(count, is_wrong, raw_input, score_message);
-                                document::eval(&"document.getElementById('numberField').value = ' '".to_string());
-                                raw_input.set(" ".to_string());
-                                document::eval(&"document.getElementById('numberField').select()".to_string());
+                                input_wrapper(raw_input, count, is_wrong, raw_input, score_message)
                         },
                         disabled: if {score_message}.read().to_owned() == GameFinished {true},
                         class:"btn btn-primary" , "Ok" },
@@ -77,11 +84,7 @@ pub fn Panel() -> Element {
                     class:"col-span-1 grid ",
                     button {id: "undoButton",
                         onclick: move |_| {
-                                let last_score = undo_last_score(count, is_wrong, score_message);
-                                    document::eval(&format!(
-                                    "document.getElementById('numberField').value = '{last_score}'"
-                                 ));
-                                document::eval(&"document.getElementById('numberField').select()".to_string());
+                                undo_wrapper(count, is_wrong, score_message);
                         },
                         disabled: if count.read().len() < 2 {true},
                         class:"btn btn-primary" , "Undo" },
@@ -103,14 +106,6 @@ pub fn Panel() -> Element {
 
 
     }
-        div {
-            id: "displayError",
-            if is_wrong() {
-                p {
-                class: "text-xs text-color-error",
-                "Please enter a valid number" }
-            }
-        }
 
       div {
             class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
@@ -157,6 +152,33 @@ pub fn Panel() -> Element {
     }
 }
 
+fn input_wrapper(
+    mut raw_input: Signal<String>,
+    mut count: Signal<Vec<CurrentScore>>,
+    mut is_wrong: Signal<bool>,
+    input_ref: Signal<String>,
+    mut score_message: Signal<ScoreMessageMode>
+){
+    let suc = input_changed(count, is_wrong, raw_input, score_message);
+    if suc {
+        document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+        raw_input.set(" ".to_string());
+    }
+    document::eval(&"document.getElementById('numberField').select()".to_string());
+}
+
+fn undo_wrapper(
+    mut count: Signal<Vec<CurrentScore>>,
+    mut is_wrong: Signal<bool>,
+    mut score_message: Signal<ScoreMessageMode>
+) {
+    let last_score = undo_last_score(count, is_wrong, score_message);
+    document::eval(&format!(
+        "document.getElementById('numberField').value = '{last_score}'"
+    ));
+    document::eval(&"document.getElementById('numberField').select()".to_string());
+}
+
 fn new_game(
     mut count: Signal<Vec<CurrentScore>>,
     mut is_wrong: Signal<bool>,
@@ -195,7 +217,7 @@ fn input_changed(
     mut is_wrong: Signal<bool>,
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>
-) {
+) -> bool {
     let score_message_mode = score_message();
     match score_message_mode {
         UndoLastScore {last_score: _}=>  {
@@ -208,18 +230,21 @@ fn input_changed(
     let result = input_ref.read().parse();
     match result {
         Ok(val) => {
-            if val <= 180 {
+            if calculations::valid_thrown(val) {
                 let new_score = calculations::calculate_remaining(&count.read().to_owned(), val);
                 count.write().push(new_score.clone());
                 if new_score.remaining == 0 {
                     score_message.set(GameFinished)
                 }
-                is_wrong.set(false)
+                is_wrong.set(false);
+                true
             } else {
-                is_wrong.set(true)
+                is_wrong.set(true);
+                false
             }
         }
-        Err(_) => is_wrong.set(true),
+        Err(_) => {is_wrong.set(true);
+            false}
     }
 }
 

@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use dioxus::core_macro::Props;
 
-#[derive(Props, PartialEq, Clone)]
+#[derive(Props, PartialEq, Clone, Debug)]
 pub struct CurrentScore {
     pub remaining: u16,
     pub thrown: u16,
