@@ -16,7 +16,7 @@ pub struct ScoreMessage {
 #[derive(Clone, PartialEq)]
 pub enum ScoreMessageMode {
     NewScore,
-    ResetLastScore{ last_score: u16},
+    UndoLastScore { last_score: u16},
     GameFinished
 }
 
@@ -24,7 +24,7 @@ impl ScoreMessageMode {
     pub fn value(&self) -> String {
         match self {
             ScoreMessageMode::NewScore => "Enter the new score".to_string(),
-            ScoreMessageMode::ResetLastScore{last_score} => format!("{} {}", "Correct last entered Score: ".to_string(), last_score.to_string()),
+            ScoreMessageMode::UndoLastScore {last_score} => format!("{} {}", "Correct last entered Score: ".to_string(), last_score.to_string()),
             ScoreMessageMode::GameFinished => "Game finished".to_string(),
         }
 

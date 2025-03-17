@@ -3526,6 +3526,7 @@ dependencies = [
  "daisy_rsx",
  "dioxus",
  "dioxus-logger",
+ "tracing",
  "tracing-wasm",
 ]
 
