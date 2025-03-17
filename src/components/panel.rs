@@ -19,7 +19,6 @@ pub fn Panel() -> Element {
     };
     let init_count_vector = vec![init_current_score];
     let mut count = use_signal(|| init_count_vector);
-    let mut count_placeholder = use_signal(|| " ");
     let mut score_message = use_signal(|| NewScore);
     let is_wrong = use_signal(|| false);
 
@@ -48,6 +47,7 @@ pub fn Panel() -> Element {
                         if e.key() == Key::Enter && {score_message}.read().to_owned() != GameFinished {
                             input_changed(count, is_wrong, raw_input, score_message);
                             document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+                            raw_input.set(" ".to_string());
                             document::eval(&"document.getElementById('numberField').select()".to_string());
                         }
                     },
@@ -66,6 +66,7 @@ pub fn Panel() -> Element {
                         onclick: move |_| {
                                 input_changed(count, is_wrong, raw_input, score_message);
                                 document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+                                raw_input.set(" ".to_string());
                                 document::eval(&"document.getElementById('numberField').select()".to_string());
                         },
                         disabled: if {score_message}.read().to_owned() == GameFinished {true},
