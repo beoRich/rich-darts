@@ -21,6 +21,7 @@ pub fn Panel() -> Element {
     let mut score_message = use_signal(|| NewShot);
     let mut error_message = use_signal(|| ErrorMessageMode::None);
 
+
     rsx! {
         div {
       id: "All",
@@ -118,6 +119,7 @@ pub fn Panel() -> Element {
             id:"BottomHalf",
             class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
             div { id: "numbers",
+                    class: "table-container",
                 table {
                     thead {
                         class: "text-xs uppercase bg-neutral-content",
@@ -137,7 +139,7 @@ pub fn Panel() -> Element {
                         }
                     }
                     tbody {
-                            overflow_y: "auto",
+                        id: "numbers-body",
                         for a in count.iter() {
                             tr {
                                     class:"bg-white border-b dark:bg-white-800 dark:border-gray-700 border-gray-200",
@@ -168,13 +170,17 @@ fn input_wrapper(
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
 ) {
-    let errorMessageMode = input_changed(count, raw_input, score_message);
-    if errorMessageMode == ErrorMessageMode::None {
+    let error_message_mode = input_changed(count, raw_input, score_message);
+    if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
         raw_input.set(" ".to_string());
     }
-    error_message.set(errorMessageMode);
+    error_message.set(error_message_mode);
     document::eval(&"document.getElementById('numberField').select()".to_string());
+    //document::eval(&"document.getElementById('numbers-body').scrollTop(document.getElementById('numbers-body').offsetHeight)".to_string());
+    //document::eval(&"document.getElementById('numbers-body').scrollTo(0, document.getElementById('numbers-body').offsetHeight - 20)".to_string());
+    document::eval(&"document.getElementById('numbers-body').scrollTo(0, 999999999)".to_string());
+    //tracing::info!( "{:?}", document::eval(&"document.getElementById('numbers-body').scrollHeight".to_string()));
 }
 
 fn undo_wrapper(
