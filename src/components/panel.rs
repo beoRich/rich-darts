@@ -236,19 +236,27 @@ fn input_changed(
     mut score_message: Signal<ScoreMessageMode>,
 ) -> (ErrorMessageMode, Option<CurrentScore>) {
     let score_message_mode = score_message();
-    match score_message_mode {
-        UndoLastShot { last_score: _ } => {
-            count.write().pop();
-            score_message.set(NewShot)
-        }
-        NewShot => {}
-        GameFinished => return (ErrorMessageMode::LegAlreadyFinished, None),
-    }
     let result = input_ref.read().parse();
     match result {
         Ok(val) => {
             if calculations::valid_thrown(val) {
-                let new_score = calculations::calculate_remaining(&count.read().to_owned(), val);
+                let last = count.read().last().unwrap().to_owned();
+                let next_throw_order: u16;
+                {
+                    match score_message_mode {
+                        UndoLastShot { last_score: _ } => {
+                            count.write().pop();
+                            score_message.set(NewShot);
+                            next_throw_order = last.throw_order;
+                            //todo set all leg entries that are equal to next_throw_order deleted = true
+                        }
+                        NewShot => {
+                            next_throw_order = last.throw_order + 1;
+                        }
+                        GameFinished => return (ErrorMessageMode::LegAlreadyFinished, None),
+                    }
+                }
+                let new_score = calculations::calculate_remaining(last, val, next_throw_order);
                 count.write().push(new_score.clone());
                 let _ = async {
                     backend::save_throw(1, new_score.clone()).await.expect("TODO: panic message");
@@ -264,6 +272,6 @@ fn input_changed(
         Err(_) => (ErrorMessageMode::NotANumber, None),
     }
 }
+fn handle_last() {
 
-async fn store(new_score: &CurrentScore) {
 }
