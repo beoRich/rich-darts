@@ -63,7 +63,7 @@ pub fn Panel() -> Element {
                     id: "displayError",
                     if error_message.read().value().is_some() {
                         p {
-                        class: "text-xl text-error",
+                        class: "text-l text-error",
                                 {error_message.read().value()}
                          }
                     }
@@ -84,7 +84,7 @@ pub fn Panel() -> Element {
                                 input_wrapper(raw_input, count, error_message, score_message)
                         },
                         disabled: if {score_message}.read().to_owned() == GameFinished {true},
-                        class:"btn btn-primary" , "Ok" },
+                        class:"btn btn-soft btn-primary" , "Ok" },
                 }
 
                 div {
@@ -94,7 +94,7 @@ pub fn Panel() -> Element {
                                 undo_wrapper(count, error_message, score_message);
                         },
                         disabled: if count.read().len() < 2 {true},
-                        class:"btn btn-primary" , "Undo" },
+                        class:"btn btn-soft btn-secondary" , "Undo" },
                 }
 
                 div {
@@ -107,7 +107,7 @@ pub fn Panel() -> Element {
                                     document::eval(&"document.getElementById('numberField').value = ' '".to_string());
                                     document::eval(&"document.getElementById('numberField').select()".to_string());
                             },
-                            class:"btn btn-secondary" , "New Leg" },
+                            class:"btn btn-soft btn-info" , "New Leg" },
                     }
                 }
         }
@@ -140,16 +140,19 @@ pub fn Panel() -> Element {
                     }
                     tbody {
                         id: "numbers-body",
-                        for a in count.iter() {
+                        for (i, a) in count().into_iter().rev().enumerate() {
                             tr {
-                                    class:"bg-white border-b dark:bg-white-800 dark:border-gray-700 border-gray-200",
                                     td {
-                                        class:"px-6 py-4",
+                                        class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
+                                        class: if i % 2 == 0 && i!=0 {"px-6 py-4 bg-base-200 text-base-content"},
+                                        class: if i % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
                                         style:"white-space: pre; text-align: center;",
                                         {format!("{:>3}", a.thrown.to_string())}
                                     },
                                     td {
-                                        class:"px-6 py-4",
+                                        class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
+                                        class: if i % 2 == 0 && i!=0 {"px-6 py-4 bg-base-200 text-base-content"},
+                                        class: if i % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
                                         style:"white-space: pre; text-align: center;",
                                         {format!("{:>3}", a.remaining.to_string())}
                                     },
@@ -177,10 +180,6 @@ fn input_wrapper(
     }
     error_message.set(error_message_mode);
     document::eval(&"document.getElementById('numberField').select()".to_string());
-    //document::eval(&"document.getElementById('numbers-body').scrollTop(document.getElementById('numbers-body').offsetHeight)".to_string());
-    //document::eval(&"document.getElementById('numbers-body').scrollTo(0, document.getElementById('numbers-body').offsetHeight - 20)".to_string());
-    document::eval(&"document.getElementById('numbers-body').scrollTo(0, 999999999)".to_string());
-    //tracing::info!( "{:?}", document::eval(&"document.getElementById('numbers-body').scrollHeight".to_string()));
 }
 
 fn undo_wrapper(
