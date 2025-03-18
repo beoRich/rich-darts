@@ -1,12 +1,14 @@
 use dioxus::core_macro::Props;
 use dioxus::prelude::*;
+use dioxus::prelude::server_fn::serde::Deserialize;
+use serde::Serialize;
 
 pub const INIT_SCORE: CurrentScore = CurrentScore {
     remaining: 501,
     thrown: 0,
 };
 
-#[derive(Props, PartialEq, Clone, Debug)]
+#[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct CurrentScore {
     pub remaining: u16,
     pub thrown: u16,

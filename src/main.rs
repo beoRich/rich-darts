@@ -3,6 +3,8 @@ use dioxus::prelude::*;
 use components::Panel;
 
 mod components;
+mod backend;
+mod domain;
 
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
 const CUSTOM_CSS: Asset = asset!("/assets/main.css");

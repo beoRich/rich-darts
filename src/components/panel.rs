@@ -1,6 +1,6 @@
 use crate::components::calculations;
-use crate::components::domain::ScoreMessageMode::{GameFinished, NewShot, UndoLastShot};
-use crate::components::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
+use crate::domain::ScoreMessageMode::{GameFinished, NewShot, UndoLastShot};
+use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
 use dioxus::dioxus_core::internal::generational_box::GenerationalRef;
 use dioxus::events::Key::New;
 use dioxus::prelude::*;
@@ -8,14 +8,11 @@ use dioxus_elements::style;
 use dioxus_logger::tracing;
 use std::cell::Ref;
 use std::num::ParseIntError;
+use crate::backend;
 
 #[component]
 pub fn Panel() -> Element {
     let mut raw_input = use_signal(|| "".to_string());
-    let init_current_score = CurrentScore {
-        remaining: 501,
-        thrown: 0,
-    };
     let init_count_vector = vec![INIT_SCORE];
     let mut count = use_signal(|| init_count_vector);
     let mut score_message = use_signal(|| NewShot);
@@ -47,11 +44,13 @@ pub fn Panel() -> Element {
                     onfocusin: move |_| {
                             document::eval(&"document.getElementById('numberField').select()".to_string());
                         },
-                    onkeypress: move |e| {
+                    onkeypress: move |e| async move {
                             let key = e.key();
                             if key == Key::Enter && {score_message}.read().to_owned() != GameFinished {
-                                    input_wrapper(raw_input, count, error_message, score_message)
-                                //not working properly
+                                let option = input_wrapper(raw_input, count, error_message, score_message);
+                                if option.is_some() {
+                                    _ = backend::save_throw(1, option.unwrap()).await
+                                }
                             } else if key == Key::Home  {
                                 undo_wrapper(count, error_message, score_message);
                             };
@@ -80,8 +79,12 @@ pub fn Panel() -> Element {
                 div {
                     class:"col-span-1 grid ",
                     button {id: "confirmButton",
-                        onclick: move |_| {
-                                input_wrapper(raw_input, count, error_message, score_message)
+                        onclick: move |_| async move {
+                                let option = input_wrapper(raw_input, count, error_message, score_message);
+                                if option.is_some() {
+                                    _ = backend::save_throw(1, option.unwrap()).await
+                                }
+
                         },
                         disabled: if {score_message}.read().to_owned() == GameFinished {true},
                         class:"btn btn-soft btn-primary" , "Ok" },
@@ -102,10 +105,11 @@ pub fn Panel() -> Element {
                     div {
                         class:"col-start-8",
                         button {id: "newLegButton",
-                            onclick: move |_| {
+                            onclick: move |_| async move {
                                     new_leg(count, error_message, score_message);
                                     document::eval(&"document.getElementById('numberField').value = ' '".to_string());
                                     document::eval(&"document.getElementById('numberField').select()".to_string());
+                                    let  _ = backend::save_throw(1, INIT_SCORE.clone()).await;
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
                     }
@@ -172,14 +176,15 @@ fn input_wrapper(
     mut count: Signal<Vec<CurrentScore>>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
-) {
-    let error_message_mode = input_changed(count, raw_input, score_message);
+) -> Option<CurrentScore> {
+    let (error_message_mode, score_message_maybe) = input_changed(count, raw_input, score_message);
     if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
         raw_input.set(" ".to_string());
     }
     error_message.set(error_message_mode);
     document::eval(&"document.getElementById('numberField').select()".to_string());
+    score_message_maybe
 }
 
 fn undo_wrapper(
@@ -229,7 +234,7 @@ fn input_changed(
     mut count: Signal<Vec<CurrentScore>>,
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>,
-) -> ErrorMessageMode {
+) -> (ErrorMessageMode, Option<CurrentScore>) {
     let score_message_mode = score_message();
     match score_message_mode {
         UndoLastShot { last_score: _ } => {
@@ -237,7 +242,7 @@ fn input_changed(
             score_message.set(NewShot)
         }
         NewShot => {}
-        GameFinished => return ErrorMessageMode::LegAlreadyFinished,
+        GameFinished => return (ErrorMessageMode::LegAlreadyFinished, None),
     }
     let result = input_ref.read().parse();
     match result {
@@ -245,14 +250,20 @@ fn input_changed(
             if calculations::valid_thrown(val) {
                 let new_score = calculations::calculate_remaining(&count.read().to_owned(), val);
                 count.write().push(new_score.clone());
+                let _ = async {
+                    backend::save_throw(1, new_score.clone()).await.expect("TODO: panic message");
+                };
                 if new_score.remaining == 0 {
                     score_message.set(GameFinished)
                 }
-                ErrorMessageMode::None
+                (ErrorMessageMode::None, Some(new_score))
             } else {
-                ErrorMessageMode::NotADartsNumber
+                (ErrorMessageMode::NotADartsNumber, None)
             }
         }
-        Err(_) => ErrorMessageMode::NotANumber,
+        Err(_) => (ErrorMessageMode::NotANumber, None),
     }
+}
+
+async fn store(new_score: &CurrentScore) {
 }

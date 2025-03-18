@@ -3936,6 +3936,7 @@ dependencies = [
  "dioxus-logger",
  "itertools",
  "rusqlite",
+ "serde",
  "tracing",
  "tracing-wasm",
 ]

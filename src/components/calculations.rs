@@ -1,4 +1,4 @@
-use crate::components::domain::CurrentScore;
+use crate::domain::CurrentScore;
 use itertools::{iproduct, Itertools};
 use std::collections::HashSet;
 use std::hash::Hash;
@@ -68,7 +68,7 @@ mod test {
     use crate::components::calculations::{
         calculate_remaining, check_possible_remaining, valid_thrown,
     };
-    use crate::components::domain::CurrentScore;
+    use crate::domain::CurrentScore;
 
     #[test]
     fn invalid_throw_bigger_then_180() {
