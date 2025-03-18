@@ -259,7 +259,7 @@ fn input_changed(
                 let new_score = calculations::calculate_remaining(last, val, next_throw_order);
                 count.write().push(new_score.clone());
                 let _ = async {
-                    backend::save_throw(1, new_score.clone()).await.expect("TODO: panic message");
+                    backend::save_throw(1, new_score.clone()).await.expect("Failed to store throw into backend");
                 };
                 if new_score.remaining == 0 {
                     score_message.set(GameFinished)
