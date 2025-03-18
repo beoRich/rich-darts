@@ -8,3 +8,31 @@ input::-webkit-inner-spin-button {
 input[type=number] {
     -moz-appearance:textfield; /* Firefox */
 }
+/* For Webkit-based browsers (Chrome, Safari and Opera) */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* For IE, Edge and Firefox */
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.scroll-container::-webkit-scrollbar {
+    background: white;
+    padding: 2em;
+    margin: auto;
+    max-width: 450px;
+    max-height: 350px;
+    /* This displays hides the scrollbar on the element, however, it affects its scrolling function */
+    overflow: hidden;
+}
+.container-self {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}

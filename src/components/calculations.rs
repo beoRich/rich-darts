@@ -1,15 +1,14 @@
-use std::collections::HashSet;
-use std::hash::Hash;
 use crate::components::domain::CurrentScore;
 use itertools::{iproduct, Itertools};
-
+use std::collections::HashSet;
+use std::hash::Hash;
 
 pub fn valid_thrown(val: u16) -> bool {
-   let all_possible_values: HashSet<u16> = possible_values();
-   match val {
-       val if val> 180 => false,
-       val if all_possible_values.contains(&val) => true,
-       _ => false
+    let all_possible_values: HashSet<u16> = possible_values();
+    match val {
+        val if val > 180 => false,
+        val if all_possible_values.contains(&val) => true,
+        _ => false,
     }
 }
 
@@ -21,7 +20,11 @@ fn possible_values() -> HashSet<u16> {
     let double: Vec<u16> = (0..21).map(|val| val * 2).collect();
     let triples: Vec<u16> = (0..21).map(|val| val * 3).collect();
 
-    let all: Vec<u16> =  <HashSet<u16> as IntoIterator>::into_iter(HashSet::from_iter(vec![singles, double, triples].concat())).into_iter().collect();
+    let all: Vec<u16> = <HashSet<u16> as IntoIterator>::into_iter(HashSet::from_iter(
+        vec![singles, double, triples].concat(),
+    ))
+    .into_iter()
+    .collect();
 
     let mut sums: HashSet<u16> = HashSet::new();
     for (a, b, c) in iproduct!(all.clone(), all.clone(), all.clone()) {
@@ -35,7 +38,7 @@ pub fn calculate_remaining(count: &Vec<CurrentScore>, val: u16) -> CurrentScore 
     let last_remaining = last.remaining;
     let new_remaining: u16;
     if val <= last_remaining && check_possible_remaining(last_remaining - val, val) {
-        new_remaining = last_remaining -val;
+        new_remaining = last_remaining - val;
     } else {
         new_remaining = last_remaining;
     }
@@ -46,7 +49,6 @@ pub fn calculate_remaining(count: &Vec<CurrentScore>, val: u16) -> CurrentScore 
 }
 
 fn check_possible_remaining(possible_remaining: u16, val: u16) -> bool {
-
     match possible_remaining {
         1 => false,
         0 => {
@@ -54,16 +56,18 @@ fn check_possible_remaining(possible_remaining: u16, val: u16) -> bool {
             match val {
                 val if boogey_nr.contains(&val) => false,
                 0..170 => true,
-                _ => false
+                _ => false,
             }
         }
-        _ => true
+        _ => true,
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::components::calculations::{calculate_remaining, check_possible_remaining, valid_thrown};
+    use crate::components::calculations::{
+        calculate_remaining, check_possible_remaining, valid_thrown,
+    };
     use crate::components::domain::CurrentScore;
 
     #[test]
@@ -93,44 +97,90 @@ mod test {
         assert!(valid_thrown(63));
     }
 
-
-
     #[test]
     fn should_not_end_on_1() {
-        let input: &Vec<CurrentScore> = &vec![CurrentScore{remaining:501, thrown: 180}, CurrentScore{remaining:321, thrown: 180},
-                                              CurrentScore { remaining: 141, thrown: 180 }
+        let input: &Vec<CurrentScore> = &vec![
+            CurrentScore {
+                remaining: 501,
+                thrown: 180,
+            },
+            CurrentScore {
+                remaining: 321,
+                thrown: 180,
+            },
+            CurrentScore {
+                remaining: 141,
+                thrown: 180,
+            },
         ];
         let thrown = 140;
         let result = calculate_remaining(&input, thrown);
-        assert_eq!(result, CurrentScore{remaining: 141, thrown })
+        assert_eq!(
+            result,
+            CurrentScore {
+                remaining: 141,
+                thrown
+            }
+        )
     }
 
     #[test]
     fn should_not_end_on_negative() {
-        let input: &Vec<CurrentScore> = &vec![CurrentScore{remaining:501, thrown: 180}, CurrentScore{remaining:321, thrown: 180},
-                                              CurrentScore { remaining: 141, thrown: 180 }
+        let input: &Vec<CurrentScore> = &vec![
+            CurrentScore {
+                remaining: 501,
+                thrown: 180,
+            },
+            CurrentScore {
+                remaining: 321,
+                thrown: 180,
+            },
+            CurrentScore {
+                remaining: 141,
+                thrown: 180,
+            },
         ];
         let thrown = 150;
         let result = calculate_remaining(&input, thrown);
-        assert_eq!(result, CurrentScore{remaining: 141, thrown })
+        assert_eq!(
+            result,
+            CurrentScore {
+                remaining: 141,
+                thrown
+            }
+        )
     }
 
     #[test]
     fn should_end_on_0() {
-        let input: &Vec<CurrentScore> = &vec![CurrentScore{remaining:501, thrown: 180}, CurrentScore{remaining:321, thrown: 180},
-                                              CurrentScore { remaining: 141, thrown: 180 }
+        let input: &Vec<CurrentScore> = &vec![
+            CurrentScore {
+                remaining: 501,
+                thrown: 180,
+            },
+            CurrentScore {
+                remaining: 321,
+                thrown: 180,
+            },
+            CurrentScore {
+                remaining: 141,
+                thrown: 180,
+            },
         ];
         let thrown = 141;
         let result = calculate_remaining(&input, thrown);
-        assert_eq!(result, CurrentScore{remaining: 0, thrown})
+        assert_eq!(
+            result,
+            CurrentScore {
+                remaining: 0,
+                thrown
+            }
+        )
     }
 
     #[test]
     fn should_not_end_on_0_if_impossible() {
         assert!(!check_possible_remaining(0, 171));
         assert!(!check_possible_remaining(0, 163))
-
     }
-
-
 }

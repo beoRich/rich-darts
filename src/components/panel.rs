@@ -1,14 +1,13 @@
+use crate::components::calculations;
+use crate::components::domain::ScoreMessageMode::{GameFinished, NewShot, UndoLastShot};
+use crate::components::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
 use dioxus::dioxus_core::internal::generational_box::GenerationalRef;
+use dioxus::events::Key::New;
 use dioxus::prelude::*;
 use dioxus_elements::style;
 use dioxus_logger::tracing;
 use std::cell::Ref;
 use std::num::ParseIntError;
-use dioxus::events::Key::New;
-use crate::components::calculations;
-use crate::components::domain::{CurrentScore, ScoreMessageMode};
-use crate::components::domain::ScoreMessageMode::{GameFinished, NewShot, UndoLastShot};
-
 
 #[component]
 pub fn Panel() -> Element {
@@ -17,14 +16,19 @@ pub fn Panel() -> Element {
         remaining: 501,
         thrown: 0,
     };
-    let init_count_vector = vec![init_current_score];
+    let init_count_vector = vec![INIT_SCORE];
     let mut count = use_signal(|| init_count_vector);
     let mut score_message = use_signal(|| NewShot);
-    let is_wrong = use_signal(|| false);
+    let mut error_message = use_signal(|| ErrorMessageMode::None);
 
     rsx! {
+        div {
+      id: "All",
+            class: "container-self",
+
       div {
-            class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+        id:"TopHalf",
+        class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-x-scroll",
         div {
             class:"mb-4",
                 label {
@@ -45,10 +49,10 @@ pub fn Panel() -> Element {
                     onkeypress: move |e| {
                             let key = e.key();
                             if key == Key::Enter && {score_message}.read().to_owned() != GameFinished {
-                                    input_wrapper(raw_input, count, is_wrong, raw_input, score_message)
+                                    input_wrapper(raw_input, count, error_message, score_message)
                                 //not working properly
                             } else if key == Key::Home  {
-                                undo_wrapper(count, is_wrong, score_message);
+                                undo_wrapper(count, error_message, score_message);
                             };
                     },
 
@@ -56,10 +60,11 @@ pub fn Panel() -> Element {
 
                 div {
                     id: "displayError",
-                    if is_wrong() {
+                    if error_message.read().value().is_some() {
                         p {
-                        class: "text-xs text-error",
-                        "Please enter a valid number" }
+                        class: "text-xl text-error",
+                                {error_message.read().value()}
+                         }
                     }
                 }
 
@@ -68,13 +73,14 @@ pub fn Panel() -> Element {
 
         }
         div {
+            id: "ButtonsDiv",
             class:"grid grid-cols-10 gap-4",
 
                 div {
                     class:"col-span-1 grid ",
                     button {id: "confirmButton",
                         onclick: move |_| {
-                                input_wrapper(raw_input, count, is_wrong, raw_input, score_message)
+                                input_wrapper(raw_input, count, error_message, score_message)
                         },
                         disabled: if {score_message}.read().to_owned() == GameFinished {true},
                         class:"btn btn-primary" , "Ok" },
@@ -84,7 +90,7 @@ pub fn Panel() -> Element {
                     class:"col-span-1 grid ",
                     button {id: "undoButton",
                         onclick: move |_| {
-                                undo_wrapper(count, is_wrong, score_message);
+                                undo_wrapper(count, error_message, score_message);
                         },
                         disabled: if count.read().len() < 2 {true},
                         class:"btn btn-primary" , "Undo" },
@@ -96,7 +102,7 @@ pub fn Panel() -> Element {
                         class:"col-start-8",
                         button {id: "newLegButton",
                             onclick: move |_| {
-                                    new_leg(count, is_wrong, score_message);
+                                    new_leg(count, error_message, score_message);
                                     document::eval(&"document.getElementById('numberField').value = ' '".to_string());
                                     document::eval(&"document.getElementById('numberField').select()".to_string());
                             },
@@ -109,7 +115,8 @@ pub fn Panel() -> Element {
     }
 
       div {
-            class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4",
+            id:"BottomHalf",
+            class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
             div { id: "numbers",
                 table {
                     thead {
@@ -130,6 +137,7 @@ pub fn Panel() -> Element {
                         }
                     }
                     tbody {
+                            overflow_y: "auto",
                         for a in count.iter() {
                             tr {
                                     class:"bg-white border-b dark:bg-white-800 dark:border-gray-700 border-gray-200",
@@ -151,29 +159,30 @@ pub fn Panel() -> Element {
             }
       }
     }
+    }
 }
 
 fn input_wrapper(
     mut raw_input: Signal<String>,
     mut count: Signal<Vec<CurrentScore>>,
-    mut is_wrong: Signal<bool>,
-    input_ref: Signal<String>,
-    mut score_message: Signal<ScoreMessageMode>
-){
-    let suc = input_changed(count, is_wrong, raw_input, score_message);
-    if suc {
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
+) {
+    let errorMessageMode = input_changed(count, raw_input, score_message);
+    if errorMessageMode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
         raw_input.set(" ".to_string());
     }
+    error_message.set(errorMessageMode);
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 
 fn undo_wrapper(
     mut count: Signal<Vec<CurrentScore>>,
-    mut is_wrong: Signal<bool>,
-    mut score_message: Signal<ScoreMessageMode>
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
 ) {
-    let last_score = undo_last_score(count, is_wrong, score_message);
+    let last_score = undo_last_score(count, error_message, score_message);
     document::eval(&format!(
         "document.getElementById('numberField').value = '{last_score}'"
     ));
@@ -182,51 +191,48 @@ fn undo_wrapper(
 
 fn new_leg(
     mut count: Signal<Vec<CurrentScore>>,
-    mut is_wrong: Signal<bool>,
-    mut score_message: Signal<ScoreMessageMode>
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
 ) {
-    is_wrong.set(false);
+    error_message.set(ErrorMessageMode::None);
     score_message.set(NewShot);
     count.write().clear();
-    let init_score = CurrentScore {
-        remaining: 501,
-        thrown: 0,
-    };
-    count.push(init_score);
+    count.push(INIT_SCORE);
 }
 
 fn undo_last_score(
     mut count: Signal<Vec<CurrentScore>>,
-    mut is_wrong: Signal<bool>,
-    mut score_message: Signal<ScoreMessageMode>
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
 ) -> u16 {
-    is_wrong.set(false);
+    error_message.set(ErrorMessageMode::None);
     let generational_ref = count.read();
     let last_score = generational_ref.last();
     match last_score {
         Some(val) => {
             let last_thrown = val.thrown;
-            score_message.set(UndoLastShot { last_score: last_thrown });
+            score_message.set(UndoLastShot {
+                last_score: last_thrown,
+            });
             last_thrown
-        },
-        None => {0}
+        }
+        None => 0,
     }
 }
 
 fn input_changed(
     mut count: Signal<Vec<CurrentScore>>,
-    mut is_wrong: Signal<bool>,
     input_ref: Signal<String>,
-    mut score_message: Signal<ScoreMessageMode>
-) -> bool {
+    mut score_message: Signal<ScoreMessageMode>,
+) -> ErrorMessageMode {
     let score_message_mode = score_message();
     match score_message_mode {
-        UndoLastShot {last_score: _}=>  {
+        UndoLastShot { last_score: _ } => {
             count.write().pop();
             score_message.set(NewShot)
-        },
-        NewShot => {},
-        GameFinished => {is_wrong.set(true)}
+        }
+        NewShot => {}
+        GameFinished => return ErrorMessageMode::LegAlreadyFinished,
     }
     let result = input_ref.read().parse();
     match result {
@@ -237,15 +243,11 @@ fn input_changed(
                 if new_score.remaining == 0 {
                     score_message.set(GameFinished)
                 }
-                is_wrong.set(false);
-                true
+                ErrorMessageMode::None
             } else {
-                is_wrong.set(true);
-                false
+                ErrorMessageMode::NotADartsNumber
             }
         }
-        Err(_) => {is_wrong.set(true);
-            false}
+        Err(_) => ErrorMessageMode::NotANumber,
     }
 }
-
