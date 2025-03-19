@@ -2,7 +2,6 @@ use crate::components::calculations;
 use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
 use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
 use dioxus::dioxus_core::internal::generational_box::GenerationalRef;
-use dioxus::events::Key::New;
 use dioxus::prelude::*;
 use dioxus_elements::style;
 use dioxus_logger::tracing;
@@ -14,9 +13,14 @@ use crate::backend;
 pub fn Panel() -> Element {
     let mut raw_input = use_signal(|| "".to_string());
     let init_count_vector = vec![INIT_SCORE];
+
     let mut count = use_signal(|| init_count_vector);
     let mut score_message = use_signal(|| NewShot);
     let mut error_message = use_signal(|| ErrorMessageMode::None);
+    //let mut count_db = use_resource(backend::list_throws_test2).suspend()?;
+
+
+    //tracing::info!("{:?}", count_db().unwrap());
 
 
     rsx! {
@@ -138,6 +142,7 @@ pub fn Panel() -> Element {
                     tbody {
                         id: "numbers-body",
                         for (i, a) in count().into_iter().rev().enumerate() {
+                        //for (i, a) in count_db().unwrap().into_iter().rev().enumerate() {
                             tr {
                                     td {
                                         class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
@@ -278,7 +283,7 @@ fn get_last(count: &mut Signal<Vec<CurrentScore>>) -> CurrentScore {
 
 fn get_snd_last(count: &mut Signal<Vec<CurrentScore>>) -> CurrentScore {
     let generational_ref = count.read();
-    generational_ref.get(generational_ref.len() -1 ).unwrap().to_owned()
+    generational_ref.get(generational_ref.len() - 1).unwrap().to_owned()
 }
 
 fn handle_last() {

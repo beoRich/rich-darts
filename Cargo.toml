@@ -7,13 +7,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-daisy_rsx = "0.1.14"
-dioxus = { version = "0.6.0", features = ["fullstack"] }
+dioxus = { version = "0.6.3", features = ["fullstack", "router"] }
 dioxus-logger = "0.6.2"
 itertools = "0.14.0"
 rusqlite = { version = "0.34.0", features = ["bundled"], optional = true }
-tracing = "0.1.41"
-tracing-wasm = "0.2.1"
 serde = { version = "1.0.219", features = ["derive"] }
 
 

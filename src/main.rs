@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 
 use components::Panel;
+use components::Test;
 
 mod components;
 mod backend;
@@ -24,8 +25,17 @@ fn App() -> Element {
         document::Stylesheet {
             href: CUSTOM_CSS
         }
+        Router::<Route> {}
 
 
-        Panel {}
     }
+}
+
+#[derive(Routable, Clone, PartialEq)]
+enum Route {
+    #[route("/")]
+    Panel,
+
+    #[route("/test")]
+    Test,
 }
