@@ -12,12 +12,25 @@ use crate::backend;
 #[component]
 pub fn Panel() -> Element {
     let mut raw_input = use_signal(|| "".to_string());
-    let init_count_vector = vec![INIT_SCORE];
+    let mut init_count_db = use_server_future(backend::list_throws)?.suspend()?;
+    let mut count = use_signal(|| vec![]);
 
-    let mut count = use_signal(|| init_count_vector);
+    use_resource(move || {
+        let value = init_count_db.clone();
+        async move {
+            let val = value();
+            if val.is_ok() && val.clone().unwrap().len() > 0 {
+                count.set(val.unwrap());
+            } else {
+                count.set(vec![INIT_SCORE]);
+                backend::save_throw(1, INIT_SCORE).await.expect("TODO: panic message");
+            };
+        }
+    });
+
+
     let mut score_message = use_signal(|| NewShot);
     let mut error_message = use_signal(|| ErrorMessageMode::None);
-    let mut count_db = use_server_future(backend::list_throws)?.suspend()?;
 
 
     //tracing::info!("{:?}", count_db().unwrap());
@@ -141,7 +154,7 @@ pub fn Panel() -> Element {
                     }
                     tbody {
                         id: "numbers-body",
-                        for (i, a) in count_db().unwrap().into_iter().rev().enumerate() {
+                        for (i, a) in count().into_iter().rev().enumerate() {
                             tr {
                                     td {
                                         class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
