@@ -4,7 +4,7 @@ use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode, INIT_SCORE
 use dioxus::dioxus_core::internal::generational_box::GenerationalRef;
 use dioxus::prelude::*;
 use dioxus_elements::style;
-use dioxus_logger::tracing;
+use dioxus_logger::{init, tracing};
 use std::cell::Ref;
 use std::num::ParseIntError;
 use crate::backend;
@@ -12,28 +12,34 @@ use crate::backend;
 #[component]
 pub fn Panel() -> Element {
     let mut raw_input = use_signal(|| "".to_string());
-    let mut init_count_db = use_server_future(backend::list_throws)?.suspend()?;
-    let mut count = use_signal(|| vec![]);
 
-    use_resource(move || {
-        let value = init_count_db.clone();
-        async move {
-            let val = value();
-            if val.is_ok() && val.clone().unwrap().len() > 0 {
-                count.set(val.unwrap());
-            } else {
-                count.set(vec![INIT_SCORE]);
-                backend::save_throw(1, INIT_SCORE).await.expect("TODO: panic message");
-            };
-        }
-    });
+    let mut init_leg_db = use_server_future(backend::get_latest_leg)?.suspend()?;
+    let mut leg = use_signal(|| 0);
+
+    let mut count = use_signal(|| vec![]);
 
 
     let mut score_message = use_signal(|| NewShot);
     let mut error_message = use_signal(|| ErrorMessageMode::None);
 
+    use_resource(move || {
+        //let init_count_db_clone = init_count_db.clone();
+        let init_leg_db_clone = init_leg_db.clone();
+        async move {
+            let init_leg_val = init_leg_db_clone();
+            if init_leg_val.is_ok(){
+                leg.set(init_leg_val.clone().unwrap());
+                let init_count_val = backend::list_throws(init_leg_val.unwrap()).await;;
+                if init_count_val.is_ok() && !init_count_val.clone().unwrap().is_empty() {
+                    count.set(init_count_val.unwrap());
+                } else {
+                    //todo error that a new leg must be created
+                };
+            }
 
-    //tracing::info!("{:?}", count_db().unwrap());
+        }
+    });
+
 
 
     rsx! {
@@ -64,7 +70,7 @@ pub fn Panel() -> Element {
                     onkeypress: move |e| async move {
                             let key = e.key();
                             if key == Key::Enter && {score_message}.read().to_owned() != LegFinished {
-                                input_wrapper(raw_input, count, error_message, score_message).await;
+                                input_wrapper(raw_input, leg, count, error_message, score_message).await;
                             } else if key == Key::Home  {
                                 undo_wrapper(count, error_message, score_message);
                             };
@@ -94,7 +100,7 @@ pub fn Panel() -> Element {
                     class:"col-span-1 grid ",
                     button {id: "confirmButton",
                         onclick: move |_| async move {
-                                input_wrapper(raw_input, count, error_message, score_message).await;
+                                input_wrapper(raw_input, leg, count, error_message, score_message).await;
                         },
                         disabled: if {score_message}.read().to_owned() == LegFinished {true},
                         class:"btn btn-soft btn-primary" , "Ok" },
@@ -116,10 +122,7 @@ pub fn Panel() -> Element {
                         class:"col-start-8",
                         button {id: "newLegButton",
                             onclick: move |_| async move {
-                                    new_leg(count, error_message, score_message);
-                                    document::eval(&"document.getElementById('numberField').value = ' '".to_string());
-                                    document::eval(&"document.getElementById('numberField').select()".to_string());
-                                    let  _ = backend::save_throw(1, INIT_SCORE.clone()).await;
+                                    new_leg_wrapper(leg, count, error_message, score_message).await;
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
                     }
@@ -183,11 +186,12 @@ pub fn Panel() -> Element {
 
 async fn input_wrapper(
     mut raw_input: Signal<String>,
+    leg: Signal<u16>,
     count: Signal<Vec<CurrentScore>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 )  {
-    let (error_message_mode) = input_changed(count, raw_input, score_message).await;
+    let (error_message_mode) = input_changed(leg, count, raw_input, score_message).await;
     if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
         raw_input.set(" ".to_string());
@@ -208,7 +212,19 @@ fn undo_wrapper(
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 
-fn new_leg(
+async fn new_leg_wrapper(
+    leg: Signal<u16>,
+    count: Signal<Vec<CurrentScore>>,
+    error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+) {
+    new_leg(leg, count, error_message, score_message).await;
+    document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+    document::eval(&"document.getElementById('numberField').select()".to_string());
+}
+
+async fn new_leg(
+    mut leg: Signal<u16>,
     mut count: Signal<Vec<CurrentScore>>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
@@ -216,7 +232,15 @@ fn new_leg(
     error_message.set(ErrorMessageMode::None);
     score_message.set(NewShot);
     count.write().clear();
-    count.push(INIT_SCORE);
+
+    let leg_val = leg();
+    let new_leg_val = leg_val + 1;
+    leg.set(new_leg_val);
+    backend::save_leg(new_leg_val).await.expect("TODO: panic message");
+    let db_op_res = backend::save_throw(new_leg_val, INIT_SCORE).await;
+    if db_op_res.is_ok() {
+        count.set(vec![INIT_SCORE]);
+    }
 }
 
 fn undo_last_score(
@@ -240,12 +264,14 @@ fn undo_last_score(
 }
 
 async fn input_changed(
+    mut leg: Signal<u16>,
     mut count: Signal<Vec<CurrentScore>>,
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>,
 ) -> ErrorMessageMode {
     let score_message_mode = score_message();
     let result = input_ref.read().parse();
+    let leg_val = leg();
     match result {
         Ok(val) => {
             if calculations::valid_thrown(val) {
@@ -257,7 +283,7 @@ async fn input_changed(
                             count.write().pop();
                             score_message.set(NewShot);
                             next_throw_order = last.throw_order;
-                            let  db_op_res = backend::delete_throw_by_order(next_throw_order).await;
+                            let db_op_res = backend::delete_throw_by_order(leg_val, next_throw_order).await;
                             if db_op_res.is_err(){
                                 //todo error conversion between db_op_res ServerFnError -> TechnicalError
                                 return ErrorMessageMode::TechnicalError;
@@ -271,7 +297,7 @@ async fn input_changed(
                     }
                 }
                 let new_score = calculations::calculate_remaining(last, val, next_throw_order);
-                let db_op_res = backend::save_throw(1, new_score.clone()).await;
+                let db_op_res = backend::save_throw(leg_val, new_score.clone()).await;
                 if db_op_res.is_ok() {
                     if (&new_score).remaining == 0 {
                         score_message.set(LegFinished)

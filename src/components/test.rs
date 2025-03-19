@@ -4,7 +4,7 @@ use dioxus::logger::tracing::info;
 
 #[component]
 pub fn Test() -> Element {
-    let mut favorites = use_server_future(backend::list_throws)?.suspend()?;
+    //let mut favorites = use_server_future(backend::list_throws)?.suspend()?;
 
     rsx! {
         div { id: "favorites",
