@@ -27,3 +27,9 @@ pub async fn save_throw(leg_id: u16, current_score: CurrentScore) -> Result<(), 
     DB.with(|f| f.execute("INSERT INTO leg (leg_id, throw_order, thrown, remaining) VALUES (?1,?2, ?3, ?4)", (&leg_id, &current_score.throw_order, &current_score.thrown, &current_score.remaining)))?;
     Ok(())
 }
+
+#[server]
+pub async fn delete_throw_by_order(throw_order: u16) -> Result<(), ServerFnError> {
+    DB.with(|f| f.execute("UPDATE leg SET deleted = 1 where throw_order = ?1", &[&throw_order]))?;
+    Ok(())
+}

@@ -1,5 +1,5 @@
 use crate::components::calculations;
-use crate::domain::ScoreMessageMode::{GameFinished, NewShot, UndoLastShot};
+use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
 use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
 use dioxus::dioxus_core::internal::generational_box::GenerationalRef;
 use dioxus::events::Key::New;
@@ -46,11 +46,8 @@ pub fn Panel() -> Element {
                         },
                     onkeypress: move |e| async move {
                             let key = e.key();
-                            if key == Key::Enter && {score_message}.read().to_owned() != GameFinished {
-                                let option = input_wrapper(raw_input, count, error_message, score_message);
-                                if option.is_some() {
-                                    _ = backend::save_throw(1, option.unwrap()).await
-                                }
+                            if key == Key::Enter && {score_message}.read().to_owned() != LegFinished {
+                                input_wrapper(raw_input, count, error_message, score_message).await;
                             } else if key == Key::Home  {
                                 undo_wrapper(count, error_message, score_message);
                             };
@@ -80,13 +77,9 @@ pub fn Panel() -> Element {
                     class:"col-span-1 grid ",
                     button {id: "confirmButton",
                         onclick: move |_| async move {
-                                let option = input_wrapper(raw_input, count, error_message, score_message);
-                                if option.is_some() {
-                                    _ = backend::save_throw(1, option.unwrap()).await
-                                }
-
+                                input_wrapper(raw_input, count, error_message, score_message).await;
                         },
-                        disabled: if {score_message}.read().to_owned() == GameFinished {true},
+                        disabled: if {score_message}.read().to_owned() == LegFinished {true},
                         class:"btn btn-soft btn-primary" , "Ok" },
                 }
 
@@ -171,26 +164,25 @@ pub fn Panel() -> Element {
     }
 }
 
-fn input_wrapper(
+async fn input_wrapper(
     mut raw_input: Signal<String>,
-    mut count: Signal<Vec<CurrentScore>>,
+    count: Signal<Vec<CurrentScore>>,
     mut error_message: Signal<ErrorMessageMode>,
-    mut score_message: Signal<ScoreMessageMode>,
-) -> Option<CurrentScore> {
-    let (error_message_mode, score_message_maybe) = input_changed(count, raw_input, score_message);
+    score_message: Signal<ScoreMessageMode>,
+)  {
+    let (error_message_mode) = input_changed(count, raw_input, score_message).await;
     if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
         raw_input.set(" ".to_string());
     }
     error_message.set(error_message_mode);
     document::eval(&"document.getElementById('numberField').select()".to_string());
-    score_message_maybe
 }
 
 fn undo_wrapper(
-    mut count: Signal<Vec<CurrentScore>>,
-    mut error_message: Signal<ErrorMessageMode>,
-    mut score_message: Signal<ScoreMessageMode>,
+    count: Signal<Vec<CurrentScore>>,
+    error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
 ) {
     let last_score = undo_last_score(count, error_message, score_message);
     document::eval(&format!(
@@ -230,17 +222,17 @@ fn undo_last_score(
     }
 }
 
-fn input_changed(
+async fn input_changed(
     mut count: Signal<Vec<CurrentScore>>,
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>,
-) -> (ErrorMessageMode, Option<CurrentScore>) {
+) -> ErrorMessageMode {
     let score_message_mode = score_message();
     let result = input_ref.read().parse();
     match result {
         Ok(val) => {
             if calculations::valid_thrown(val) {
-                let last = count.read().last().unwrap().to_owned();
+                let mut last = get_last(&mut count);
                 let next_throw_order: u16;
                 {
                     match score_message_mode {
@@ -248,30 +240,47 @@ fn input_changed(
                             count.write().pop();
                             score_message.set(NewShot);
                             next_throw_order = last.throw_order;
-                            //todo set all leg entries that are equal to next_throw_order deleted = true
+                            let  db_op_res = backend::delete_throw_by_order(next_throw_order).await;
+                            if db_op_res.is_err(){
+                                //todo error conversion between db_op_res ServerFnError -> TechnicalError
+                                return ErrorMessageMode::TechnicalError;
+                            }
+                            last = get_snd_last(&mut count);
                         }
                         NewShot => {
                             next_throw_order = last.throw_order + 1;
                         }
-                        GameFinished => return (ErrorMessageMode::LegAlreadyFinished, None),
+                        LegFinished => return (ErrorMessageMode::LegAlreadyFinished),
                     }
                 }
                 let new_score = calculations::calculate_remaining(last, val, next_throw_order);
-                count.write().push(new_score.clone());
-                let _ = async {
-                    backend::save_throw(1, new_score.clone()).await.expect("Failed to store throw into backend");
-                };
-                if new_score.remaining == 0 {
-                    score_message.set(GameFinished)
+                let db_op_res = backend::save_throw(1, new_score.clone()).await;
+                if db_op_res.is_ok() {
+                    if (&new_score).remaining == 0 {
+                        score_message.set(LegFinished)
+                    }
+                    count.write().push(new_score);
+                    return ErrorMessageMode::None;
                 }
-                (ErrorMessageMode::None, Some(new_score))
+                //todo error conversion between db_op_res ServerFnError -> TechnicalError
+                ErrorMessageMode::TechnicalError
             } else {
-                (ErrorMessageMode::NotADartsNumber, None)
+                (ErrorMessageMode::NotADartsNumber)
             }
         }
-        Err(_) => (ErrorMessageMode::NotANumber, None),
+        Err(_) => (ErrorMessageMode::NotANumber),
     }
 }
+
+fn get_last(count: &mut Signal<Vec<CurrentScore>>) -> CurrentScore {
+    count.read().last().unwrap().to_owned()
+}
+
+fn get_snd_last(count: &mut Signal<Vec<CurrentScore>>) -> CurrentScore {
+    let generational_ref = count.read();
+    generational_ref.get(generational_ref.len() -1 ).unwrap().to_owned()
+}
+
 fn handle_last() {
 
 }

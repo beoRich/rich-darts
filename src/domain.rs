@@ -26,7 +26,7 @@ pub struct ScoreMessage {
 pub enum ScoreMessageMode {
     NewShot,
     UndoLastShot { last_score: u16 },
-    GameFinished,
+    LegFinished,
 }
 
 impl ScoreMessageMode {
@@ -38,7 +38,7 @@ impl ScoreMessageMode {
                 "Correct last Shot: ".to_string(),
                 last_score.to_string()
             ),
-            ScoreMessageMode::GameFinished => "Leg finished".to_string(),
+            ScoreMessageMode::LegFinished => "Leg finished".to_string(),
         }
     }
 }
@@ -49,6 +49,7 @@ pub enum ErrorMessageMode {
     NotANumber,
     NotADartsNumber,
     LegAlreadyFinished,
+    TechnicalError,
 }
 
 impl ErrorMessageMode {
@@ -58,6 +59,7 @@ impl ErrorMessageMode {
             ErrorMessageMode::NotADartsNumber => Some("Not a valid Darts number".to_string()),
             ErrorMessageMode::NotANumber => Some("Not a number".to_string()),
             ErrorMessageMode::LegAlreadyFinished => Some("Leg already finished".to_string()),
+            ErrorMessageMode::TechnicalError => Some("Technical error".to_string())
         }
     }
 }
