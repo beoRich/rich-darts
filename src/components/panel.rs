@@ -5,6 +5,8 @@ use dioxus::prelude::*;
 use dioxus_logger::{tracing};
 use std::num::ParseIntError;
 use crate::backend;
+use crate::components::enter_panel::EnterPanel;
+use crate::components::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 
 #[component]
@@ -51,144 +53,13 @@ pub fn Panel() -> Element {
       id: "All",
             class: "container-self",
 
-      div {
-        id:"TopHalf",
-        class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-x-scroll",
-        div {
-            class:"mb-4",
-                label {
-                    class:"block text-gray-700 text-sm font-bold mb-2",
-                    for: "numberField",
-                    {score_message.read().value()}
-                    }
-
-            div {
-                class:"grid grid-cols-10 gap-4",
-                input {id: "numberField",
-                        autofocus: true,
-                    class:"shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
-                    type: "number", maxlength:10, min:0, oninput: move |e| raw_input.set(e.value()),
-                    onfocusin: move |_| {
-                            document::eval(&"document.getElementById('numberField').select()".to_string());
-                        },
-                    onkeypress: move |e| async move {
-                            let key = e.key();
-                            if key == Key::Enter && allow_score() {
-                                input_wrapper(raw_input, leg, count, error_message, score_message).await;
-                            } else if key == Key::Home  {
-                                undo_wrapper(count, error_message, score_message);
-                            };
-                    },
-
-                }
-
-                div {
-                    id: "displayError",
-                    if error_message.read().value().is_some() {
-                        p {
-                        class: "text-l text-error",
-                                {error_message.read().value()}
-                         }
-                    }
-                }
-
-
-            }
-
+        EnterPanel {count, raw_input, leg, error_message, score_message, allow_score}
+        ScoreDisplay {count}
         }
-        div {
-            id: "ButtonsDiv",
-            class:"grid grid-cols-10 gap-4",
-
-                div {
-                    class:"col-span-1 grid ",
-                    button {id: "confirmButton",
-                        onclick: move |_| async move {
-                                input_wrapper(raw_input, leg, count, error_message, score_message).await;
-                        },
-                        disabled: if !allow_score() {true},
-                        class:"btn btn-soft btn-primary" , "Ok" },
-                }
-
-                div {
-                    class:"col-span-1 grid ",
-                    button {id: "undoButton",
-                        onclick: move |_| {
-                                undo_wrapper(count, error_message, score_message);
-                        },
-                        disabled: if count.read().len() < 2 {true},
-                        class:"btn btn-soft btn-secondary" , "Undo" },
-                }
-
-                div {
-                    class:"col-span-8 grid grid-cols-subgrid gap-4",
-                    div {
-                        class:"col-start-8",
-                        button {id: "newLegButton",
-                            onclick: move |_| async move {
-                                    new_leg_wrapper(leg, count, error_message, score_message).await;
-                            },
-                            class:"btn btn-soft btn-info" , "New Leg" },
-                    }
-                }
-        }
-
-
-    }
-
-      div {
-            id:"BottomHalf",
-            class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
-            div { id: "numbers",
-                    class: "table-container",
-                table {
-                    thead {
-                        class: "text-xs uppercase bg-neutral-content",
-                        tr {
-                            th {
-                                scope:"col",
-                                style:"white-space: pre; text-align: center;",
-                                class:"text-primary px-6 py-3",
-                                "Thrown"
-                            },
-                            th {
-                                scope:"col",
-                                style:"white-space: pre; text-align: center;",
-                                class:"text-secondary px-6 py-3",
-                                "Remaining"
-                            }
-                        }
-                    }
-                    tbody {
-                        id: "numbers-body",
-                        for (i, a) in count().into_iter().rev().enumerate() {
-                            tr {
-                                    td {
-                                        class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
-                                        class: if i % 2 == 0 && i!=0 {"px-6 py-4 bg-base-200 text-base-content"},
-                                        class: if i % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
-                                        style:"white-space: pre; text-align: center;",
-                                        {format!("{:>3}", a.thrown.to_string())}
-                                    },
-                                    td {
-                                        class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
-                                        class: if i % 2 == 0 && i!=0 {"px-6 py-4 bg-base-200 text-base-content"},
-                                        class: if i % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
-                                        style:"white-space: pre; text-align: center;",
-                                        {format!("{:>3}", a.remaining.to_string())}
-                                    },
-                            }
-                        }
-                    }
-
-                }
-            }
-      }
-    }
     }
 }
 
-async fn input_wrapper(
+pub async fn input_wrapper(
     mut raw_input: Signal<String>,
     leg: Signal<u16>,
     count: Signal<Vec<CurrentScore>>,
@@ -204,7 +75,7 @@ async fn input_wrapper(
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 
-fn undo_wrapper(
+pub fn undo_wrapper(
     count: Signal<Vec<CurrentScore>>,
     error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
@@ -216,7 +87,7 @@ fn undo_wrapper(
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 
-async fn new_leg_wrapper(
+pub async fn new_leg_wrapper(
     leg: Signal<u16>,
     count: Signal<Vec<CurrentScore>>,
     error_message: Signal<ErrorMessageMode>,
