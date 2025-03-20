@@ -1,3 +1,4 @@
+use crate::backend;
 use crate::components::main_component::{input_wrapper, new_leg_wrapper, undo_wrapper};
 use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode};
 use dioxus::prelude::*;
@@ -118,7 +119,9 @@ fn Buttons(
                         class:"col-start-8",
                         button {id: "newLegButton",
                             onclick: move |_| async move {
-                                    new_leg_wrapper(leg, count, error_message, score_message).await;
+                                    let res = backend::get_latest_leg().await;
+                                    let new_leg_val = res.map(|val| val +1).unwrap_or(1);
+                                    new_leg_wrapper(new_leg_val, leg, count, error_message, score_message).await;
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
                     }

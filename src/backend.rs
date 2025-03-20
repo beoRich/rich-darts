@@ -80,6 +80,15 @@ pub async fn get_latest_leg() -> Result<u16, ServerFnError> {
 }
 
 #[server]
+pub async fn leg_exists(leg_id: u16) -> Result<bool, ServerFnError> {
+    let res: Option<u16> = DB.with(|f| {
+        let mut stmt = f.prepare("SELECT count(id) from leg where id = ?1")?;
+        stmt.query_row([leg_id], |row| row.get(0))
+    })?;
+    res.map(|e| e >0 ).ok_or(ServerFnError::MissingArg("DB Error for leg_exists".to_string()))
+}
+
+#[server]
 pub async fn save_leg(leg_id: u16) -> Result<(), ServerFnError> {
     DB.with(|f| f.execute("INSERT INTO leg (id) VALUES (?1)", &[&leg_id]))?;
     Ok(())
