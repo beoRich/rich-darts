@@ -4,16 +4,16 @@ use crate::components::enter_panel::EnterPanel;
 use crate::components::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
-use crate::domain::{Score, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
+use crate::domain::{Score, ErrorMessageMode, ScoreMessageMode, INIT_SCORE, Leg};
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use std::num::ParseIntError;
 use dioxus_logger::tracing::error;
 
 #[component]
-pub fn MainComponent(leg: Signal<u16>) -> Element {
+pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
     let mut raw_input = use_signal(|| "".to_string());
-    let mut count = use_signal(|| vec![]);
+    let mut scores = use_signal(|| vec![]);
 
     let mut score_message = use_signal(|| NewShot);
     let mut error_message = use_signal(|| ErrorMessageMode::None);
@@ -33,11 +33,11 @@ pub fn MainComponent(leg: Signal<u16>) -> Element {
             let leg_val = leg();
             let leg_exists = backend::leg_exists(leg_val).await.unwrap();
             if !leg_exists {
-                new_leg_wrapper(leg_val, leg, count, error_message, score_message).await;
+                new_leg_wrapper(leg_val, leg, scores, error_message, score_message).await;
             }
             let init_count_val = backend::list_score(leg()).await;
             if init_count_val.is_ok() && !init_count_val.clone().unwrap().is_empty() {
-                count.set(init_count_val.unwrap());
+                scores.set(init_count_val.unwrap());
             } else {
                 error_message.set(CreateNewLeg);
             };
@@ -62,8 +62,8 @@ pub fn MainComponent(leg: Signal<u16>) -> Element {
                 },
         }
 
-            EnterPanel {count, raw_input, leg, error_message, score_message, allow_score}
-            ScoreDisplay {count}
+            EnterPanel {scores, raw_input, leg, error_message, score_message, allow_score}
+            ScoreDisplay {scores}
         }
     }
 }
@@ -119,11 +119,13 @@ async fn new_leg(
     score_message.set(NewShot);
     count.write().clear();
 
+
     leg.set(leg_val);
-    backend::save_leg(leg_val)
+    let new_leg = Leg { id: leg_val, status: "New".to_string() };
+    backend::save_leg(new_leg)
         .await
         .expect(&format!("Could not save leg {}", leg_val));
-    let db_op_res = backend::save_throw(leg_val, INIT_SCORE).await;
+    let db_op_res = backend::save_score(leg_val, INIT_SCORE).await;
     if db_op_res.is_ok() {
         count.set(vec![INIT_SCORE]);
     }
@@ -170,7 +172,7 @@ async fn input_changed(
                             score_message.set(NewShot);
                             next_throw_order = last.throw_order;
                             let db_op_res =
-                                backend::delete_throw_by_order(leg_val, next_throw_order).await;
+                                backend::delete_score_by_order(leg_val, next_throw_order).await;
                             if db_op_res.is_err() {
                                 //todo error conversion between db_op_res ServerFnError -> TechnicalError
                                 return ErrorMessageMode::TechnicalError;
@@ -184,7 +186,7 @@ async fn input_changed(
                     }
                 }
                 let new_score = calculations::calculate_remaining(last, val, next_throw_order);
-                let db_op_res = backend::save_throw(leg_val, new_score.clone()).await;
+                let db_op_res = backend::save_score(leg_val, new_score.clone()).await;
                 if db_op_res.is_ok() {
                     if (&new_score).remaining == 0 {
                         score_message.set(LegFinished)

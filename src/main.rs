@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use components::{MainComponent, DisplayLegs};
+use components::{MainScoreComponent, DisplayLegs};
 use components::Test;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 
@@ -57,7 +57,7 @@ fn ManualLeg(legval: u16) -> Element {
     let mut leg = use_signal(|| 0);
     leg.set(legval);
     rsx! {
-        MainComponent {leg}
+        MainScoreComponent {leg}
     }
 
 }
@@ -77,6 +77,6 @@ fn LatestLeg() -> Element {
         }
     });
     rsx! {
-        MainComponent {leg}
+        MainScoreComponent {leg}
     }
 }

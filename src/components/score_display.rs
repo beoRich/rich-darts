@@ -2,7 +2,7 @@ use crate::domain::Score;
 use dioxus::prelude::*;
 
 #[component]
-pub fn ScoreDisplay(count: Signal<Vec<Score>>) -> Element {
+pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
     rsx! {
       div {
             id:"BottomHalf",
@@ -29,7 +29,7 @@ pub fn ScoreDisplay(count: Signal<Vec<Score>>) -> Element {
                     }
                     tbody {
                         id: "numbers-body",
-                        for (i, a) in count().into_iter().rev().enumerate() {
+                        for (i, a) in scores().into_iter().rev().enumerate() {
                             tr {
                                     td {
                                         class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},

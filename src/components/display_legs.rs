@@ -2,21 +2,59 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::prelude::*;
 use dioxus::dioxus_core::Element;
 use crate::{backend, Route};
+use crate::domain::{ErrorMessageMode, Leg, Score, ScoreMessageMode, INIT_SCORE};
+use crate::domain::ScoreMessageMode::NewShot;
 
 #[component]
 pub fn DisplayLegs() -> Element {
 
-    let mut leg = use_signal(|| vec![]);
+    let mut legs = use_signal(|| vec![]);
     let mut init_leg_db = use_server_future(backend::list_leg)?.suspend()?;
     use_resource(move || {
         let init_leg_db_clone = init_leg_db.clone();
         async move {
             let init_leg_val = init_leg_db_clone();
             if init_leg_val.is_ok() {
-                leg.set(init_leg_val.clone().unwrap());
+                legs.set(init_leg_val.clone().unwrap());
             }
         }
     });
+    rsx! {
+
+        div {
+            id: "DisplayLegDiv",
+            div {
+                    LegTable{legs}
+            }
+
+                        button {id: "newLegButton",
+                            onclick: move |_| async move {
+                                    let res = backend::get_latest_leg().await;
+                                    let new_leg_val = res.map(|val| val +1).unwrap_or(1);
+                                    new_leg(new_leg_val, legs).await;
+                            },
+                            class:"btn btn-soft btn-info" , "New Leg" },
+
+            }
+
+    }
+}
+
+async fn new_leg(
+    leg_val : u16,
+    mut legs: Signal<Vec<Leg>>,
+) {
+    let new_leg = Leg { id: leg_val, status: "New".to_string() };
+    legs.push(new_leg.clone());
+    backend::save_leg(new_leg)
+        .await
+        .expect(&format!("Could not save leg {}", leg_val));
+    let db_op_res = backend::save_score(leg_val, INIT_SCORE).await;
+}
+
+#[component]
+pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
+
     //todo coalesce into generic with score_display
     rsx! {
       div {
@@ -44,7 +82,7 @@ pub fn DisplayLegs() -> Element {
                     }
                     tbody {
                         id: "numbers-body",
-                        for (i, a) in leg().into_iter().rev().enumerate() {
+                        for (i, a) in legs().into_iter().rev().enumerate() {
                             tr {
                                     td {
                                         class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
@@ -75,4 +113,3 @@ pub fn DisplayLegs() -> Element {
     }
 
 }
-

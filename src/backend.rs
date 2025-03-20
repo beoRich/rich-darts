@@ -18,7 +18,7 @@ thread_local! {
                             );
 
 
-                            CREATE TABLE IF NOT EXISTS throw
+                            CREATE TABLE IF NOT EXISTS score
                             (
                                 id          INTEGER PRIMARY KEY,
                                 leg_id      INTEGER,
@@ -38,21 +38,21 @@ thread_local! {
 }
 
 #[server]
-pub async fn save_throw(leg_id: u16, current_score: Score) -> Result<(), ServerFnError> {
-    DB.with(|f| f.execute("INSERT INTO throw (leg_id, throw_order, thrown, remaining) VALUES (?1,?2, ?3, ?4)", (&leg_id, &current_score.throw_order, &current_score.thrown, &current_score.remaining)))?;
+pub async fn save_score(leg_id: u16, score: Score) -> Result<(), ServerFnError> {
+    DB.with(|f| f.execute("INSERT INTO score (leg_id, throw_order, thrown, remaining) VALUES (?1,?2, ?3, ?4)", (&leg_id, &score.throw_order, &score.thrown, &score.remaining)))?;
     Ok(())
 }
 
 #[server]
-pub async fn delete_throw_by_order(leg_id: u16, throw_order: u16) -> Result<(), ServerFnError> {
-    DB.with(|f| f.execute("UPDATE throw SET deleted = 1 where throw_order = ?1 and leg_id = ?2", &[&throw_order, &leg_id]))?;
+pub async fn delete_score_by_order(leg_id: u16, throw_order: u16) -> Result<(), ServerFnError> {
+    DB.with(|f| f.execute("UPDATE score SET deleted = 1 where throw_order = ?1 and leg_id = ?2", &[&throw_order, &leg_id]))?;
     Ok(())
 }
 
 #[server]
 pub async fn list_score(leg_id: u16) -> Result<Vec<Score>, ServerFnError> {
     let scores = DB.with(|f| {
-        f.prepare("SELECT remaining, thrown, throw_order from throw where deleted = 0 and leg_id =?1")
+        f.prepare("SELECT remaining, thrown, throw_order from score where deleted = 0 and leg_id =?1")
             .unwrap()
             .query_map( [leg_id], move |row| {
                 Ok(Score {
@@ -104,7 +104,7 @@ pub async fn leg_exists(leg_id: u16) -> Result<bool, ServerFnError> {
 }
 
 #[server]
-pub async fn save_leg(leg_id: u16) -> Result<(), ServerFnError> {
-    DB.with(|f| f.execute("INSERT INTO leg (id) VALUES (?1)", &[&leg_id]))?;
+pub async fn save_leg(leg: Leg) -> Result<(), ServerFnError> {
+    DB.with(|f| f.execute("INSERT INTO leg (id, status) VALUES (?1,?2)", (&leg.id, &leg.status)))?;
     Ok(())
 }

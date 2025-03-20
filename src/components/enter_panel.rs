@@ -1,11 +1,11 @@
 use crate::backend;
-use crate::components::main_component::{input_wrapper, new_leg_wrapper, undo_wrapper};
+use crate::components::main_score_component::{input_wrapper, new_leg_wrapper, undo_wrapper};
 use crate::domain::{Score, ErrorMessageMode, ScoreMessageMode};
 use dioxus::prelude::*;
 
 #[component]
 pub fn EnterPanel(
-    count: Signal<Vec<Score>>,
+    scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
     leg: Signal<u16>,
     mut error_message: Signal<ErrorMessageMode>,
@@ -16,15 +16,15 @@ pub fn EnterPanel(
        div {
          id:"EnterPanel",
          class:"bg-base-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-x-scroll",
-         NumberFieldError {count, raw_input, leg, error_message, score_message, allow_score}
-         Buttons {count, raw_input, leg, error_message, score_message, allow_score}
+         NumberFieldError {scores, raw_input, leg, error_message, score_message, allow_score}
+         Buttons {scores, raw_input, leg, error_message, score_message, allow_score}
      }
     }
 }
 
 #[component]
 fn NumberFieldError(
-    count: Signal<Vec<Score>>,
+    scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
     leg: Signal<u16>,
     mut error_message: Signal<ErrorMessageMode>,
@@ -53,9 +53,9 @@ fn NumberFieldError(
                     onkeypress: move |e| async move {
                             let key = e.key();
                             if key == Key::Enter && allow_score() {
-                                input_wrapper(raw_input, leg, count, error_message, score_message).await;
+                                input_wrapper(raw_input, leg, scores, error_message, score_message).await;
                             } else if key == Key::Home  {
-                                undo_wrapper(count, error_message, score_message);
+                                undo_wrapper(scores, error_message, score_message);
                             };
                     },
 
@@ -80,7 +80,7 @@ fn NumberFieldError(
 
 #[component]
 fn Buttons(
-    count: Signal<Vec<Score>>,
+    scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
     leg: Signal<u16>,
     mut error_message: Signal<ErrorMessageMode>,
@@ -97,7 +97,7 @@ fn Buttons(
                     class:"col-span-1 grid ",
                     button {id: "confirmButton",
                         onclick: move |_| async move {
-                                input_wrapper(raw_input, leg, count, error_message, score_message).await;
+                                input_wrapper(raw_input, leg, scores, error_message, score_message).await;
                         },
                         disabled: if !allow_score() {true},
                         class:"btn btn-soft btn-primary" , "Ok" },
@@ -107,9 +107,9 @@ fn Buttons(
                     class:"col-span-1 grid ",
                     button {id: "undoButton",
                         onclick: move |_| {
-                                undo_wrapper(count, error_message, score_message);
+                                undo_wrapper(scores, error_message, score_message);
                         },
-                        disabled: if count.read().len() < 2 {true},
+                        disabled: if scores.read().len() < 2 {true},
                         class:"btn btn-soft btn-secondary" , "Undo" },
                 }
 
@@ -121,7 +121,7 @@ fn Buttons(
                             onclick: move |_| async move {
                                     let res = backend::get_latest_leg().await;
                                     let new_leg_val = res.map(|val| val +1).unwrap_or(1);
-                                    new_leg_wrapper(new_leg_val, leg, count, error_message, score_message).await;
+                                    new_leg_wrapper(new_leg_val, leg, scores, error_message, score_message).await;
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
                     }
