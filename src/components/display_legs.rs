@@ -1,13 +1,12 @@
-use dioxus::core_macro::{component, rsx};
-use dioxus::prelude::*;
-use dioxus::dioxus_core::Element;
-use crate::{backend, Route};
-use crate::domain::{ErrorMessageMode, Leg, Score, ScoreMessageMode, INIT_SCORE};
 use crate::domain::ScoreMessageMode::NewShot;
+use crate::domain::{ErrorMessageMode, Leg, Score, ScoreMessageMode, INIT_SCORE};
+use crate::{backend, Route};
+use dioxus::core_macro::{component, rsx};
+use dioxus::dioxus_core::Element;
+use dioxus::prelude::*;
 
 #[component]
 pub fn DisplayLegs() -> Element {
-
     let mut legs = use_signal(|| vec![]);
     let mut init_leg_db = use_server_future(backend::list_leg)?.suspend()?;
     use_resource(move || {
@@ -40,11 +39,11 @@ pub fn DisplayLegs() -> Element {
     }
 }
 
-async fn new_leg(
-    leg_val : u16,
-    mut legs: Signal<Vec<Leg>>,
-) {
-    let new_leg = Leg { id: leg_val, status: "New".to_string() };
+async fn new_leg(leg_val: u16, mut legs: Signal<Vec<Leg>>) {
+    let new_leg = Leg {
+        id: leg_val,
+        status: "New".to_string(),
+    };
     legs.push(new_leg.clone());
     backend::save_leg(new_leg)
         .await
@@ -54,7 +53,6 @@ async fn new_leg(
 
 #[component]
 pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
-
     //todo coalesce into generic with score_display
     rsx! {
       div {
@@ -63,8 +61,8 @@ pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
             div { id: "numbers",
                     class: "table-container",
                 table {
+                    class: "text-xl uppercase bg-neutral-content",
                     thead {
-                        class: "text-xs uppercase bg-neutral-content",
                         tr {
                             th {
                                 scope:"col",
@@ -111,5 +109,4 @@ pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
       }
 
     }
-
 }

@@ -32,14 +32,14 @@ pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
                         for (i, a) in scores().into_iter().rev().enumerate() {
                             tr {
                                     td {
-                                        class: if i == 0 {"px-6 py-4 text-3xl bg-accent text-accent-content"},
+                                        class: if i == 0 {"px-6 py-4 text-4xl bg-accent text-accent-content"},
                                         class: if i % 2 == 0 && i!=0 {"px-6 py-4 bg-base-200 text-base-content"},
                                         class: if i % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
                                         style:"white-space: pre; text-align: center;",
                                         {format!("{:>3}", a.thrown.to_string())}
                                     },
                                     td {
-                                        class: if i == 0 {"px-6 py-4 text-3xl bg-accent text-accent-content"},
+                                        class: if i == 0 {"px-6 py-4 text-4xl bg-accent text-accent-content"},
                                         class: if i % 2 == 0 && i!=0 {"px-6 py-4 bg-base-200 text-base-content"},
                                         class: if i % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
                                         style:"white-space: pre; text-align: center;",
