@@ -1,8 +1,8 @@
 mod calculations;
-mod main;
+mod main_component;
 mod test;
 mod score_display;
 mod enter_panel;
 
-pub use main::Main;
+pub use main_component::MainComponent;
 pub use test::Test;

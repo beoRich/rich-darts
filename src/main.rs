@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use components::Main;
+use components::MainComponent;
 use components::Test;
 
 mod components;
@@ -34,7 +34,7 @@ fn App() -> Element {
 #[derive(Routable, Clone, PartialEq)]
 enum Route {
     #[route("/")]
-    Main,
+    MainComponent,
 
     #[route("/test")]
     Test,

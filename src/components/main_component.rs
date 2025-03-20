@@ -10,7 +10,7 @@ use crate::components::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 
 #[component]
-pub fn Main() -> Element {
+pub fn MainComponent() -> Element {
     let mut raw_input = use_signal(|| "".to_string());
 
     let mut init_leg_db = use_server_future(backend::get_latest_leg)?.suspend()?;

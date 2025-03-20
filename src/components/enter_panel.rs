@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use crate::components::main::{input_wrapper, new_leg_wrapper, undo_wrapper};
+use crate::components::main_component::{input_wrapper, new_leg_wrapper, undo_wrapper};
 use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode};
 
 #[component]
