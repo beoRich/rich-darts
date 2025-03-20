@@ -1,24 +1,24 @@
-use dioxus::prelude::*;
 use crate::components::main_component::{input_wrapper, new_leg_wrapper, undo_wrapper};
 use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode};
+use dioxus::prelude::*;
 
 #[component]
-pub fn EnterPanel(count: Signal<Vec<CurrentScore>>,
-                  mut raw_input: Signal<String>,
-                  leg: Signal<u16>,
-                  mut error_message: Signal<ErrorMessageMode>,
-                  score_message: Signal<ScoreMessageMode>,
-                  allow_score: Signal<bool>
-
+pub fn EnterPanel(
+    count: Signal<Vec<CurrentScore>>,
+    mut raw_input: Signal<String>,
+    leg: Signal<u16>,
+    mut error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+    allow_score: Signal<bool>,
 ) -> Element {
-   rsx! {
-      div {
-        id:"EnterPanel",
-        class:"bg-base-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-x-scroll",
-        NumberFieldError {count, raw_input, leg, error_message, score_message, allow_score}
-        Buttons {count, raw_input, leg, error_message, score_message, allow_score}
+    rsx! {
+       div {
+         id:"EnterPanel",
+         class:"bg-base-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-x-scroll",
+         NumberFieldError {count, raw_input, leg, error_message, score_message, allow_score}
+         Buttons {count, raw_input, leg, error_message, score_message, allow_score}
+     }
     }
-   }
 }
 
 #[component]
@@ -28,7 +28,7 @@ fn NumberFieldError(
     leg: Signal<u16>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
-    allow_score: Signal<bool>
+    allow_score: Signal<bool>,
 ) -> Element {
     rsx! {
         div {
@@ -75,9 +75,7 @@ fn NumberFieldError(
 
         }
     }
-
 }
-
 
 #[component]
 fn Buttons(
@@ -86,9 +84,8 @@ fn Buttons(
     leg: Signal<u16>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
-    allow_score: Signal<bool>
+    allow_score: Signal<bool>,
 ) -> Element {
-
     rsx! {
 
         div {
@@ -130,4 +127,3 @@ fn Buttons(
 
     }
 }
-

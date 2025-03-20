@@ -1,8 +1,8 @@
-use dioxus::prelude::*;
 use crate::domain::CurrentScore;
+use dioxus::prelude::*;
 
 #[component]
-pub fn ScoreDisplay(count: Signal<Vec<CurrentScore>> ) -> Element {
+pub fn ScoreDisplay(count: Signal<Vec<CurrentScore>>) -> Element {
     rsx! {
       div {
             id:"BottomHalf",
@@ -54,5 +54,4 @@ pub fn ScoreDisplay(count: Signal<Vec<CurrentScore>> ) -> Element {
       }
 
     }
-
 }

@@ -1,13 +1,13 @@
-use crate::components::calculations;
-use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
-use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
-use dioxus::prelude::*;
-use dioxus_logger::{tracing};
-use std::num::ParseIntError;
 use crate::backend;
+use crate::components::calculations;
 use crate::components::enter_panel::EnterPanel;
 use crate::components::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
+use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
+use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
+use dioxus::prelude::*;
+use dioxus_logger::tracing;
+use std::num::ParseIntError;
 
 #[component]
 pub fn MainComponent() -> Element {
@@ -18,14 +18,16 @@ pub fn MainComponent() -> Element {
 
     let mut count = use_signal(|| vec![]);
 
-
     let mut score_message = use_signal(|| NewShot);
     let mut error_message = use_signal(|| ErrorMessageMode::None);
 
     let mut allow_score = use_signal(|| true);
 
-    use_memo (move ||{
-        let allow: bool = { score_message }.read().to_owned() != LegFinished && {error_message}.read().to_owned() != CreateNewLeg ;
+    use_memo(move || {
+        let allow: bool = { score_message }.read().to_owned() != LegFinished && { error_message }
+            .read()
+            .to_owned()
+            != CreateNewLeg;
         allow_score.set(allow)
     });
 
@@ -33,9 +35,9 @@ pub fn MainComponent() -> Element {
         let init_leg_db_clone = init_leg_db.clone();
         async move {
             let init_leg_val = init_leg_db_clone();
-            if init_leg_val.is_ok(){
+            if init_leg_val.is_ok() {
                 leg.set(init_leg_val.clone().unwrap());
-                let init_count_val = backend::list_throws(init_leg_val.unwrap()).await;;
+                let init_count_val = backend::list_throws(init_leg_val.unwrap()).await;
                 if init_count_val.is_ok() && !init_count_val.clone().unwrap().is_empty() {
                     count.set(init_count_val.unwrap());
                 } else {
@@ -44,7 +46,6 @@ pub fn MainComponent() -> Element {
             } else {
                 error_message.set(CreateNewLeg);
             }
-
         }
     });
 
@@ -65,7 +66,7 @@ pub async fn input_wrapper(
     count: Signal<Vec<CurrentScore>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
-)  {
+) {
     let (error_message_mode) = input_changed(leg, count, raw_input, score_message).await;
     if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
@@ -111,7 +112,9 @@ async fn new_leg(
     let leg_val = leg();
     let new_leg_val = leg_val + 1;
     leg.set(new_leg_val);
-    backend::save_leg(new_leg_val).await.expect("TODO: panic message");
+    backend::save_leg(new_leg_val)
+        .await
+        .expect(&format!("Could not save leg {}", new_leg_val));
     let db_op_res = backend::save_throw(new_leg_val, INIT_SCORE).await;
     if db_op_res.is_ok() {
         count.set(vec![INIT_SCORE]);
@@ -158,8 +161,9 @@ async fn input_changed(
                             count.write().pop();
                             score_message.set(NewShot);
                             next_throw_order = last.throw_order;
-                            let db_op_res = backend::delete_throw_by_order(leg_val, next_throw_order).await;
-                            if db_op_res.is_err(){
+                            let db_op_res =
+                                backend::delete_throw_by_order(leg_val, next_throw_order).await;
+                            if db_op_res.is_err() {
                                 //todo error conversion between db_op_res ServerFnError -> TechnicalError
                                 return ErrorMessageMode::TechnicalError;
                             }
@@ -196,9 +200,10 @@ fn get_last(count: &mut Signal<Vec<CurrentScore>>) -> CurrentScore {
 
 fn get_snd_last(count: &mut Signal<Vec<CurrentScore>>) -> CurrentScore {
     let generational_ref = count.read();
-    generational_ref.get(generational_ref.len() - 1).unwrap().to_owned()
+    generational_ref
+        .get(generational_ref.len() - 1)
+        .unwrap()
+        .to_owned()
 }
 
-fn handle_last() {
-
-}
+fn handle_last() {}
