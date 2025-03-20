@@ -37,7 +37,8 @@ input[type=number] {
     overflow: hidden;
 }
 .table-container {
-    height: 90%;
+    display: flex;
+    height: 75vh;
 }
 table {
     display: flex;

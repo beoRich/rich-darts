@@ -1,13 +1,12 @@
-use crate::{backend, Route};
 use crate::components::calculations;
 use crate::components::enter_panel::EnterPanel;
 use crate::components::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
-use crate::domain::{Score, ErrorMessageMode, ScoreMessageMode, INIT_SCORE, Leg};
+use crate::domain::{ErrorMessageMode, Leg, Score, ScoreMessageMode, INIT_SCORE};
+use crate::{backend, Route};
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
-use std::num::ParseIntError;
 use dioxus_logger::tracing::error;
 
 #[component]
@@ -28,20 +27,18 @@ pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
         allow_score.set(allow)
     });
 
-    use_resource(move || {
-        async move {
-            let leg_val = leg();
-            let leg_exists = backend::leg_exists(leg_val).await.unwrap();
-            if !leg_exists {
-                new_leg_wrapper(leg_val, leg, scores, error_message, score_message).await;
-            }
-            let init_count_val = backend::list_score(leg()).await;
-            if init_count_val.is_ok() && !init_count_val.clone().unwrap().is_empty() {
-                scores.set(init_count_val.unwrap());
-            } else {
-                error_message.set(CreateNewLeg);
-            };
+    use_resource(move || async move {
+        let leg_val = leg();
+        let leg_exists = backend::leg_exists(leg_val).await.unwrap();
+        if !leg_exists {
+            new_leg_wrapper(leg_val, leg, scores, error_message, score_message).await;
         }
+        let init_count_val = backend::list_score(leg()).await;
+        if init_count_val.is_ok() && !init_count_val.clone().unwrap().is_empty() {
+            scores.set(init_count_val.unwrap());
+        } else {
+            error_message.set(CreateNewLeg);
+        };
     });
 
     rsx! {
@@ -109,7 +106,7 @@ pub async fn new_leg_wrapper(
 }
 
 async fn new_leg(
-    leg_val : u16,
+    leg_val: u16,
     mut leg: Signal<u16>,
     mut count: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
@@ -119,9 +116,11 @@ async fn new_leg(
     score_message.set(NewShot);
     count.write().clear();
 
-
     leg.set(leg_val);
-    let new_leg = Leg { id: leg_val, status: "New".to_string() };
+    let new_leg = Leg {
+        id: leg_val,
+        status: "New".to_string(),
+    };
     backend::save_leg(new_leg)
         .await
         .expect(&format!("Could not save leg {}", leg_val));
