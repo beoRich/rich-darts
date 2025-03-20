@@ -71,7 +71,7 @@ pub async fn list_throws(leg_id: u16) -> Result<Vec<CurrentScore>, ServerFnError
 }
 
 #[server]
-pub async fn get_latest_leg() -> Result<(u16), ServerFnError> {
+pub async fn get_latest_leg() -> Result<u16, ServerFnError> {
     let res: Option<u16> = DB.with(|f| {
         let mut stmt = f.prepare("SELECT max(id) from leg")?;
         stmt.query_row([], |row| row.get(0))

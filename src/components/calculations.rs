@@ -1,7 +1,6 @@
 use crate::domain::CurrentScore;
-use itertools::{iproduct, Itertools};
+use itertools::{iproduct};
 use std::collections::HashSet;
-use std::hash::Hash;
 
 pub fn valid_thrown(val: u16) -> bool {
     let all_possible_values: HashSet<u16> = possible_values();

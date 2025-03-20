@@ -1,11 +1,8 @@
 use crate::components::calculations;
 use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
 use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
-use dioxus::dioxus_core::internal::generational_box::GenerationalRef;
 use dioxus::prelude::*;
-use dioxus_elements::style;
-use dioxus_logger::{init, tracing};
-use std::cell::Ref;
+use dioxus_logger::{tracing};
 use std::num::ParseIntError;
 use crate::backend;
 
@@ -23,7 +20,6 @@ pub fn Panel() -> Element {
     let mut error_message = use_signal(|| ErrorMessageMode::None);
 
     use_resource(move || {
-        //let init_count_db_clone = init_count_db.clone();
         let init_leg_db_clone = init_leg_db.clone();
         async move {
             let init_leg_val = init_leg_db_clone();
@@ -308,10 +304,10 @@ async fn input_changed(
                 //todo error conversion between db_op_res ServerFnError -> TechnicalError
                 ErrorMessageMode::TechnicalError
             } else {
-                (ErrorMessageMode::NotADartsNumber)
+                ErrorMessageMode::NotADartsNumber
             }
         }
-        Err(_) => (ErrorMessageMode::NotANumber),
+        Err(_) => ErrorMessageMode::NotANumber,
     }
 }
 
