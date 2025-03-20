@@ -1,0 +1,5 @@
+
+#[component]
+fn ScoreDisplay() -> Element {
+
+}

@@ -5,6 +5,7 @@ use dioxus::prelude::*;
 use dioxus_logger::{tracing};
 use std::num::ParseIntError;
 use crate::backend;
+use crate::domain::ErrorMessageMode::CreateNewLeg;
 
 #[component]
 pub fn Panel() -> Element {
@@ -19,6 +20,13 @@ pub fn Panel() -> Element {
     let mut score_message = use_signal(|| NewShot);
     let mut error_message = use_signal(|| ErrorMessageMode::None);
 
+    let mut allow_score = use_signal(|| true);
+
+    use_memo (move ||{
+        let allow: bool = { score_message }.read().to_owned() != LegFinished && {error_message}.read().to_owned() != CreateNewLeg ;
+        allow_score.set(allow)
+    });
+
     use_resource(move || {
         let init_leg_db_clone = init_leg_db.clone();
         async move {
@@ -29,14 +37,14 @@ pub fn Panel() -> Element {
                 if init_count_val.is_ok() && !init_count_val.clone().unwrap().is_empty() {
                     count.set(init_count_val.unwrap());
                 } else {
-                    //todo error that a new leg must be created
+                    error_message.set(CreateNewLeg);
                 };
+            } else {
+                error_message.set(CreateNewLeg);
             }
 
         }
     });
-
-
 
     rsx! {
         div {
@@ -65,7 +73,7 @@ pub fn Panel() -> Element {
                         },
                     onkeypress: move |e| async move {
                             let key = e.key();
-                            if key == Key::Enter && {score_message}.read().to_owned() != LegFinished {
+                            if key == Key::Enter && allow_score() {
                                 input_wrapper(raw_input, leg, count, error_message, score_message).await;
                             } else if key == Key::Home  {
                                 undo_wrapper(count, error_message, score_message);
@@ -98,7 +106,7 @@ pub fn Panel() -> Element {
                         onclick: move |_| async move {
                                 input_wrapper(raw_input, leg, count, error_message, score_message).await;
                         },
-                        disabled: if {score_message}.read().to_owned() == LegFinished {true},
+                        disabled: if !allow_score() {true},
                         class:"btn btn-soft btn-primary" , "Ok" },
                 }
 

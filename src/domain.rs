@@ -49,6 +49,7 @@ pub enum ErrorMessageMode {
     NotANumber,
     NotADartsNumber,
     LegAlreadyFinished,
+    CreateNewLeg,
     TechnicalError,
 }
 
@@ -59,7 +60,8 @@ impl ErrorMessageMode {
             ErrorMessageMode::NotADartsNumber => Some("Not a valid Darts number".to_string()),
             ErrorMessageMode::NotANumber => Some("Not a number".to_string()),
             ErrorMessageMode::LegAlreadyFinished => Some("Leg already finished".to_string()),
-            ErrorMessageMode::TechnicalError => Some("Technical error".to_string())
+            ErrorMessageMode::TechnicalError => Some("Technical error".to_string()),
+            ErrorMessageMode::CreateNewLeg => Some("Create a new  leg".to_string())
         }
     }
 }
