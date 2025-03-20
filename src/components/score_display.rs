@@ -6,7 +6,7 @@ pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
     rsx! {
       div {
             id:"BottomHalf",
-            class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 ",
+            class:"bg-neutral shadow-md rounded px-8 pt-6 pb-8 mb-4 ",
             div { id: "numbers",
                     class: "table-container",
                 table {

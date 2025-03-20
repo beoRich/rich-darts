@@ -51,10 +51,10 @@ pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
           class:"breadcrumbs text-sm",
           ul {
                     li {
-                        Link {to: Route::DisplayLegs {}, "Leg"}
+                        Link {to: Route::DisplayLegs {}, class:"text-xl", "Leg"}
                     },
                     li {
-                        Link {to: Route::ManualLeg {legval: leg()}, {leg().to_string()}}
+                        Link {to: Route::ManualLeg {legval: leg()}, class:"text-xl", {leg().to_string()}}
                     }
                 },
         }
