@@ -10,6 +10,8 @@ pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
             div { id: "numbers",
                     class: "table-container",
                 table {
+                    margin_left: "10%",
+                    //margin: "auto",
                     class: "text-xl uppercase bg-neutral-content",
                     thead {
                         tr {

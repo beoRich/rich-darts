@@ -1,6 +1,6 @@
 use crate::backend;
 use crate::components::main_score_component::{input_wrapper, new_leg_wrapper, undo_wrapper};
-use crate::domain::{Score, ErrorMessageMode, ScoreMessageMode};
+use crate::domain::{ErrorMessageMode, Score, ScoreMessageMode};
 use dioxus::prelude::*;
 
 #[component]
@@ -36,16 +36,17 @@ fn NumberFieldError(
             id: "NumberFieldError",
             class:"mb-4",
                 label {
-                    class:"block text-gray-700 text-sm font-bold mb-2",
+                    class:"block text-gray-700 text-xl text-primary font-bold mb-2",
                     for: "numberField",
                     {score_message.read().value()}
                     }
 
             div {
                 class:"grid grid-cols-10 gap-4",
+                margin: "auto",
                 input {id: "numberField",
                         autofocus: true,
-                    class:"shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
+                    class:"text-2xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
                     type: "number", maxlength:10, min:0, oninput: move |e| raw_input.set(e.value()),
                     onfocusin: move |_| {
                             document::eval(&"document.getElementById('numberField').select()".to_string());
@@ -65,7 +66,7 @@ fn NumberFieldError(
                     id: "displayError",
                     if error_message.read().value().is_some() {
                         p {
-                        class: "text-l text-error",
+                        class: "text-xl text-error",
                                 {error_message.read().value()}
                          }
                     }
