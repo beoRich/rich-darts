@@ -53,7 +53,7 @@ pub fn DisplayLegs() -> Element {
                                         style:"white-space: pre; text-align: center;",
 
                                         li {
-                                            Link {to: Route::ManualLeg {legval: a.id}, {format!("{:>3}", a.id.to_string())}}
+                                            Link {to: Route::ManualLeg {legval: a.id}, {a.id.to_string()}}
                                         }
 
                                     },
