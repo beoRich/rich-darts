@@ -1,4 +1,4 @@
-use crate::domain::CurrentScore;
+use crate::domain::Score;
 use itertools::{iproduct};
 use std::collections::HashSet;
 
@@ -32,7 +32,7 @@ fn possible_values() -> HashSet<u16> {
     sums
 }
 
-pub fn calculate_remaining(last: CurrentScore, val: u16, next_throw_order: u16) -> CurrentScore {
+pub fn calculate_remaining(last: Score, val: u16, next_throw_order: u16) -> Score {
     let last_remaining = last.remaining;
     let new_remaining: u16;
     if val <= last_remaining && check_possible_remaining(last_remaining - val, val) {
@@ -40,7 +40,7 @@ pub fn calculate_remaining(last: CurrentScore, val: u16, next_throw_order: u16) 
     } else {
         new_remaining = last_remaining;
     }
-    CurrentScore {
+    Score {
         remaining: new_remaining,
         thrown: val,
         throw_order: next_throw_order
@@ -67,7 +67,7 @@ mod test {
     use crate::components::calculations::{
         calculate_remaining, check_possible_remaining, valid_thrown,
     };
-    use crate::domain::CurrentScore;
+    use crate::domain::Score;
 
     #[test]
     fn invalid_throw_bigger_then_180() {
@@ -98,7 +98,7 @@ mod test {
 
     #[test]
     fn should_not_end_on_1() {
-        let last = CurrentScore {
+        let last = Score {
             remaining: 141,
             thrown: 180,
             throw_order: 0};
@@ -106,7 +106,7 @@ mod test {
         let result = calculate_remaining(last, thrown, 0);
         assert_eq!(
             result,
-            CurrentScore {
+            Score {
                 remaining: 141,
                 throw_order: 0,
                 thrown
@@ -116,7 +116,7 @@ mod test {
 
     #[test]
     fn should_not_end_on_negative() {
-        let last = CurrentScore {
+        let last = Score {
                 remaining: 141,
                 thrown: 180,
                 throw_order: 0};
@@ -124,7 +124,7 @@ mod test {
         let result = calculate_remaining(last, thrown, 0);
         assert_eq!(
             result,
-            CurrentScore {
+            Score {
                 remaining: 141,
                 throw_order: 0,
                 thrown
@@ -135,7 +135,7 @@ mod test {
     #[test]
     fn should_end_on_0() {
         let thrown = 141;
-        let last = CurrentScore {
+        let last = Score {
                 remaining: 141,
                 thrown: 180,
                 throw_order: 0,
@@ -143,7 +143,7 @@ mod test {
         let result = calculate_remaining(last, thrown, 0);
         assert_eq!(
             result,
-            CurrentScore {
+            Score {
                 remaining: 0,
                 throw_order: 0,
                 thrown

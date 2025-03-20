@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use components::MainComponent;
+use components::{MainComponent, DisplayLegs};
 use components::Test;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 
@@ -40,6 +40,9 @@ enum Route {
         legval: u16
     },
 
+    #[route("/leg")]
+    DisplayLegs,
+    //todo someday resolve this via redirect
     #[route("/")]
     LatestLeg,
 
@@ -59,10 +62,10 @@ fn ManualLeg(legval: u16) -> Element {
 
 }
 
+
 #[component]
 fn LatestLeg() -> Element {
     let mut leg = use_signal(|| 0);
-
     let mut init_leg_db = use_server_future(backend::get_latest_leg)?.suspend()?;
     use_resource(move || {
         let init_leg_db_clone = init_leg_db.clone();

@@ -1,8 +1,23 @@
-use crate::domain::Score;
+use dioxus::core_macro::{component, rsx};
 use dioxus::prelude::*;
+use dioxus::dioxus_core::Element;
+use crate::{backend, Route};
 
 #[component]
-pub fn ScoreDisplay(count: Signal<Vec<Score>>) -> Element {
+pub fn DisplayLegs() -> Element {
+
+    let mut leg = use_signal(|| vec![]);
+    let mut init_leg_db = use_server_future(backend::list_leg)?.suspend()?;
+    use_resource(move || {
+        let init_leg_db_clone = init_leg_db.clone();
+        async move {
+            let init_leg_val = init_leg_db_clone();
+            if init_leg_val.is_ok() {
+                leg.set(init_leg_val.clone().unwrap());
+            }
+        }
+    });
+    //todo coalesce into generic with score_display
     rsx! {
       div {
             id:"BottomHalf",
@@ -17,33 +32,37 @@ pub fn ScoreDisplay(count: Signal<Vec<Score>>) -> Element {
                                 scope:"col",
                                 style:"white-space: pre; text-align: center;",
                                 class:"text-primary px-6 py-3",
-                                "Thrown"
+                                "Id (click me)"
                             },
                             th {
                                 scope:"col",
                                 style:"white-space: pre; text-align: center;",
                                 class:"text-secondary px-6 py-3",
-                                "Remaining"
+                                "Status"
                             }
                         }
                     }
                     tbody {
                         id: "numbers-body",
-                        for (i, a) in count().into_iter().rev().enumerate() {
+                        for (i, a) in leg().into_iter().rev().enumerate() {
                             tr {
                                     td {
                                         class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
                                         class: if i % 2 == 0 && i!=0 {"px-6 py-4 bg-base-200 text-base-content"},
                                         class: if i % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
                                         style:"white-space: pre; text-align: center;",
-                                        {format!("{:>3}", a.thrown.to_string())}
+
+                                        li {
+                                            Link {to: Route::ManualLeg {legval: a.id}, {format!("{:>3}", a.id.to_string())}}
+                                        }
+
                                     },
                                     td {
                                         class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
                                         class: if i % 2 == 0 && i!=0 {"px-6 py-4 bg-base-200 text-base-content"},
                                         class: if i % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
                                         style:"white-space: pre; text-align: center;",
-                                        {format!("{:>3}", a.remaining.to_string())}
+                                        {format!("{:>3}", a.status)}
                                     },
                             }
                         }
@@ -54,4 +73,6 @@ pub fn ScoreDisplay(count: Signal<Vec<Score>>) -> Element {
       }
 
     }
+
 }
+

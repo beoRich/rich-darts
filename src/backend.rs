@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 use dioxus::prelude::server_fn::error::ServerFnErrorErr;
 use itertools::Itertools;
-use crate::domain::CurrentScore;
+use crate::domain::{Leg, Score};
 
 #[cfg(feature = "server")]
 thread_local! {
@@ -38,7 +38,7 @@ thread_local! {
 }
 
 #[server]
-pub async fn save_throw(leg_id: u16, current_score: CurrentScore) -> Result<(), ServerFnError> {
+pub async fn save_throw(leg_id: u16, current_score: Score) -> Result<(), ServerFnError> {
     DB.with(|f| f.execute("INSERT INTO throw (leg_id, throw_order, thrown, remaining) VALUES (?1,?2, ?3, ?4)", (&leg_id, &current_score.throw_order, &current_score.thrown, &current_score.remaining)))?;
     Ok(())
 }
@@ -50,12 +50,12 @@ pub async fn delete_throw_by_order(leg_id: u16, throw_order: u16) -> Result<(), 
 }
 
 #[server]
-pub async fn list_throws(leg_id: u16) -> Result<Vec<CurrentScore>, ServerFnError> {
-    let throws = DB.with(|f| {
+pub async fn list_score(leg_id: u16) -> Result<Vec<Score>, ServerFnError> {
+    let scores = DB.with(|f| {
         f.prepare("SELECT remaining, thrown, throw_order from throw where deleted = 0 and leg_id =?1")
             .unwrap()
             .query_map( [leg_id], move |row| {
-                Ok(CurrentScore {
+                Ok(Score {
                     remaining: row.get(0)?,
                     thrown: row.get(1)?,
                     throw_order: row.get(2) ?,
@@ -65,9 +65,24 @@ pub async fn list_throws(leg_id: u16) -> Result<Vec<CurrentScore>, ServerFnError
             .map(|r| r.unwrap())
             .collect()
     });
-    //let res: Vec<CurrentScore> = throws.filter_map(|e| e.ok()).collect();
-    println!("{:?}", throws);
-    Ok(throws)
+    Ok(scores)
+}
+#[server]
+pub async fn list_leg() -> Result<Vec<Leg>, ServerFnError> {
+    let legs = DB.with(|f| {
+        f.prepare("SELECT id, status from leg")
+            .unwrap()
+            .query_map( [], move |row| {
+                Ok(Leg {
+                    id: row.get(0)?,
+                    status: row.get(1).unwrap_or("Unknown status".to_string()),
+                })
+            })
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect()
+    });
+    Ok(legs)
 }
 
 #[server]

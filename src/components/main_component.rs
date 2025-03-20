@@ -1,10 +1,10 @@
-use crate::backend;
+use crate::{backend, Route};
 use crate::components::calculations;
 use crate::components::enter_panel::EnterPanel;
 use crate::components::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
-use crate::domain::{CurrentScore, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
+use crate::domain::{Score, ErrorMessageMode, ScoreMessageMode, INIT_SCORE};
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use std::num::ParseIntError;
@@ -35,7 +35,7 @@ pub fn MainComponent(leg: Signal<u16>) -> Element {
             if !leg_exists {
                 new_leg_wrapper(leg_val, leg, count, error_message, score_message).await;
             }
-            let init_count_val = backend::list_throws(leg()).await;
+            let init_count_val = backend::list_score(leg()).await;
             if init_count_val.is_ok() && !init_count_val.clone().unwrap().is_empty() {
                 count.set(init_count_val.unwrap());
             } else {
@@ -46,11 +46,24 @@ pub fn MainComponent(leg: Signal<u16>) -> Element {
 
     rsx! {
         div {
-      id: "All",
+            id: "All",
             class: "container-self",
 
-        EnterPanel {count, raw_input, leg, error_message, score_message, allow_score}
-        ScoreDisplay {count}
+
+        div {
+          class:"breadcrumbs text-sm",
+          ul {
+                    li {
+                        Link {to: Route::DisplayLegs {}, "Leg"}
+                    },
+                    li {
+                        Link {to: Route::ManualLeg {legval: leg()}, {leg().to_string()}}
+                    }
+                },
+        }
+
+            EnterPanel {count, raw_input, leg, error_message, score_message, allow_score}
+            ScoreDisplay {count}
         }
     }
 }
@@ -58,7 +71,7 @@ pub fn MainComponent(leg: Signal<u16>) -> Element {
 pub async fn input_wrapper(
     mut raw_input: Signal<String>,
     leg: Signal<u16>,
-    count: Signal<Vec<CurrentScore>>,
+    count: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) {
@@ -72,7 +85,7 @@ pub async fn input_wrapper(
 }
 
 pub fn undo_wrapper(
-    count: Signal<Vec<CurrentScore>>,
+    count: Signal<Vec<Score>>,
     error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) {
@@ -86,7 +99,7 @@ pub fn undo_wrapper(
 pub async fn new_leg_wrapper(
     leg_val: u16,
     leg: Signal<u16>,
-    count: Signal<Vec<CurrentScore>>,
+    count: Signal<Vec<Score>>,
     error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) {
@@ -98,7 +111,7 @@ pub async fn new_leg_wrapper(
 async fn new_leg(
     leg_val : u16,
     mut leg: Signal<u16>,
-    mut count: Signal<Vec<CurrentScore>>,
+    mut count: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
 ) {
@@ -117,7 +130,7 @@ async fn new_leg(
 }
 
 fn undo_last_score(
-    mut count: Signal<Vec<CurrentScore>>,
+    mut count: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
 ) -> u16 {
@@ -138,7 +151,7 @@ fn undo_last_score(
 
 async fn input_changed(
     mut leg: Signal<u16>,
-    mut count: Signal<Vec<CurrentScore>>,
+    mut count: Signal<Vec<Score>>,
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>,
 ) -> ErrorMessageMode {
@@ -189,11 +202,11 @@ async fn input_changed(
     }
 }
 
-fn get_last(count: &mut Signal<Vec<CurrentScore>>) -> CurrentScore {
+fn get_last(count: &mut Signal<Vec<Score>>) -> Score {
     count.read().last().unwrap().to_owned()
 }
 
-fn get_snd_last(count: &mut Signal<Vec<CurrentScore>>) -> CurrentScore {
+fn get_snd_last(count: &mut Signal<Vec<Score>>) -> Score {
     let generational_ref = count.read();
     generational_ref
         .get(generational_ref.len() - 1)

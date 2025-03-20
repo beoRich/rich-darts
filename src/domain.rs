@@ -3,17 +3,23 @@ use dioxus::prelude::*;
 use dioxus::prelude::server_fn::serde::Deserialize;
 use serde::Serialize;
 
-pub const INIT_SCORE: CurrentScore = CurrentScore {
+pub const INIT_SCORE: Score = Score {
     remaining: 501,
     thrown: 0,
     throw_order: 0,
 };
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
-pub struct CurrentScore {
+pub struct Score {
     pub remaining: u16,
     pub thrown: u16,
     pub throw_order: u16
+}
+
+#[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
+pub struct Leg {
+    pub id: u16,
+    pub status: String,
 }
 
 #[derive(Props, PartialEq, Clone)]
