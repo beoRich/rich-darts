@@ -1,6 +1,6 @@
 # About
 
-A webapp to track a Darts Game, written in Rust for frontend and backend via dixous.
+A webapp to track a Darts Game, written in Rust for frontend and backend via dioxus.
 Currently under development
 
 

@@ -1,5 +1,4 @@
-use crate::domain::ScoreMessageMode::NewShot;
-use crate::domain::{ErrorMessageMode, Leg, Score, ScoreMessageMode, INIT_SCORE};
+use crate::domain::{Leg, INIT_SCORE};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
@@ -12,9 +11,9 @@ pub fn DisplayLegs() -> Element {
     use_resource(move || {
         let init_leg_db_clone = init_leg_db.clone();
         async move {
-            let init_leg_val = init_leg_db_clone();
-            if init_leg_val.is_ok() {
-                legs.set(init_leg_val.clone().unwrap());
+            match init_leg_db_clone() {
+                Ok(val) => legs.set(val),
+                _ => {}
             }
         }
     });
@@ -48,7 +47,7 @@ async fn new_leg(leg_val: u16, mut legs: Signal<Vec<Leg>>) {
     backend::save_leg(new_leg)
         .await
         .expect(&format!("Could not save leg {}", leg_val));
-    let db_op_res = backend::save_score(leg_val, INIT_SCORE).await;
+    let _ = backend::save_score(leg_val, INIT_SCORE).await;
 }
 
 #[component]

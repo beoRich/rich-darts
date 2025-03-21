@@ -33,11 +33,10 @@ pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
         if !leg_exists {
             new_leg_wrapper(leg_val, leg, scores, error_message, score_message).await;
         }
-        let init_count_val = backend::list_score(leg()).await;
-        if init_count_val.is_ok() && !init_count_val.clone().unwrap().is_empty() {
-            scores.set(init_count_val.unwrap());
-        } else {
-            error_message.set(CreateNewLeg);
+        let init_score_val = backend::list_score(leg()).await;
+        match init_score_val {
+            Ok(val) if !val.is_empty() => scores.set(val),
+            _ => error_message.set(CreateNewLeg),
         };
     });
 
@@ -68,11 +67,11 @@ pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
 pub async fn input_wrapper(
     mut raw_input: Signal<String>,
     leg: Signal<u16>,
-    count: Signal<Vec<Score>>,
+    score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) {
-    let (error_message_mode) = input_changed(leg, count, raw_input, score_message).await;
+    let (error_message_mode) = input_changed(leg, score, raw_input, score_message).await;
     if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
         raw_input.set(" ".to_string());
@@ -82,11 +81,11 @@ pub async fn input_wrapper(
 }
 
 pub fn undo_wrapper(
-    count: Signal<Vec<Score>>,
+    score: Signal<Vec<Score>>,
     error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) {
-    let last_score = undo_last_score(count, error_message, score_message);
+    let last_score = undo_last_score(score, error_message, score_message);
     document::eval(&format!(
         "document.getElementById('numberField').value = '{last_score}'"
     ));
@@ -96,11 +95,11 @@ pub fn undo_wrapper(
 pub async fn new_leg_wrapper(
     leg_val: u16,
     leg: Signal<u16>,
-    count: Signal<Vec<Score>>,
+    score: Signal<Vec<Score>>,
     error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) {
-    new_leg(leg_val, leg, count, error_message, score_message).await;
+    new_leg(leg_val, leg, score, error_message, score_message).await;
     document::eval(&"document.getElementById('numberField').value = ' '".to_string());
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
@@ -108,13 +107,13 @@ pub async fn new_leg_wrapper(
 async fn new_leg(
     leg_val: u16,
     mut leg: Signal<u16>,
-    mut count: Signal<Vec<Score>>,
+    mut score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
 ) {
     error_message.set(ErrorMessageMode::None);
     score_message.set(NewShot);
-    count.write().clear();
+    score.write().clear();
 
     leg.set(leg_val);
     let new_leg = Leg {
@@ -126,17 +125,17 @@ async fn new_leg(
         .expect(&format!("Could not save leg {}", leg_val));
     let db_op_res = backend::save_score(leg_val, INIT_SCORE).await;
     if db_op_res.is_ok() {
-        count.set(vec![INIT_SCORE]);
+        score.set(vec![INIT_SCORE]);
     }
 }
 
 fn undo_last_score(
-    mut count: Signal<Vec<Score>>,
+    mut score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
 ) -> u16 {
     error_message.set(ErrorMessageMode::None);
-    let generational_ref = count.read();
+    let generational_ref = score.read();
     let last_score = generational_ref.last();
     match last_score {
         Some(val) => {
@@ -152,7 +151,7 @@ fn undo_last_score(
 
 async fn input_changed(
     mut leg: Signal<u16>,
-    mut count: Signal<Vec<Score>>,
+    mut score: Signal<Vec<Score>>,
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>,
 ) -> ErrorMessageMode {
@@ -162,12 +161,12 @@ async fn input_changed(
     match result {
         Ok(val) => {
             if calculations::valid_thrown(val) {
-                let mut last = get_last(&mut count);
+                let mut last = get_last(&mut score);
                 let next_throw_order: u16;
                 {
                     match score_message_mode {
                         UndoLastShot { last_score: _ } => {
-                            count.write().pop();
+                            score.write().pop();
                             score_message.set(NewShot);
                             next_throw_order = last.throw_order;
                             let db_op_res =
@@ -176,7 +175,7 @@ async fn input_changed(
                                 //todo error conversion between db_op_res ServerFnError -> TechnicalError
                                 return ErrorMessageMode::TechnicalError;
                             }
-                            last = get_snd_last(&mut count);
+                            last = get_snd_last(&mut score);
                         }
                         NewShot => {
                             next_throw_order = last.throw_order + 1;
@@ -190,7 +189,7 @@ async fn input_changed(
                     if (&new_score).remaining == 0 {
                         score_message.set(LegFinished)
                     }
-                    count.write().push(new_score);
+                    score.write().push(new_score);
                     return ErrorMessageMode::None;
                 }
                 //todo error conversion between db_op_res ServerFnError -> TechnicalError
@@ -203,12 +202,12 @@ async fn input_changed(
     }
 }
 
-fn get_last(count: &mut Signal<Vec<Score>>) -> Score {
-    count.read().last().unwrap().to_owned()
+fn get_last(score: &mut Signal<Vec<Score>>) -> Score {
+    score.read().last().unwrap().to_owned()
 }
 
-fn get_snd_last(count: &mut Signal<Vec<Score>>) -> Score {
-    let generational_ref = count.read();
+fn get_snd_last(score: &mut Signal<Vec<Score>>) -> Score {
+    let generational_ref = score.read();
     generational_ref
         .get(generational_ref.len() - 1)
         .unwrap()

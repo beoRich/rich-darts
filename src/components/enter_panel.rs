@@ -126,6 +126,7 @@ fn Buttons(
                                     new_leg_wrapper(new_leg_val, leg, scores, error_message, score_message).await;
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
+
                     }
                 }
         }
