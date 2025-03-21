@@ -1,7 +1,23 @@
-# Development
+# About
 
-Your new jumpstart project includes basic organization with an organized `assets` folder and a `components` folder. 
-If you chose to develop with the router feature, you will also have a `views` folder.
+A webapp to track a Darts Game, written in Rust for frontend and backend via dixous.
+Currently under development
+
+
+### Dioxus 
+
+Install dixous cli
+Run the following command in the root of your project to start developing with the default platform:
+
+```bash
+dx serve --platform web
+```
+
+To run for a different platform, use the `--platform platform` flag. E.g.
+```bash
+dx serve --platform desktop
+```
+
 
 ### Tailwind
 1. Windows + Linux Bash:
@@ -14,20 +30,6 @@ Linux fish shell: https://github.com/jorgebucaran/nvm.fish?tab=readme-ov-file th
 ```bash
 npx tailwindcss -i ./input.css -o ./assets/tailwind.css --watch
 ```
-
-### Serving Your App
-
-Run the following command in the root of your project to start developing with the default platform:
-
-```bash
-dx serve --platform web
-```
-
-To run for a different platform, use the `--platform platform` flag. E.g.
-```bash
-dx serve --platform desktop
-```
-
 
 
 ### DockerImage
