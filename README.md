@@ -10,7 +10,7 @@ Install npm: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
 Linux fish shell:
 https://github.com/jorgebucaran/nvm.fish?tab=readme-ov-file
 then 
-linux fish: nvm use latest
+linux fish: nvm use latest)
 2. Install the Tailwind CSS CLI: https://tailwindcss.com/docs/installation REQUIRES TAILWIND 3, DOES NOT WORK with TAILWIND 4
 3. install daisyUi npm i -D daisyui@latest
 4. Run the following command in the root of the project to start the Tailwind CSS compiler:
@@ -31,4 +31,21 @@ To run for a different platform, use the `--platform platform` flag. E.g.
 ```bash
 dx serve --platform desktop
 ```
+
+
+
+### DockerImage
+1. docker build . -t <tag>
+2. docker run -t <tag> 
+3. docker container ls  
+3. docker inspect <containerId>
+4. 
+search for  NetworkSettings.Networks
+or 
+docker inspect \
+        -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <containerId>
+for local IP
+5. webbrowser <localIp>:8080 
+
+TODO find out how to set the ip of the docker container
 

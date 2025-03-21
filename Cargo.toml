@@ -10,7 +10,9 @@ edition = "2021"
 dioxus = { version = "0.6.3", features = ["fullstack", "router"] }
 dioxus-logger = "0.6.2"
 itertools = "0.14.0"
-rusqlite = { version = "0.34.0", features = ["bundled"], optional = true }
+
+#https://github.com/rusqlite/rusqlite/issues/1631
+rusqlite = { version = "0.32.1", features = ["bundled"], optional = true }
 serde = { version = "1.0.219", features = ["derive"] }
 
 

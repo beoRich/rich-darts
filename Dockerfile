@@ -1,29 +1,38 @@
 # Build stage
-FROM rust:1-alpine3.21 AS builder
+FROM lewimbes/dioxus:0.6.3 AS builder
 
-RUN apk add --no-cache build-base musl-dev openssl-dev openssl
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dioxus-cli
-RUN cargo install cargo-binstall
-RUN cargo binstall dioxus-cli
+# Set the working directory
+WORKDIR /usr/src/app
 
+# Copy the entire project
+COPY . .
 
 # tailwind + daisyUi
-RUN apk update && apk --no-cache add nodejs npm
-RUN npm install tailwindcss @tailwindcss/cli
-RUN npm i -D daisyui@latest
+#RUN npm i -D daisyui@latest
 RUN npx tailwindcss -i ./input.css -o ./assets/tailwind.css
 
 # build app
 RUN dx build --release --platform web
 
 # Final stage
-FROM alpine:3.21 
+FROM debian:bookworm-slim
 
+# Install necessary dependencies for running the server
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
 WORKDIR /app
 
 # Copy the entire web directory from the builder stage
-COPY --from=builder /usr/src/app/target/dx/DrawsNotes/release/web ./
+COPY --from=builder /usr/src/app/target/dx/rich_darts/release/web ./
 
 ENV PORT=8080
 ENV IP=0.0.0.0
