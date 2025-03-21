@@ -45,5 +45,19 @@ docker inspect \
 for local IP
 5. webbrowser <localIp>:8080 
 
-TODO find out how to set the ip of the docker container
+
+### Deployment (Currently)
+1. Login to digital Oceean
+2. Create/Use a container registry
+3. push image to container registry
+4. Create/Use a droplet
+5. ssh login into droplet 
+6. setup docker inside the droplet
+7. docker login into container registry
+8. pull image from container registry
+9. docker run -d -p 80:8080 registry.digitalocean.com/rich-registry/rich-darts
+10. access ip4 address of that droplet
+
+
+
 
