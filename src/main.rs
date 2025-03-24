@@ -1,16 +1,14 @@
 use dioxus::prelude::*;
 
-use components::{MainScoreComponent, DisplayLegs};
 use components::Test;
-use crate::domain::ErrorMessageMode::CreateNewLeg;
+use components::{DisplayLegs, MainScoreComponent};
 
-mod components;
 mod backend;
+mod components;
 mod domain;
 
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
 const CUSTOM_CSS: Asset = asset!("/assets/main.css");
-
 
 fn main() {
     dioxus::launch(App);
@@ -34,11 +32,8 @@ fn App() -> Element {
 
 #[derive(Routable, Clone, PartialEq)]
 enum Route {
-
     #[route("/leg/:legval")]
-    ManualLeg {
-        legval: u16
-    },
+    ManualLeg { legval: u16 },
 
     #[route("/leg")]
     DisplayLegs,
@@ -46,11 +41,9 @@ enum Route {
     #[route("/")]
     LatestLeg,
 
-
     #[route("/test")]
     Test,
 }
-
 
 #[component]
 fn ManualLeg(legval: u16) -> Element {
@@ -59,9 +52,7 @@ fn ManualLeg(legval: u16) -> Element {
     rsx! {
         MainScoreComponent {leg}
     }
-
 }
-
 
 #[component]
 fn LatestLeg() -> Element {

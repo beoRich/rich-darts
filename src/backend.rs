@@ -1,13 +1,26 @@
+use crate::domain::{Leg, Score};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
-use dioxus::prelude::server_fn::error::ServerFnErrorErr;
-use itertools::Itertools;
-use crate::domain::{Leg, Score};
+use std::env;
+use tracing::debug;
 
 #[cfg(feature = "server")]
+#[rustfmt::skip] 
+#[allow(clippy::unused)]
 thread_local! {
     pub static DB: rusqlite::Connection = {
-        let conn = rusqlite:: Connection::open("richDarts.db").expect("Failed to open Database");
+
+        let url_maybe = env::var("SQLITE_URL");
+        let conn: String;
+        if url_maybe.is_ok() {
+            conn = url_maybe.unwrap();
+            debug!("Connecting via env to Rusqlite  at {:?}", conn);
+
+        } else {
+            conn = "richDarts.db".to_string();
+            debug!("Connecting directly to Rusqlite  at {:?}", conn);
+            }
+        let conn = rusqlite:: Connection::open(conn).expect("Failed to open Database");
         conn.execute_batch (
             "
 
@@ -39,31 +52,43 @@ thread_local! {
 
 #[server]
 pub async fn save_score(leg_id: u16, score: Score) -> Result<(), ServerFnError> {
-    DB.with(|f| f.execute("INSERT INTO score (leg_id, throw_order, thrown, remaining) VALUES (?1,?2, ?3, ?4)", (&leg_id, &score.throw_order, &score.thrown, &score.remaining)))?;
+    DB.with(|f| {
+        f.execute(
+            "INSERT INTO score (leg_id, throw_order, thrown, remaining) VALUES (?1,?2, ?3, ?4)",
+            (&leg_id, &score.throw_order, &score.thrown, &score.remaining),
+        )
+    })?;
     Ok(())
 }
 
 #[server]
 pub async fn delete_score_by_order(leg_id: u16, throw_order: u16) -> Result<(), ServerFnError> {
-    DB.with(|f| f.execute("UPDATE score SET deleted = 1 where throw_order = ?1 and leg_id = ?2", &[&throw_order, &leg_id]))?;
+    DB.with(|f| {
+        f.execute(
+            "UPDATE score SET deleted = 1 where throw_order = ?1 and leg_id = ?2",
+            &[&throw_order, &leg_id],
+        )
+    })?;
     Ok(())
 }
 
 #[server]
 pub async fn list_score(leg_id: u16) -> Result<Vec<Score>, ServerFnError> {
     let scores = DB.with(|f| {
-        f.prepare("SELECT remaining, thrown, throw_order from score where deleted = 0 and leg_id =?1")
-            .unwrap()
-            .query_map( [leg_id], move |row| {
-                Ok(Score {
-                    remaining: row.get(0)?,
-                    thrown: row.get(1)?,
-                    throw_order: row.get(2) ?,
-                })
+        f.prepare(
+            "SELECT remaining, thrown, throw_order from score where deleted = 0 and leg_id =?1",
+        )
+        .unwrap()
+        .query_map([leg_id], move |row| {
+            Ok(Score {
+                remaining: row.get(0)?,
+                thrown: row.get(1)?,
+                throw_order: row.get(2)?,
             })
-            .unwrap()
-            .map(|r| r.unwrap())
-            .collect()
+        })
+        .unwrap()
+        .map(|r| r.unwrap())
+        .collect()
     });
     Ok(scores)
 }
@@ -72,7 +97,7 @@ pub async fn list_leg() -> Result<Vec<Leg>, ServerFnError> {
     let legs = DB.with(|f| {
         f.prepare("SELECT id, status from leg")
             .unwrap()
-            .query_map( [], move |row| {
+            .query_map([], move |row| {
                 Ok(Leg {
                     id: row.get(0)?,
                     status: row.get(1).unwrap_or("Unknown status".to_string()),
@@ -91,7 +116,9 @@ pub async fn get_latest_leg() -> Result<u16, ServerFnError> {
         let mut stmt = f.prepare("SELECT max(id) from leg")?;
         stmt.query_row([], |row| row.get(0))
     })?;
-    res.ok_or(ServerFnError::MissingArg("Could not find max id".to_string()))
+    res.ok_or(ServerFnError::MissingArg(
+        "Could not find max id".to_string(),
+    ))
 }
 
 #[server]
@@ -100,11 +127,18 @@ pub async fn leg_exists(leg_id: u16) -> Result<bool, ServerFnError> {
         let mut stmt = f.prepare("SELECT count(id) from leg where id = ?1")?;
         stmt.query_row([leg_id], |row| row.get(0))
     })?;
-    res.map(|e| e >0 ).ok_or(ServerFnError::MissingArg("DB Error for leg_exists".to_string()))
+    res.map(|e| e > 0).ok_or(ServerFnError::MissingArg(
+        "DB Error for leg_exists".to_string(),
+    ))
 }
 
 #[server]
 pub async fn save_leg(leg: Leg) -> Result<(), ServerFnError> {
-    DB.with(|f| f.execute("INSERT INTO leg (id, status) VALUES (?1,?2)", (&leg.id, &leg.status)))?;
+    DB.with(|f| {
+        f.execute(
+            "INSERT INTO leg (id, status) VALUES (?1,?2)",
+            (&leg.id, &leg.status),
+        )
+    })?;
     Ok(())
 }

@@ -33,8 +33,10 @@ npx tailwindcss -i ./input.css -o ./assets/tailwind.css --watch
 
 
 ### DockerImage
-1. docker build . -t <tag>
+Locally
+1. docker build . -t registry.digitalocean.com/rich-registry/rich-darts  
 2. docker run -t <tag> 
+ docker run -d --name rich-container -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' registry.digitalocean.com/rich-registry/rich-darts
 3. docker container ls  
 3. docker inspect <containerId>
 4. 
@@ -44,8 +46,13 @@ docker inspect \
         -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <containerId>
 for local IP
 5. webbrowser <localIp>:8080 
+6. stop container: docker container stop test
+7. remove container: docker container rm test
 
 TODO: Docker build . only works currently locally where tailwind already installed
+
+Server -> Deployment 7-9
+
 
 
 ### Deployment (Currently)
@@ -57,7 +64,14 @@ TODO: Docker build . only works currently locally where tailwind already install
 6. setup docker inside the droplet
 7. docker login into container registry
 8. pull image from container registry
-9. docker run -d -p 80:8080 registry.digitalocean.com/rich-registry/rich-darts
+9. docker run -d -p 80:8080 -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' registry.digitalocean.com/rich-registry/rich-darts
+
+All cmds in order:
+docker pull registry.digitalocean.com/rich-registry/rich-darts
+docker run -d -p 80:8080 -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' registry.digitalocean.com/rich-registry/rich-darts
+docker container prune 
+
+
 10. access ip4 address of that droplet
 
 
