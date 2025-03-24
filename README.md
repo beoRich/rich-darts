@@ -36,18 +36,25 @@ npx tailwindcss -i ./input.css -o ./assets/tailwind.css --watch
 Locally
 1. docker build . -t registry.digitalocean.com/rich-registry/rich-darts  
 2. docker run -t <tag> 
- docker run -d --name rich-container -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' registry.digitalocean.com/rich-registry/rich-darts
+
+docker run -d --name test -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' -e LOG_URL='/home/server.log' registry.digitalocean.com/rich-registry/rich-darts
+
 3. docker container ls  
 3. docker inspect <containerId>
 4. 
 search for  NetworkSettings.Networks
 or 
-docker inspect \
-        -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <containerId>
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <containerId>
 for local IP
 5. webbrowser <localIp>:8080 
 6. stop container: docker container stop test
 7. remove container: docker container rm test
+
+
+## Logs in Docker 
+
+docker exec -it test bash
+tail -f /home/server.log
 
 TODO: Docker build . only works currently locally where tailwind already installed
 

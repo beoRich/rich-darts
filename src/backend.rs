@@ -1,6 +1,8 @@
 use crate::domain::{Leg, Score};
+//use dioxus::logger::tracing::{info, Level};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
+use dotenv::dotenv;
 use std::env;
 use tracing::debug;
 
@@ -9,18 +11,19 @@ use tracing::debug;
 #[allow(clippy::unused)]
 thread_local! {
     pub static DB: rusqlite::Connection = {
-
-
+        dotenv().ok();
         let url_maybe = env::var("SQLITE_URL");
         let conn: String;
-        if url_maybe.is_ok() {
-            conn = url_maybe.unwrap();
-            log::debug!("Connecting via env to Rusqlite  at {}", conn);
-
-        } else {
-            conn = "richDarts.db".to_string();
-            log::debug!("Connecting directly to Rusqlite  at {}", conn);
+        match url_maybe {
+            Ok(conn_val) => {
+                conn = conn_val;
+                log::debug!("Connecting via env to Rusqlite  at {}", conn);
             }
+            _ => {
+                panic!("Could not read DB connection")
+            }
+        }
+
         let conn = rusqlite:: Connection::open(conn).expect("Failed to open Database");
         conn.execute_batch (
             "
@@ -53,11 +56,50 @@ thread_local! {
 
 #[server]
 pub async fn backend_initializer() -> Result<(), ServerFnError> {
-    // Initialize the logger as part of the backend initialization process
-    log4rs::init_file("logging_config.yaml", Default::default())
-        .unwrap_or_else(|e| panic!("Error initializing logging: {}", e));
+    dotenv().ok();
+    let url_maybe = env::var("LOG_URL");
+    let log_file: String;
+    match url_maybe {
+        Ok(val) => {
+            log_file = val;
+        }
+        _ => {
+            panic!("Could not read log file env path")
+        }
+    }
+
+    use log::LevelFilter;
+    use log4rs::append::console::ConsoleAppender;
+    use log4rs::append::file::FileAppender;
+    use log4rs::config::{Appender, Config, Logger, Root};
+    use log4rs::encode::pattern::PatternEncoder;
+
+    let stdout = ConsoleAppender::builder().build();
+    let server = FileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new(
+            "{h({d(%Y-%m-%d %H:%M:%S)(utc)} - {l}: {m}{n})}",
+        )))
+        .build(log_file)
+        .unwrap();
+
+    let config = Config::builder()
+        .appender(Appender::builder().build("stdout", Box::new(stdout)))
+        .appender(Appender::builder().build("server", Box::new(server)))
+        .logger(
+            Logger::builder()
+                .appender("server")
+                .build("app::server", LevelFilter::Debug),
+        )
+        .build(
+            Root::builder()
+                .appender("stdout")
+                .appender("server")
+                .build(LevelFilter::Debug),
+        )
+        .unwrap();
 
     // Log the initialization
+    let handle = log4rs::init_config(config).unwrap();
     log::info!("Logger initialized successfully in the backend.");
     Ok(())
 }
