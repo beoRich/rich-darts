@@ -10,15 +10,16 @@ use tracing::debug;
 thread_local! {
     pub static DB: rusqlite::Connection = {
 
+
         let url_maybe = env::var("SQLITE_URL");
         let conn: String;
         if url_maybe.is_ok() {
             conn = url_maybe.unwrap();
-            debug!("Connecting via env to Rusqlite  at {:?}", conn);
+            log::debug!("Connecting via env to Rusqlite  at {}", conn);
 
         } else {
             conn = "richDarts.db".to_string();
-            debug!("Connecting directly to Rusqlite  at {:?}", conn);
+            log::debug!("Connecting directly to Rusqlite  at {}", conn);
             }
         let conn = rusqlite:: Connection::open(conn).expect("Failed to open Database");
         conn.execute_batch (
@@ -51,7 +52,19 @@ thread_local! {
 }
 
 #[server]
+pub async fn backend_initializer() -> Result<(), ServerFnError> {
+    // Initialize the logger as part of the backend initialization process
+    log4rs::init_file("logging_config.yaml", Default::default())
+        .unwrap_or_else(|e| panic!("Error initializing logging: {}", e));
+
+    // Log the initialization
+    log::info!("Logger initialized successfully in the backend.");
+    Ok(())
+}
+
+#[server]
 pub async fn save_score(leg_id: u16, score: Score) -> Result<(), ServerFnError> {
+    log::info!("Save score leg_id:{:?}, score:{:?}", leg_id, score);
     DB.with(|f| {
         f.execute(
             "INSERT INTO score (leg_id, throw_order, thrown, remaining) VALUES (?1,?2, ?3, ?4)",

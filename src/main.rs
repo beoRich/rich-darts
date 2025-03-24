@@ -16,6 +16,7 @@ fn main() {
 
 #[component]
 fn App() -> Element {
+    use_server_future(move || backend::backend_initializer())?;
     rsx! {
         // Global app resources
         document::Stylesheet {
