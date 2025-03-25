@@ -1,5 +1,4 @@
 use crate::domain::{Leg, Score};
-//use dioxus::logger::tracing::{info, Level};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 use dotenv::dotenv;
@@ -12,7 +11,7 @@ use tracing::debug;
 thread_local! {
     pub static DB: rusqlite::Connection = {
         dotenv().ok();
-        let url_maybe = env::var("SQLITE_URL");
+        let url_maybe = env::var("DATABASE_URL");
         let conn: String;
         match url_maybe {
             Ok(conn_val) => {
@@ -25,31 +24,6 @@ thread_local! {
         }
 
         let conn = rusqlite:: Connection::open(conn).expect("Failed to open Database");
-        conn.execute_batch (
-            "
-
-                            CREATE TABLE IF NOT EXISTS leg
-                            (
-                                id     INTEGER PRIMARY KEY,
-                                status TEXT
-                            );
-
-
-                            CREATE TABLE IF NOT EXISTS score
-                            (
-                                id          INTEGER PRIMARY KEY,
-                                leg_id      INTEGER,
-                                throw_order INTEGER,
-                                thrown      INTEGER,
-                                remaining   INTEGER,
-                                deleted     BOOLEAN NOT NULL CHECK (deleted in (0, 1)) DEFAULT 0,
-                                FOREIGN KEY (leg_id) REFERENCES leg (id)
-                            );
-
-
-            ",
-        ).expect("Table creation failed");
-
         conn
     };
 }
@@ -79,8 +53,7 @@ pub async fn backend_initializer() -> Result<(), ServerFnError> {
         .encoder(Box::new(PatternEncoder::new(
             "{h({d(%Y-%m-%d %H:%M:%S)(utc)} - {l}: {m}{n})}",
         )))
-        .build(log_file)
-        .unwrap();
+        .build(log_file)?;
 
     let config = Config::builder()
         .appender(Appender::builder().build("stdout", Box::new(stdout)))
@@ -95,11 +68,10 @@ pub async fn backend_initializer() -> Result<(), ServerFnError> {
                 .appender("stdout")
                 .appender("server")
                 .build(LevelFilter::Debug),
-        )
-        .unwrap();
+        )?;
 
     // Log the initialization
-    let handle = log4rs::init_config(config).unwrap();
+    let handle = log4rs::init_config(config)?;
     log::info!("Logger initialized successfully in the backend.");
     Ok(())
 }

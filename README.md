@@ -83,6 +83,17 @@ docker container prune
 
 
 
+# Diesel
+
+## Setup
+ORM requires CLI on developing system
+`cargo binstall diesel`
+
+## Migrations
+1. CREATE: diesel migration generate <migrationName>
+2. RUN: diesel migration run
+3. TEST: diesel migration redo
+
 
 
 

@@ -7,6 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+diesel = { version = "2.2.8", features = ["sqlite", "returning_clauses_for_sqlite_3_35"], optional=true }
 dioxus = { version = "0.6.3", features = ["fullstack", "router"] }
 dioxus-logger = "0.6.2"
 dotenv = "0.15.0"
