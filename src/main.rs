@@ -6,6 +6,7 @@ use components::{DisplayLegs, MainScoreComponent};
 mod backend;
 mod components;
 mod domain;
+mod schema;
 
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
 const CUSTOM_CSS: Asset = asset!("/assets/main.css");
@@ -16,7 +17,7 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    use_server_future(move || backend::backend_initializer())?;
+    use_server_future(move || backend::log_init())?;
     rsx! {
         // Global app resources
         document::Stylesheet {

@@ -1,13 +1,14 @@
 use crate::components::calculations;
 use crate::components::enter_panel::EnterPanel;
 use crate::components::score_display::ScoreDisplay;
-use crate::domain::ErrorMessageMode::CreateNewLeg;
+use crate::domain::ErrorMessageMode::{CreateNewLeg, TechnicalError};
 use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
 use crate::domain::{ErrorMessageMode, Leg, Score, ScoreMessageMode, INIT_SCORE};
 use crate::{backend, Route};
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_logger::tracing::error;
+use crate::backend::leg_exists;
 
 #[component]
 pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
@@ -29,9 +30,10 @@ pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
 
     use_resource(move || async move {
         let leg_val = leg();
-        let leg_exists = backend::leg_exists(leg_val).await.unwrap();
-        if !leg_exists {
-            new_leg_wrapper(leg_val, leg, scores, error_message, score_message).await;
+        let leg_exists = backend::leg_exists(leg_val).await;
+        match leg_exists {
+            Ok(val) if !val => new_leg_wrapper(leg_val, leg, scores, error_message, score_message).await,
+            _ => {}
         }
         let init_score_val = backend::list_score(leg()).await;
         match init_score_val {
@@ -115,17 +117,19 @@ async fn new_leg(
     score_message.set(NewShot);
     score.write().clear();
 
-    leg.set(leg_val);
     let new_leg = Leg {
         id: leg_val,
         status: "New".to_string(),
     };
-    backend::save_leg(new_leg)
-        .await
-        .expect(&format!("Could not save leg {}", leg_val));
-    let db_op_res = backend::save_score(leg_val, INIT_SCORE).await;
-    if db_op_res.is_ok() {
-        score.set(vec![INIT_SCORE]);
+    let res = backend::save_leg(new_leg).await;
+    if res.is_err() {
+        error_message.set(TechnicalError);
+    } else {
+        leg.set(leg_val);
+        let db_op_res = backend::save_score(leg_val, INIT_SCORE).await;
+        if db_op_res.is_ok() {
+            score.set(vec![INIT_SCORE]);
+        }
     }
 }
 
