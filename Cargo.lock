@@ -4117,6 +4117,7 @@ dependencies = [
  "itertools",
  "log",
  "log4rs",
+ "once_cell",
  "rusqlite",
  "serde",
  "tracing",

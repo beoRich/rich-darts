@@ -4,14 +4,43 @@ use dioxus::prelude::{server, ServerFnError};
 use dotenv::dotenv;
 use std::env;
 use tracing::debug;
+use std::sync::Mutex;
+use once_cell::sync::Lazy;
 
 #[cfg(feature = "server")]
-#[rustfmt::skip] 
-#[allow(clippy::unused)]
+use diesel::prelude::*;
+#[cfg(feature = "server")]
+use crate::backend::models::*;
+#[cfg(feature = "server")]
+use crate::schema_manual::*;
+
+#[cfg(feature = "server")]
+pub static DB2: Lazy<Mutex<SqliteConnection>> =
+    Lazy::new(|| {
+    dotenv().ok();
+    let url_maybe = env::var("DATABASE_URL");
+    let database_url: String;
+    match url_maybe {
+        Ok(conn_val) => {
+            database_url = conn_val;
+            log::debug!("Connecting via env to Rusqlite  at {}", database_url);
+        }
+        _ => {
+            panic!("Could not read DB connection")
+        }
+    }
+
+    let conn = SqliteConnection::establish(&database_url).unwrap_or_else(|_| panic!("Error connecting to {}", database_url));
+    Mutex::new(conn)
+    });
+
+
+
+#[cfg(feature = "server")]
 thread_local! {
     pub static DB: rusqlite::Connection = {
         dotenv().ok();
-        let url_maybe = env::var("DATABASE_URL");
+        let url_maybe = env::var("SQLITE_URL");
         let conn: String;
         match url_maybe {
             Ok(conn_val) => {
@@ -27,6 +56,7 @@ thread_local! {
         conn
     };
 }
+
 
 #[server]
 pub async fn save_score(leg_id: u16, score: Score) -> Result<(), ServerFnError> {
@@ -113,11 +143,14 @@ pub async fn leg_exists(leg_id: u16) -> Result<bool, ServerFnError> {
 
 #[server]
 pub async fn save_leg(leg: Leg) -> Result<(), ServerFnError> {
-    DB.with(|f| {
-        f.execute(
-            "INSERT INTO leg (id, status) VALUES (?1,?2)",
-            (&leg.id, &leg.status),
-        )
-    })?;
+    use crate::schema_manual::guard::dartmatch::dsl::*;
+    use crate::schema_manual::guard::dartmatch;
+
+    let new_match = NewMatch::new();
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+    diesel::insert_into(dartmatch::table).values(new_match).returning(DartMatch::as_returning())
+        .get_result(conn_ref).expect("Error saving new Match");
+
     Ok(())
 }

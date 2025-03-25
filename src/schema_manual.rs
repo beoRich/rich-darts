@@ -1,7 +1,7 @@
 // @generated automatically by Diesel CLI.
 
 #[cfg(feature = "server")]
-pub mod table {
+pub mod guard {
 
     diesel::table! {
         dartmatch (id) {
