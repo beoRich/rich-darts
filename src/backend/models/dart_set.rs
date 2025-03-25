@@ -9,3 +9,16 @@ pub struct DartSet {
     pub match_id: i32,
     pub status: String
 }
+
+#[cfg_attr(feature = "server", derive(Insertable))]
+#[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::dartset))]
+pub struct NewSet {
+    pub match_id: i32,
+    pub status: String
+}
+
+impl NewSet {
+    pub(crate) fn new (match_id: i32) -> NewSet {
+        NewSet {status: "ONGOING".to_string(), match_id}
+    }
+}

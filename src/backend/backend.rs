@@ -40,7 +40,7 @@ pub static DB2: Lazy<Mutex<SqliteConnection>> =
 thread_local! {
     pub static DB: rusqlite::Connection = {
         dotenv().ok();
-        let url_maybe = env::var("SQLITE_URL");
+        let url_maybe = env::var("DATABASE_URL");
         let conn: String;
         match url_maybe {
             Ok(conn_val) => {
@@ -143,14 +143,25 @@ pub async fn leg_exists(leg_id: u16) -> Result<bool, ServerFnError> {
 
 #[server]
 pub async fn save_leg(leg: Leg) -> Result<(), ServerFnError> {
-    use crate::schema_manual::guard::dartmatch::dsl::*;
     use crate::schema_manual::guard::dartmatch;
+    use crate::schema_manual::guard::dartset;
+    use crate::schema_manual::guard::leg;
 
-    let new_match = NewMatch::new();
+    let insert_match = NewMatch::new();
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
-    diesel::insert_into(dartmatch::table).values(new_match).returning(DartMatch::as_returning())
+    let match_result = diesel::insert_into(dartmatch::table).values(insert_match)
+        .returning(DartMatch::as_returning())
         .get_result(conn_ref).expect("Error saving new Match");
 
+    let insert_set = NewSet::new(match_result.id);
+    let set_result = diesel::insert_into(dartset::table).values(insert_set)
+        .returning(DartSet::as_returning())
+        .get_result(conn_ref).expect("Error saving new Match");
+
+    let insert_leg = NewLeg::new(match_result.id, leg.id as i32);
+    let leg_result = diesel::insert_into(leg::table).values(insert_leg)
+        .returning(DartLeg::as_returning())
+        .get_result(conn_ref).expect("Error saving new Match");
     Ok(())
 }

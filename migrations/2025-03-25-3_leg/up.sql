@@ -3,6 +3,6 @@ CREATE TABLE leg
 (
     id     INTEGER PRIMARY KEY NOT NULL,
     set_id      INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT ('ONGOING') references statusType(type),
+    status TEXT NOT NULL DEFAULT ('ONGOING'), --references statusType(dart_type),
     FOREIGN KEY (set_id) REFERENCES dartset (id)
 );

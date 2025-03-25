@@ -85,6 +85,11 @@ docker container prune
 
 # Diesel
 
+## Remark
+The choice of diesel was not a good decision since it lacks natural async and the dioxus documentation recommends using
+something else.
+There is diesel-async but it does not support sqlite.
+
 ## Setup
 ORM requires CLI on developing system
 `cargo binstall diesel`

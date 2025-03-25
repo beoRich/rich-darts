@@ -40,8 +40,7 @@ pub mod guard {
     diesel::table! {
         statusType (id) {
             id -> Integer,
-            #[sql_name = "type"]
-            type_ -> Text,
+            dart_type -> Text,
         }
     }
 

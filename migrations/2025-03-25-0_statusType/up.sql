@@ -2,9 +2,9 @@
 CREATE TABLE statusType
 (
     id INTEGER PRIMARY KEY NOT NULL,
-    type      TEXT NOT NULL
+    dart_type      TEXT NOT NULL
 );
 
-insert into statusType(type) values ('ONGOING');
-insert into statusType(type) values ('FINISHED');
-insert into statusType(type) values ('CANCELLED');
+insert into statusType(dart_type) values ('ONGOING');
+insert into statusType(dart_type) values ('FINISHED');
+insert into statusType(dart_type) values ('CANCELLED');
