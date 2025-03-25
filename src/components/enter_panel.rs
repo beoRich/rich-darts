@@ -7,7 +7,7 @@ use dioxus::prelude::*;
 pub fn EnterPanel(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    leg: Signal<u16>,
+    leg_signal: Signal<u16>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
@@ -17,8 +17,8 @@ pub fn EnterPanel(
          id:"EnterPanel",
         margin_left: "10%",
          class:"bg-base-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-x-scroll",
-         NumberFieldError {scores, raw_input, leg, error_message, score_message, allow_score}
-         Buttons {scores, raw_input, leg, error_message, score_message, allow_score}
+         NumberFieldError {scores, raw_input, leg_signal, error_message, score_message, allow_score}
+         Buttons {scores, raw_input, leg_signal, error_message, score_message, allow_score}
      }
     }
 }
@@ -27,7 +27,7 @@ pub fn EnterPanel(
 fn NumberFieldError(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    leg: Signal<u16>,
+    leg_signal: Signal<u16>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
@@ -55,7 +55,7 @@ fn NumberFieldError(
                     onkeypress: move |e| async move {
                             let key = e.key();
                             if key == Key::Enter && allow_score() {
-                                input_wrapper(raw_input, leg, scores, error_message, score_message).await;
+                                input_wrapper(raw_input, leg_signal, scores, error_message, score_message).await;
                             } else if key == Key::Home  {
                                 undo_wrapper(scores, error_message, score_message);
                             };
@@ -84,7 +84,7 @@ fn NumberFieldError(
 fn Buttons(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    leg: Signal<u16>,
+    leg_signal: Signal<u16>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
@@ -99,7 +99,7 @@ fn Buttons(
                     class:"col-span-1 grid ",
                     button {id: "confirmButton",
                         onclick: move |_| async move {
-                                input_wrapper(raw_input, leg, scores, error_message, score_message).await;
+                                input_wrapper(raw_input, leg_signal, scores, error_message, score_message).await;
                         },
                         disabled: if !allow_score() {true},
                         class:"btn btn-soft btn-primary" , "Ok" },
@@ -123,7 +123,7 @@ fn Buttons(
                             onclick: move |_| async move {
                                     let res = backend::get_latest_leg().await;
                                     let new_leg_val = res.map(|val| val +1).unwrap_or(1);
-                                    new_leg_wrapper(new_leg_val, leg, scores, error_message, score_message).await;
+                                    new_leg_wrapper(new_leg_val, leg_signal, scores, error_message, score_message).await;
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
 

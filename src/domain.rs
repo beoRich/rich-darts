@@ -22,6 +22,18 @@ pub struct Leg {
     pub status: String,
 }
 
+#[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
+pub struct Set {
+    pub id: u16,
+    pub status: String,
+}
+
+#[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
+pub struct Match {
+    pub id: u16,
+    pub status: String,
+}
+
 #[derive(Props, PartialEq, Clone)]
 pub struct ScoreMessage {
     pub score_message_mode: ScoreMessageMode,

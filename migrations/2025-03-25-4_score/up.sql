@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS score
     thrown      INTEGER NOT NULL,
     remaining   INTEGER  NOT NULL,
     deleted     BOOLEAN NOT NULL CHECK (deleted in (0, 1)) DEFAULT 0,
-    FOREIGN KEY (leg_id) REFERENCES leg (id)
+    FOREIGN KEY (leg_id) REFERENCES dartleg (id)
 );

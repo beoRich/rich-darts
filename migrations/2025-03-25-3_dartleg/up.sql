@@ -1,5 +1,5 @@
 -- Your SQL goes here
-CREATE TABLE leg
+CREATE TABLE dartleg
 (
     id     INTEGER PRIMARY KEY NOT NULL,
     set_id      INTEGER NOT NULL,

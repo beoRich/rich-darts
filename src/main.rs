@@ -2,6 +2,8 @@ use dioxus::prelude::*;
 
 use components::Test;
 use components::{DisplayLegs, MainScoreComponent};
+use crate::components::DisplaySets;
+use crate::components::DisplayMatches;
 
 mod backend;
 mod components;
@@ -34,11 +36,18 @@ fn App() -> Element {
 
 #[derive(Routable, Clone, PartialEq)]
 enum Route {
-    #[route("/leg/:legval")]
+    #[route("/score/:legval")]
     ManualLeg { legval: u16 },
 
-    #[route("/leg")]
-    DisplayLegs,
+    #[route("/match/:matchval/:setval")]
+    WrapDisplayLegs{matchval: u16, setval: u16},
+
+    #[route("/match")]
+    DisplayMatches,
+
+    #[route("/match/:matchval")]
+    WrapDisplaySets{matchval: u16},
+
     //todo someday resolve this via redirect
     #[route("/")]
     LatestLeg,
@@ -48,28 +57,47 @@ enum Route {
 }
 
 #[component]
-fn ManualLeg(legval: u16) -> Element {
-    let mut leg = use_signal(|| 0);
-    leg.set(legval);
+fn WrapDisplayLegs(matchval: u16, setval: u16) -> Element {
+    let mut set_signal = use_signal(|| 0);
+    set_signal.set(setval);
+
     rsx! {
-        MainScoreComponent {leg}
+        DisplayLegs {set_signal}
+    }
+}
+
+#[component]
+fn WrapDisplaySets(matchval: u16) -> Element {
+    let mut signal = use_signal(|| 0);
+    signal.set(matchval);
+    rsx! {
+        DisplaySets {match_signal: signal}
+    }
+}
+
+#[component]
+fn ManualLeg(legval: u16) -> Element {
+    let mut leg_signal = use_signal(|| 0);
+    leg_signal.set(legval);
+    rsx! {
+        MainScoreComponent {leg_signal}
     }
 }
 
 #[component]
 fn LatestLeg() -> Element {
-    let mut leg = use_signal(|| 0);
+    let mut leg_signal = use_signal(|| 0);
     let mut init_leg_db = use_server_future(backend::get_latest_leg)?.suspend()?;
     use_resource(move || {
         let init_leg_db_clone = init_leg_db.clone();
         async move {
             let init_leg_val = init_leg_db_clone();
             if init_leg_val.is_ok() {
-                leg.set(init_leg_val.clone().unwrap());
+                leg_signal.set(init_leg_val.clone().unwrap());
             }
         }
     });
     rsx! {
-        MainScoreComponent {leg}
+        MainScoreComponent {leg_signal}
     }
 }

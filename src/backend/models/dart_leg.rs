@@ -2,7 +2,7 @@
 use diesel::prelude::*;
 
 #[cfg_attr(feature = "server", derive(Queryable, Selectable))]
-#[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::leg))]
+#[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::dartleg))]
 #[cfg_attr(feature = "server", diesel(check_for_backend(diesel::sqlite::Sqlite)))]
 pub struct DartLeg {
     pub id: i32,
@@ -11,7 +11,7 @@ pub struct DartLeg {
 }
 
 #[cfg_attr(feature = "server", derive(Insertable))]
-#[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::leg))]
+#[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::dartleg))]
 pub struct NewLeg {
     pub id: i32,
     pub set_id: i32,

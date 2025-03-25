@@ -11,7 +11,7 @@ use dioxus_logger::tracing::error;
 use crate::backend::leg_exists;
 
 #[component]
-pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
+pub fn MainScoreComponent(leg_signal: Signal<u16>) -> Element {
     let mut raw_input = use_signal(|| "".to_string());
     let mut scores = use_signal(|| vec![]);
 
@@ -29,13 +29,13 @@ pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
     });
 
     use_resource(move || async move {
-        let leg_val = leg();
+        let leg_val = leg_signal();
         let leg_exists = backend::leg_exists(leg_val).await;
         match leg_exists {
-            Ok(val) if !val => new_leg_wrapper(leg_val, leg, scores, error_message, score_message).await,
+            Ok(val) if !val => new_leg_wrapper(leg_val, leg_signal, scores, error_message, score_message).await,
             _ => {}
         }
-        let init_score_val = backend::list_score(leg()).await;
+        let init_score_val = backend::list_score(leg_signal()).await;
         match init_score_val {
             Ok(val) if !val.is_empty() => scores.set(val),
             _ => error_message.set(CreateNewLeg),
@@ -52,15 +52,17 @@ pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
           class:"breadcrumbs text-sm",
           ul {
                     li {
-                        Link {to: Route::DisplayLegs {}, class:"text-xl", "Leg"}
+                        "todo"
+                        //Link {to: Route::DisplayLegs {}, class:"text-xl", "Leg"}
                     },
                     li {
-                        Link {to: Route::ManualLeg {legval: leg()}, class:"text-xl", {leg().to_string()}}
+                        "todo"
+                        //Link {to: Route::ManualLeg {legval: leg_signal()}, class:"text-xl", {leg_signal().to_string()}}
                     }
                 },
         }
 
-            EnterPanel {scores, raw_input, leg, error_message, score_message, allow_score}
+            EnterPanel {scores, raw_input, leg_signal, error_message, score_message, allow_score}
             ScoreDisplay {scores}
         }
     }
@@ -68,12 +70,12 @@ pub fn MainScoreComponent(leg: Signal<u16>) -> Element {
 
 pub async fn input_wrapper(
     mut raw_input: Signal<String>,
-    leg: Signal<u16>,
+    leg_signal: Signal<u16>,
     score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) {
-    let (error_message_mode) = input_changed(leg, score, raw_input, score_message).await;
+    let (error_message_mode) = input_changed(leg_signal, score, raw_input, score_message).await;
     if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
         raw_input.set(" ".to_string());
@@ -96,19 +98,19 @@ pub fn undo_wrapper(
 
 pub async fn new_leg_wrapper(
     leg_val: u16,
-    leg: Signal<u16>,
+    leg_signal: Signal<u16>,
     score: Signal<Vec<Score>>,
     error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) {
-    new_leg(leg_val, leg, score, error_message, score_message).await;
+    new_leg(leg_val, leg_signal, score, error_message, score_message).await;
     document::eval(&"document.getElementById('numberField').value = ' '".to_string());
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 
 async fn new_leg(
     leg_val: u16,
-    mut leg: Signal<u16>,
+    mut leg_signal: Signal<u16>,
     mut score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
@@ -125,7 +127,7 @@ async fn new_leg(
     if res.is_err() {
         error_message.set(TechnicalError);
     } else {
-        leg.set(leg_val);
+        leg_signal.set(leg_val);
         let db_op_res = backend::save_score(leg_val, INIT_SCORE).await;
         if db_op_res.is_ok() {
             score.set(vec![INIT_SCORE]);
@@ -154,14 +156,14 @@ fn undo_last_score(
 }
 
 async fn input_changed(
-    mut leg: Signal<u16>,
+    mut leg_signal: Signal<u16>,
     mut score: Signal<Vec<Score>>,
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>,
 ) -> ErrorMessageMode {
     let score_message_mode = score_message();
     let result = input_ref.read().parse();
-    let leg_val = leg();
+    let leg_val = leg_signal();
     match result {
         Ok(val) => {
             if calculations::valid_thrown(val) {

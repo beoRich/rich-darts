@@ -4,6 +4,14 @@
 pub mod guard {
 
     diesel::table! {
+        dartleg (id) {
+            id -> Integer,
+            set_id -> Integer,
+            status -> Text,
+        }
+    }
+
+    diesel::table! {
         dartmatch (id) {
             id -> Integer,
             status -> Text,
@@ -14,14 +22,6 @@ pub mod guard {
         dartset (id) {
             id -> Integer,
             match_id -> Integer,
-            status -> Text,
-        }
-    }
-
-    diesel::table! {
-        leg (id) {
-            id -> Integer,
-            set_id -> Integer,
             status -> Text,
         }
     }
@@ -44,9 +44,9 @@ pub mod guard {
         }
     }
 
+    diesel::joinable!(dartleg -> dartset (set_id));
     diesel::joinable!(dartset -> dartmatch (match_id));
-    diesel::joinable!(leg -> dartset (set_id));
-    diesel::joinable!(score -> leg (leg_id));
+    diesel::joinable!(score -> dartleg (leg_id));
 
-    diesel::allow_tables_to_appear_in_same_query!(dartmatch, dartset, leg, score, statusType,);
+    diesel::allow_tables_to_appear_in_same_query!(dartleg, dartmatch, dartset, score, statusType,);
 }

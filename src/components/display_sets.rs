@@ -1,18 +1,20 @@
-use crate::domain::{Leg, INIT_SCORE};
+use crate::domain::{Leg, Set, INIT_SCORE};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
+use crate::components::main_score_component::new_leg_wrapper;
+use crate::domain::ErrorMessageMode::CreateNewLeg;
 
 #[component]
-pub fn DisplayLegs(set_signal: Signal<u16>) -> Element {
-    let mut legs = use_signal(|| vec![]);
+pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
+    let mut sets = use_signal(|| vec![]);
 
     use_resource(move || async move {
-        let val = set_signal();
-        let res = backend::list_leg(val as i32).await;
+        let match_val = match_signal();
+        let res = backend::list_set(match_val as i32).await;
         match res {
-            Ok(val) if !val.is_empty() => legs.set(val),
+            Ok(val) if !val.is_empty() => sets.set(val),
             _ => {}
         };
     });
@@ -20,18 +22,18 @@ pub fn DisplayLegs(set_signal: Signal<u16>) -> Element {
     rsx! {
 
         div {
-            id: "DisplayLegDiv",
+            id: "DisplaySetDiv",
             div {
-                    LegTable{legs}
+                    SetTable{sets}
             }
 
-                        button {id: "newLegButton",
+                        button {id: "newSetButton",
                             onclick: move |_| async move {
                                     let res = backend::get_latest_leg().await;
                                     let new_leg_val = res.map(|val| val +1).unwrap_or(1);
-                                    new_leg(new_leg_val, legs).await;
+                                    //new_leg(new_leg_val, sets).await;
                             },
-                            class:"btn btn-soft btn-info" , "New Leg" },
+                            class:"btn btn-soft btn-info" , "New Set" },
 
             }
 
@@ -51,7 +53,7 @@ async fn new_leg(leg_val: u16, mut legs: Signal<Vec<Leg>>) {
 }
 
 #[component]
-pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
+pub fn SetTable(sets: Signal<Vec<Set>>) -> Element {
     //todo coalesce into generic with score_display
     rsx! {
       div {
@@ -79,7 +81,7 @@ pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
                     }
                     tbody {
                         id: "numbers-body",
-                        for (i, a) in legs().into_iter().rev().enumerate() {
+                        for (i, a) in sets().into_iter().rev().enumerate() {
                             tr {
                                     td {
                                         class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
