@@ -6,7 +6,7 @@ use components::{DisplayLegs, MainScoreComponent};
 mod backend;
 mod components;
 mod domain;
-mod schema;
+mod schema_manual;
 
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
 const CUSTOM_CSS: Asset = asset!("/assets/main.css");

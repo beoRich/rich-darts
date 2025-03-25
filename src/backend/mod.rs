@@ -1,6 +1,8 @@
 mod backend;
 mod logger;
-mod darts_match;
+mod dart_match;
+mod dart_set;
+mod dart_leg;
 
 pub use logger::log_init;
 pub use backend::get_latest_leg;

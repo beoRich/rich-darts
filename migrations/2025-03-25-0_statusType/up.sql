@@ -1,8 +1,8 @@
 -- Your SQL goes here
 CREATE TABLE statusType
 (
-    id INTEGER PRIMARY KEY,
-    type      TEXT
+    id INTEGER PRIMARY KEY NOT NULL,
+    type      TEXT NOT NULL
 );
 
 insert into statusType(type) values ('ONGOING');
