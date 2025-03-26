@@ -80,6 +80,24 @@ docker container prune
 
 
 
+# Diesel
+
+## Remark
+The choice of diesel was not a good decision since it lacks natural async and the dioxus documentation recommends using
+something else.
+There is diesel-async but it does not support sqlite.
+
+## Setup
+ORM requires CLI on developing system
+`cargo binstall diesel`
+
+## Migrations
+1. CREATE: diesel migration generate <migrationName>
+2. RUN without schemaFile : diesel migration run --no-generate-schema (since diesel is locked to backend we can't use the default schema generation of diesel)
+or 
+3.  RUN with schemaFile: diesel migration run -> copy entries to from schema.rs -> schema_manual.rs
+3. TEST: diesel migration redo
+
 
 
 

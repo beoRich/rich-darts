@@ -1,13 +1,16 @@
 use crate::backend;
-use crate::components::main_score_component::{input_wrapper, new_leg_wrapper, undo_wrapper};
-use crate::domain::{ErrorMessageMode, Score, ScoreMessageMode};
+use crate::domain::{ErrorMessageMode, IdOrder, Score, ScoreMessageMode, INIT_SCORE};
 use dioxus::prelude::*;
+use crate::components::calculations;
+use crate::domain::ErrorMessageMode::TechnicalError;
+use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
 
 #[component]
 pub fn EnterPanel(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    leg: Signal<u16>,
+    set_signal: Signal<IdOrder>,
+    leg_signal: Signal<IdOrder>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
@@ -17,8 +20,8 @@ pub fn EnterPanel(
          id:"EnterPanel",
         margin_left: "10%",
          class:"bg-base-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-x-scroll",
-         NumberFieldError {scores, raw_input, leg, error_message, score_message, allow_score}
-         Buttons {scores, raw_input, leg, error_message, score_message, allow_score}
+         NumberFieldError {scores, raw_input, leg_signal, error_message, score_message, allow_score}
+         Buttons {scores, raw_input, set_signal, leg_signal, error_message, score_message, allow_score}
      }
     }
 }
@@ -27,7 +30,7 @@ pub fn EnterPanel(
 fn NumberFieldError(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    leg: Signal<u16>,
+    leg_signal:Signal<IdOrder>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
@@ -55,7 +58,7 @@ fn NumberFieldError(
                     onkeypress: move |e| async move {
                             let key = e.key();
                             if key == Key::Enter && allow_score() {
-                                input_wrapper(raw_input, leg, scores, error_message, score_message).await;
+                                input_wrapper(raw_input, leg_signal, scores, error_message, score_message).await;
                             } else if key == Key::Home  {
                                 undo_wrapper(scores, error_message, score_message);
                             };
@@ -84,7 +87,8 @@ fn NumberFieldError(
 fn Buttons(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    leg: Signal<u16>,
+    set_signal:Signal<IdOrder>,
+    leg_signal: Signal<IdOrder>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
@@ -99,7 +103,7 @@ fn Buttons(
                     class:"col-span-1 grid ",
                     button {id: "confirmButton",
                         onclick: move |_| async move {
-                                input_wrapper(raw_input, leg, scores, error_message, score_message).await;
+                                input_wrapper(raw_input, leg_signal, scores, error_message, score_message).await;
                         },
                         disabled: if !allow_score() {true},
                         class:"btn btn-soft btn-primary" , "Ok" },
@@ -121,9 +125,7 @@ fn Buttons(
                         class:"col-start-8",
                         button {id: "newLegButton",
                             onclick: move |_| async move {
-                                    let res = backend::get_latest_leg().await;
-                                    let new_leg_val = res.map(|val| val +1).unwrap_or(1);
-                                    new_leg_wrapper(new_leg_val, leg, scores, error_message, score_message).await;
+                                    new_leg_wrapper(set_signal().id, leg_signal, scores, error_message, score_message).await;
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
 
@@ -132,4 +134,151 @@ fn Buttons(
         }
 
     }
+}
+async fn input_wrapper(
+    mut raw_input: Signal<String>,
+    leg_signal: Signal<IdOrder>,
+    score: Signal<Vec<Score>>,
+    mut error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+) {
+    let (error_message_mode) = input_changed(leg_signal, score, raw_input, score_message).await;
+    if error_message_mode == ErrorMessageMode::None {
+        document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+        raw_input.set(" ".to_string());
+    }
+    error_message.set(error_message_mode);
+    document::eval(&"document.getElementById('numberField').select()".to_string());
+}
+
+fn undo_wrapper(
+    score: Signal<Vec<Score>>,
+    error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+) {
+    let last_score = undo_last_score(score, error_message, score_message);
+    document::eval(&format!(
+        "document.getElementById('numberField').value = '{last_score}'"
+    ));
+    document::eval(&"document.getElementById('numberField').select()".to_string());
+}
+
+
+async fn new_leg_wrapper(
+    set_val: u16,
+    leg_signal: Signal<IdOrder>,
+    score: Signal<Vec<Score>>,
+    error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+) {
+    new_leg(set_val, leg_signal, score, error_message, score_message).await;
+    document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+    document::eval(&"document.getElementById('numberField').select()".to_string());
+}
+
+async fn new_leg(
+    set_val: u16,
+    mut leg_signal: Signal<IdOrder>,
+    mut score: Signal<Vec<Score>>,
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
+) {
+    error_message.set(ErrorMessageMode::None);
+    score_message.set(NewShot);
+    score.write().clear();
+
+    let new_leg_res = backend::new_leg_init_score(set_val as i32).await;
+
+    match new_leg_res {
+        Ok(new_leg) => {
+            leg_signal.set(IdOrder { id: new_leg.id, order: new_leg.leg_order });
+            score.set(vec![INIT_SCORE]);
+        },
+        _ => error_message.set(TechnicalError)
+    }
+}
+
+fn undo_last_score(
+    mut score: Signal<Vec<Score>>,
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
+) -> u16 {
+    error_message.set(ErrorMessageMode::None);
+    let generational_ref = score.read();
+    let last_score = generational_ref.last();
+    match last_score {
+        Some(val) => {
+            let last_thrown = val.thrown;
+            score_message.set(UndoLastShot {
+                last_score: last_thrown,
+            });
+            last_thrown
+        }
+        None => 0,
+    }
+}
+
+async fn input_changed(
+    mut leg_signal: Signal<IdOrder>,
+    mut score: Signal<Vec<Score>>,
+    input_ref: Signal<String>,
+    mut score_message: Signal<ScoreMessageMode>,
+) -> ErrorMessageMode {
+    let score_message_mode = score_message();
+    let result = input_ref.read().parse();
+    let leg_val = leg_signal();
+    match result {
+        Ok(val) => {
+            if calculations::valid_thrown(val) {
+                let mut last = get_last(&mut score);
+                let next_throw_order: u16;
+                {
+                    match score_message_mode {
+                        UndoLastShot { last_score: _ } => {
+                            score.write().pop();
+                            score_message.set(NewShot);
+                            next_throw_order = last.throw_order;
+                            let db_op_res =
+                                backend::delete_score_by_order(leg_val.id, next_throw_order).await;
+                            if db_op_res.is_err() {
+                                //todo error conversion between db_op_res ServerFnError -> TechnicalError
+                                return ErrorMessageMode::TechnicalError;
+                            }
+                            last = get_snd_last(&mut score);
+                        }
+                        NewShot => {
+                            next_throw_order = last.throw_order + 1;
+                        }
+                        LegFinished => return (ErrorMessageMode::LegAlreadyFinished),
+                    }
+                }
+                let new_score = calculations::calculate_remaining(last, val, next_throw_order);
+                let db_op_res = backend::save_score(leg_val.id, new_score.clone()).await;
+                if db_op_res.is_ok() {
+                    if (&new_score).remaining == 0 {
+                        score_message.set(LegFinished)
+                    }
+                    score.write().push(new_score);
+                    return ErrorMessageMode::None;
+                }
+                //todo error conversion between db_op_res ServerFnError -> TechnicalError
+                ErrorMessageMode::TechnicalError
+            } else {
+                ErrorMessageMode::NotADartsNumber
+            }
+        }
+        Err(_) => ErrorMessageMode::NotANumber,
+    }
+}
+
+fn get_last(score: &mut Signal<Vec<Score>>) -> Score {
+    score.read().last().unwrap().to_owned()
+}
+
+fn get_snd_last(score: &mut Signal<Vec<Score>>) -> Score {
+    let generational_ref = score.read();
+    generational_ref
+        .get(generational_ref.len() - 1)
+        .unwrap()
+        .to_owned()
 }

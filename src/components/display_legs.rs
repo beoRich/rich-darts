@@ -1,62 +1,73 @@
-use crate::domain::{Leg, INIT_SCORE};
+use crate::domain::{IdOrder, Leg, INIT_SCORE};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
+use tracing::debug;
+use crate::components::breadcrumb::BreadCrumbComponent;
 
 #[component]
-pub fn DisplayLegs() -> Element {
-    let mut legs = use_signal(|| vec![]);
-    let mut init_leg_db = use_server_future(backend::list_leg)?.suspend()?;
-    use_resource(move || {
-        let init_leg_db_clone = init_leg_db.clone();
-        async move {
-            match init_leg_db_clone() {
-                Ok(val) => legs.set(val),
-                _ => {}
-            }
-        }
+pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<IdOrder>) -> Element {
+
+    debug!("{:?}", set_signal());
+    let mut legs_signal = use_signal(|| vec![]);
+
+    use_resource(move || async move {
+        let res = backend::list_leg(set_signal().id as i32).await;
+        match res {
+            Ok(val) if !val.is_empty() => legs_signal.set(val),
+            _ => {}
+        };
     });
+
     rsx! {
 
         div {
-            id: "DisplayLegDiv",
+            id: "All",
+            class: "container-self",
+
+
             div {
-                    LegTable{legs}
-            }
+                BreadCrumbComponent {match_signal, set_signal, leg_signal: None}
+
+
+                div {
+                    LegTable{match_signal, set_signal, legs_signal}
+                }
 
                         button {id: "newLegButton",
                             onclick: move |_| async move {
-                                    let res = backend::get_latest_leg().await;
-                                    let new_leg_val = res.map(|val| val +1).unwrap_or(1);
-                                    new_leg(new_leg_val, legs).await;
+                                    let test = new_leg(set_signal, legs_signal).await;
+                                    debug!("{:?}", test.err());
+
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
 
+
             }
 
-    }
+        }
+   }
+
 }
 
-async fn new_leg(leg_val: u16, mut legs: Signal<Vec<Leg>>) {
-    let new_leg = Leg {
-        id: leg_val,
-        status: "New".to_string(),
-    };
-    legs.push(new_leg.clone());
-    backend::save_leg(new_leg)
-        .await
-        .expect(&format!("Could not save leg {}", leg_val));
-    let _ = backend::save_score(leg_val, INIT_SCORE).await;
+async fn new_leg(set_signal: Signal<IdOrder>, mut legs_signal: Signal<Vec<Leg>>) -> Result<(), ServerFnError>{
+    let new_leg = backend::new_leg_init_score(set_signal().id as i32).await?;
+    legs_signal.push(new_leg);
+    Ok(())
 }
 
 #[component]
-pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
-    //todo coalesce into generic with score_display
+pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, legs_signal: Signal<Vec<Leg>>) -> Element {
     rsx! {
+
+     div {
+            "List of legs"
+        }
       div {
+
             id:"BottomHalf",
-            class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
+            class:"bg-neutral shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
             div { id: "numbers",
                     class: "table-container",
                 table {
@@ -67,7 +78,7 @@ pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
                                 scope:"col",
                                 style:"white-space: pre; text-align: center;",
                                 class:"text-primary px-6 py-3",
-                                "Id (click me)"
+                                "#Leg (click me)"
                             },
                             th {
                                 scope:"col",
@@ -79,7 +90,7 @@ pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
                     }
                     tbody {
                         id: "numbers-body",
-                        for (i, a) in legs().into_iter().rev().enumerate() {
+                        for (i, a) in legs_signal().into_iter().rev().enumerate() {
                             tr {
                                     td {
                                         class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
@@ -88,7 +99,8 @@ pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
                                         style:"white-space: pre; text-align: center;",
 
                                         li {
-                                            Link {to: Route::ManualLeg {legval: a.id}, {a.id.to_string()}}
+                                            Link {to: Route::WrapDisplayScore {matchval: match_signal(), set_id: set_signal().id,
+                                            leg_id: a.id}, {a.leg_order.to_string()}}
                                         }
 
                                     },
