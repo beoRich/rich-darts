@@ -1,4 +1,4 @@
-use crate::domain::{Leg, Match, Score, Set, INIT_SCORE};
+use crate::domain::{IdOrder, Leg, Match, Score, Set, INIT_SCORE};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 use dotenv::dotenv;
@@ -161,7 +161,7 @@ pub async fn list_matches() -> Result<Vec<Match>, ServerFnError> {
 
 
 #[server]
-pub async fn get_latest_leg() -> Result<Option<(u16, Leg)>, ServerFnError> {
+pub async fn get_latest_leg() -> Result<Option<(IdOrder, Leg)>, ServerFnError> {
     use crate::schema_manual::guard::dartleg::dsl::*;
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
@@ -169,8 +169,33 @@ pub async fn get_latest_leg() -> Result<Option<(u16, Leg)>, ServerFnError> {
     let leg_result = diesel::QueryDsl::order(dartleg, id.desc()).first::<DartLeg>(conn_ref)?;
     let leg = Leg{id: leg_result.id as u16, status: leg_result.status, leg_order: leg_result.leg_order as u16};
 
-    Ok(Some((leg_result.set_id as u16, leg)))
+    //todo fix
+    Ok(Some((IdOrder{id: leg_result.set_id as u16, order:leg_result.set_id as u16 }, leg)))
 }
+
+#[server]
+pub async fn get_set_by_id(id_input: i32) -> Result<Set, ServerFnError> {
+    use crate::schema_manual::guard::dartset::dsl::*;
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+
+    let set_result = dartset.find(id_input).first::<DartSet>(conn_ref)?;
+    let set = Set{id: set_result.id as u16, status: set_result.status, set_order: set_result.set_order as u16};
+    Ok(set)
+}
+
+#[server]
+pub async fn get_leg_by_id(id_input: i32) -> Result<Leg, ServerFnError> {
+    use crate::schema_manual::guard::dartleg::dsl::*;
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+
+    let leg_result = dartleg.find(id_input).first::<DartLeg>(conn_ref)?;
+    let leg = Leg{id: leg_result.id as u16, status: leg_result.status, leg_order: leg_result.leg_order as u16};
+
+    Ok(leg)
+}
+
 
 #[server]
 pub async fn create_leg_chain() -> Result<(), ServerFnError> {
@@ -263,13 +288,16 @@ fn new_score_with_connection(conn_ref: &mut SqliteConnection, leg_id_input: i32,
 
 #[server]
 pub async fn new_leg_init_score(set_id_input: i32) -> Result<Leg, ServerFnError> {
+    debug!("{:?}", set_id_input);
     use crate::schema_manual::guard::dartleg;
 
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
 
-    let latest_leg_of_set: Option<DartLeg> = QueryDsl::order(dartleg.filter(set_id.eq(set_id_input)), dartleg::id.desc())
-        .first::<DartLeg>(conn_ref).optional()?;
+    let latest_leg_of_set_test= QueryDsl::order(dartleg.filter(set_id.eq(set_id_input)), dartleg::id.desc())
+        .first::<DartLeg>(conn_ref).optional();
+
+    let latest_leg_of_set = latest_leg_of_set_test.expect("Failed to get latest leg of set");
 
 
     let leg_order_val: u16;
@@ -279,6 +307,8 @@ pub async fn new_leg_init_score(set_id_input: i32) -> Result<Leg, ServerFnError>
     }
 
     let insert_leg = NewDartLeg::new(set_id_input, leg_order_val as i32);
+
+    debug!("{:?}", insert_leg);
     let leg_result = diesel::insert_into(dartleg::table).values(insert_leg)
         .returning(DartLeg::as_returning())
         .get_result(conn_ref)?;

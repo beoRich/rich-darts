@@ -3,10 +3,13 @@ use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
+use tracing::debug;
 use crate::components::breadcrumb::BreadCrumbComponent;
 
 #[component]
 pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<IdOrder>) -> Element {
+
+    debug!("{:?}", set_signal());
     let mut legs_signal = use_signal(|| vec![]);
 
     use_resource(move || async move {
@@ -34,7 +37,9 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<IdOrder>) -> El
 
                         button {id: "newLegButton",
                             onclick: move |_| async move {
-                                    let _ = new_leg(set_signal, legs_signal).await;
+                                    let test = new_leg(set_signal, legs_signal).await;
+                                    debug!("{:?}", test.err());
+
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
 
@@ -62,7 +67,7 @@ pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, legs_sig
       div {
 
             id:"BottomHalf",
-            class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
+            class:"bg-neutral shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
             div { id: "numbers",
                     class: "table-container",
                 table {
@@ -73,7 +78,7 @@ pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, legs_sig
                                 scope:"col",
                                 style:"white-space: pre; text-align: center;",
                                 class:"text-primary px-6 py-3",
-                                "Id (click me)"
+                                "#Leg (click me)"
                             },
                             th {
                                 scope:"col",
@@ -94,7 +99,8 @@ pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, legs_sig
                                         style:"white-space: pre; text-align: center;",
 
                                         li {
-                                            Link {to: Route::WrapDisplayScore {matchval: match_signal(), setval: set_signal().id, legval: a.id}, {a.id.to_string()}}
+                                            Link {to: Route::WrapDisplayScore {matchval: match_signal(), set_id: set_signal().id,
+                                            leg_id: a.id}, {a.leg_order.to_string()}}
                                         }
 
                                     },

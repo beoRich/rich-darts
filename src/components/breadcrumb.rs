@@ -27,7 +27,7 @@ pub fn BreadCrumbComponent(
 
                     if set_signal.is_some() {
                         li {
-                            Link {to: Route::WrapDisplayLegs {matchval: match_signal.unwrap()(), set_order: set_signal.unwrap()().order, set_id: set_signal.unwrap()().id},
+                            Link {to: Route::WrapDisplayLegs {matchval: match_signal.unwrap()(), set_id: set_signal.unwrap()().id},
                             class:"text-xl",
                             {format!{"Set {}", set_signal.unwrap()().order.to_string()}}}
                         }
@@ -35,8 +35,8 @@ pub fn BreadCrumbComponent(
 
                     if leg_signal.is_some() {
                         li {
-                            Link {to: Route::WrapDisplayScore {matchval: match_signal.unwrap()(), setval: set_signal.unwrap()().id,
-                            legval: leg_signal.unwrap()().id
+                            Link {to: Route::WrapDisplayScore {matchval: match_signal.unwrap()(), set_id: set_signal.unwrap()().id,
+                            leg_id: leg_signal.unwrap()().id
                         },
                             class:"text-xl",
                             {format!{"Leg {}", leg_signal.unwrap()().order.to_string()}}}

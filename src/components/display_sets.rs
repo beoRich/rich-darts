@@ -3,6 +3,7 @@ use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
+use tracing::debug;
 use crate::components::breadcrumb::BreadCrumbComponent;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 
@@ -55,6 +56,7 @@ async fn new_set(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>
 
 #[component]
 pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>) -> Element {
+    debug!("{:?}", sets_signal());
     rsx! {
 
      div {
@@ -74,7 +76,7 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
                                 scope:"col",
                                 style:"white-space: pre; text-align: center;",
                                 class:"text-primary px-6 py-3",
-                                "Nr (click me)"
+                                "#Set (click me)"
                             },
                             th {
                                 scope:"col",
@@ -95,7 +97,7 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
                                         style:"white-space: pre; text-align: center;",
 
                                         li {
-                                            Link {to: Route::WrapDisplayLegs {matchval: match_signal(),set_order:  a.set_order, set_id: a.id}, {a.set_order.to_string()}}
+                                            Link {to: Route::WrapDisplayLegs {matchval: match_signal(),set_id: a.id}, {a.set_order.to_string()}}
                                         }
 
                                     },

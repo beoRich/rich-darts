@@ -14,3 +14,5 @@ pub use backend::new_set;
 pub use backend::new_leg_init_score;
 pub use backend::list_score;
 pub use backend::delete_score_by_order;
+pub use backend::get_leg_by_id;
+pub use backend::get_set_by_id;
