@@ -213,3 +213,17 @@ pub async fn new_match() -> Result<Match, ServerFnError> {
         .get_result(conn_ref)?;
     Ok((Match{id:match_result.id as u16, status:match_result.status}))
 }
+
+#[server]
+pub async fn new_set(match_id_input: i32) -> Result<Set, ServerFnError> {
+    use crate::schema_manual::guard::dartset;
+
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+
+    let insert_set = NewDartSet::new(match_id_input);
+    let set_result = diesel::insert_into(dartset::table).values(insert_set)
+        .returning(DartSet::as_returning())
+        .get_result(conn_ref)?;
+    Ok((Set{id:set_result.id as u16, status:set_result.status}))
+}

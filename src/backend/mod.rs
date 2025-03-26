@@ -10,6 +10,7 @@ pub use backend::list_matches;
 pub use backend::save_leg;
 pub use backend::save_score;
 pub use backend::new_match;
+pub use backend::new_set;
 pub use backend::list_score;
 pub use backend::delete_score_by_order;
 pub use backend::leg_exists;

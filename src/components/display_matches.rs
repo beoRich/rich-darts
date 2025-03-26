@@ -21,6 +21,10 @@ pub fn DisplayMatches() -> Element {
     rsx! {
 
         div {
+            "List of matches"
+        }
+
+        div {
             id: "DisplayMatchDiv",
             div {
                     MatchTable{matches}

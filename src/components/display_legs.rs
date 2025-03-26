@@ -19,6 +19,10 @@ pub fn DisplayLegs(set_signal: Signal<u16>) -> Element {
 
     rsx! {
 
+     div {
+            "List of legs"
+        }
+
         div {
             id: "DisplayLegDiv",
             div {

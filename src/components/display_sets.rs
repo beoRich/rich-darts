@@ -8,13 +8,13 @@ use crate::domain::ErrorMessageMode::CreateNewLeg;
 
 #[component]
 pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
-    let mut sets = use_signal(|| vec![]);
+    let mut sets_signal = use_signal(|| vec![]);
 
     use_resource(move || async move {
         let match_val = match_signal();
         let res = backend::list_set(match_val as i32).await;
         match res {
-            Ok(val) if !val.is_empty() => sets.set(val),
+            Ok(val) if !val.is_empty() => sets_signal.set(val),
             _ => {}
         };
     });
@@ -24,14 +24,12 @@ pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
         div {
             id: "DisplaySetDiv",
             div {
-                    SetTable{sets}
+                    SetTable{match_signal, sets_signal}
             }
 
                         button {id: "newSetButton",
                             onclick: move |_| async move {
-                                    let res = backend::get_latest_leg().await;
-                                    let new_leg_val = res.map(|val| val +1).unwrap_or(1);
-                                    //new_leg(new_leg_val, sets).await;
+                                    let _ = new_set(match_signal, sets_signal).await;
                             },
                             class:"btn btn-soft btn-info" , "New Set" },
 
@@ -40,22 +38,22 @@ pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
     }
 }
 
-async fn new_leg(leg_val: u16, mut legs: Signal<Vec<Leg>>) {
-    let new_leg = Leg {
-        id: leg_val,
-        status: "New".to_string(),
-    };
-    legs.push(new_leg.clone());
-    backend::save_leg(new_leg)
-        .await
-        .expect(&format!("Could not save leg {}", leg_val));
-    let _ = backend::save_score(leg_val, INIT_SCORE).await;
+async fn new_set(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>) ->  Result<(), ServerFnError> {
+    let match_id = match_signal();
+    let new_set = backend::new_set(match_id as i32).await?;
+    sets_signal.push(new_set);
+    Ok(())
 }
 
 #[component]
-pub fn SetTable(sets: Signal<Vec<Set>>) -> Element {
+pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>) -> Element {
     //todo coalesce into generic with score_display
     rsx! {
+
+     div {
+            "List of sets"
+        }
+
       div {
             id:"BottomHalf",
             class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
@@ -81,7 +79,7 @@ pub fn SetTable(sets: Signal<Vec<Set>>) -> Element {
                     }
                     tbody {
                         id: "numbers-body",
-                        for (i, a) in sets().into_iter().rev().enumerate() {
+                        for (i, a) in sets_signal().into_iter().rev().enumerate() {
                             tr {
                                     td {
                                         class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
@@ -90,7 +88,7 @@ pub fn SetTable(sets: Signal<Vec<Set>>) -> Element {
                                         style:"white-space: pre; text-align: center;",
 
                                         li {
-                                            Link {to: Route::ManualLeg {legval: a.id}, {a.id.to_string()}}
+                                            Link {to: Route::WrapDisplayLegs {matchval: match_signal(),setval:  a.id}, {a.id.to_string()}}
                                         }
 
                                     },
