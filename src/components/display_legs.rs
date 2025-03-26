@@ -5,14 +5,14 @@ use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
 
 #[component]
-pub fn DisplayLegs(set_signal: Signal<u16>) -> Element {
-    let mut legs = use_signal(|| vec![]);
+pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<u16>) -> Element {
+    let mut legs_signal = use_signal(|| vec![]);
 
     use_resource(move || async move {
         let val = set_signal();
         let res = backend::list_leg(val as i32).await;
         match res {
-            Ok(val) if !val.is_empty() => legs.set(val),
+            Ok(val) if !val.is_empty() => legs_signal.set(val),
             _ => {}
         };
     });
@@ -26,14 +26,12 @@ pub fn DisplayLegs(set_signal: Signal<u16>) -> Element {
         div {
             id: "DisplayLegDiv",
             div {
-                    LegTable{legs}
+                    LegTable{match_signal, set_signal, legs_signal}
             }
 
                         button {id: "newLegButton",
                             onclick: move |_| async move {
-                                    let res = backend::get_latest_leg().await;
-                                    let new_leg_val = res.map(|val| val +1).unwrap_or(1);
-                                    new_leg(new_leg_val, legs).await;
+                                    let _ = new_leg(set_signal, legs_signal).await;
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
 
@@ -42,21 +40,14 @@ pub fn DisplayLegs(set_signal: Signal<u16>) -> Element {
     }
 }
 
-async fn new_leg(leg_val: u16, mut legs: Signal<Vec<Leg>>) {
-    let new_leg = Leg {
-        id: leg_val,
-        status: "New".to_string(),
-    };
-    legs.push(new_leg.clone());
-    backend::save_leg(new_leg)
-        .await
-        .expect(&format!("Could not save leg {}", leg_val));
-    let _ = backend::save_score(leg_val, INIT_SCORE).await;
+async fn new_leg(set_signal: Signal<u16>, mut legs_signal: Signal<Vec<Leg>>) -> Result<(), ServerFnError>{
+    let new_leg = backend::new_leg_init_score(set_signal() as i32).await?;
+    legs_signal.push(new_leg);
+    Ok(())
 }
 
 #[component]
-pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
-    //todo coalesce into generic with score_display
+pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<u16>, legs_signal: Signal<Vec<Leg>>) -> Element {
     rsx! {
       div {
             id:"BottomHalf",
@@ -83,7 +74,7 @@ pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
                     }
                     tbody {
                         id: "numbers-body",
-                        for (i, a) in legs().into_iter().rev().enumerate() {
+                        for (i, a) in legs_signal().into_iter().rev().enumerate() {
                             tr {
                                     td {
                                         class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
@@ -92,7 +83,7 @@ pub fn LegTable(legs: Signal<Vec<Leg>>) -> Element {
                                         style:"white-space: pre; text-align: center;",
 
                                         li {
-                                            Link {to: Route::ManualLeg {legval: a.id}, {a.id.to_string()}}
+                                            Link {to: Route::WrapDisplayScore {matchval: match_signal(), setval: set_signal(), legval: a.id}, {a.id.to_string()}}
                                         }
 
                                     },

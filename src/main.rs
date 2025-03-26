@@ -36,8 +36,8 @@ fn App() -> Element {
 
 #[derive(Routable, Clone, PartialEq)]
 enum Route {
-    #[route("/score/:legval")]
-    ManualLeg { legval: u16 },
+    #[route("/match/:matchval/:setval/:legval")]
+    WrapDisplayScore {matchval: u16, setval: u16, legval: u16 },
 
     #[route("/match/:matchval/:setval")]
     WrapDisplayLegs{matchval: u16, setval: u16},
@@ -56,48 +56,64 @@ enum Route {
     Test,
 }
 
+
+#[component]
+fn WrapDisplayScore(matchval: u16, setval: u16, legval: u16) -> Element {
+    let mut set_signal = use_signal(|| 0);
+    set_signal.set(setval);
+    let mut leg_signal = use_signal(|| 0);
+    leg_signal.set(legval);
+    rsx! {
+        MainScoreComponent {set_signal, leg_signal}
+    }
+}
+
 #[component]
 fn WrapDisplayLegs(matchval: u16, setval: u16) -> Element {
     let mut set_signal = use_signal(|| 0);
     set_signal.set(setval);
 
+    let mut match_signal = use_signal(|| 0);
+    match_signal.set(matchval);
+
     rsx! {
-        DisplayLegs {set_signal}
+        DisplayLegs {match_signal, set_signal}
     }
 }
 
 #[component]
 fn WrapDisplaySets(matchval: u16) -> Element {
-    let mut signal = use_signal(|| 0);
-    signal.set(matchval);
+    let mut match_signal = use_signal(|| 0);
+    match_signal.set(matchval);
     rsx! {
-        DisplaySets {match_signal: signal}
-    }
-}
-
-#[component]
-fn ManualLeg(legval: u16) -> Element {
-    let mut leg_signal = use_signal(|| 0);
-    leg_signal.set(legval);
-    rsx! {
-        MainScoreComponent {leg_signal}
+        DisplaySets {match_signal }
     }
 }
 
 #[component]
 fn LatestLeg() -> Element {
     let mut leg_signal = use_signal(|| 0);
-    let mut init_leg_db = use_server_future(backend::get_latest_leg)?.suspend()?;
+    let mut set_signal = use_signal(|| 0);
+
+    let mut init_latest_leg = use_server_future(backend::get_latest_leg)?.suspend()?;
     use_resource(move || {
-        let init_leg_db_clone = init_leg_db.clone();
+        let latest_leg_signal = init_latest_leg.clone();
         async move {
-            let init_leg_val = init_leg_db_clone();
-            if init_leg_val.is_ok() {
-                leg_signal.set(init_leg_val.clone().unwrap());
+            let latest_leg = latest_leg_signal()?;
+            match latest_leg {
+                Some((set_id, leg)) => {
+                    set_signal.set(set_id);
+                    leg_signal.set(leg.id);
+
+                }
+                _ => (
+                    //todo
+                    )
             }
+            Ok::<(), ServerFnError>(())
         }
     });
     rsx! {
-        MainScoreComponent {leg_signal}
+        MainScoreComponent {set_signal, leg_signal}
     }
 }

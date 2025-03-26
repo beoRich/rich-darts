@@ -7,6 +7,7 @@ use dioxus::prelude::*;
 pub fn EnterPanel(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
+    set_signal: Signal<u16>,
     leg_signal: Signal<u16>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
@@ -18,7 +19,7 @@ pub fn EnterPanel(
         margin_left: "10%",
          class:"bg-base-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-x-scroll",
          NumberFieldError {scores, raw_input, leg_signal, error_message, score_message, allow_score}
-         Buttons {scores, raw_input, leg_signal, error_message, score_message, allow_score}
+         Buttons {scores, raw_input, set_signal, leg_signal, error_message, score_message, allow_score}
      }
     }
 }
@@ -84,6 +85,7 @@ fn NumberFieldError(
 fn Buttons(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
+    set_signal: Signal<u16>,
     leg_signal: Signal<u16>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
@@ -121,9 +123,7 @@ fn Buttons(
                         class:"col-start-8",
                         button {id: "newLegButton",
                             onclick: move |_| async move {
-                                    let res = backend::get_latest_leg().await;
-                                    let new_leg_val = res.map(|val| val +1).unwrap_or(1);
-                                    new_leg_wrapper(new_leg_val, leg_signal, scores, error_message, score_message).await;
+                                    new_leg_wrapper(set_signal(), leg_signal, scores, error_message, score_message).await;
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
 

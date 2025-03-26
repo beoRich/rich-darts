@@ -11,7 +11,7 @@ use dioxus_logger::tracing::error;
 use crate::backend::leg_exists;
 
 #[component]
-pub fn MainScoreComponent(leg_signal: Signal<u16>) -> Element {
+pub fn MainScoreComponent(set_signal: Signal<u16>, leg_signal: Signal<u16>) -> Element {
     let mut raw_input = use_signal(|| "".to_string());
     let mut scores = use_signal(|| vec![]);
 
@@ -29,12 +29,6 @@ pub fn MainScoreComponent(leg_signal: Signal<u16>) -> Element {
     });
 
     use_resource(move || async move {
-        let leg_val = leg_signal();
-        let leg_exists = backend::leg_exists(leg_val).await;
-        match leg_exists {
-            Ok(val) if !val => new_leg_wrapper(leg_val, leg_signal, scores, error_message, score_message).await,
-            _ => {}
-        }
         let init_score_val = backend::list_score(leg_signal()).await;
         match init_score_val {
             Ok(val) if !val.is_empty() => scores.set(val),
@@ -62,7 +56,7 @@ pub fn MainScoreComponent(leg_signal: Signal<u16>) -> Element {
                 },
         }
 
-            EnterPanel {scores, raw_input, leg_signal, error_message, score_message, allow_score}
+            EnterPanel {scores, raw_input, set_signal, leg_signal, error_message, score_message, allow_score}
             ScoreDisplay {scores}
         }
     }
@@ -96,20 +90,21 @@ pub fn undo_wrapper(
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 
+
 pub async fn new_leg_wrapper(
-    leg_val: u16,
+    set_val: u16,
     leg_signal: Signal<u16>,
     score: Signal<Vec<Score>>,
     error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) {
-    new_leg(leg_val, leg_signal, score, error_message, score_message).await;
+    new_leg(set_val, leg_signal, score, error_message, score_message).await;
     document::eval(&"document.getElementById('numberField').value = ' '".to_string());
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 
 async fn new_leg(
-    leg_val: u16,
+    set_val: u16,
     mut leg_signal: Signal<u16>,
     mut score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
@@ -119,19 +114,13 @@ async fn new_leg(
     score_message.set(NewShot);
     score.write().clear();
 
-    let new_leg = Leg {
-        id: leg_val,
-        status: "New".to_string(),
-    };
-    let res = backend::save_leg(new_leg).await;
-    if res.is_err() {
+    let new_leg = backend::new_leg_init_score(set_val as i32).await;
+
+    if new_leg.is_err() {
         error_message.set(TechnicalError);
     } else {
-        leg_signal.set(leg_val);
-        let db_op_res = backend::save_score(leg_val, INIT_SCORE).await;
-        if db_op_res.is_ok() {
-            score.set(vec![INIT_SCORE]);
-        }
+        leg_signal.set(new_leg.unwrap().id);
+        score.set(vec![INIT_SCORE]);
     }
 }
 

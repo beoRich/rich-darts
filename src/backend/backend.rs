@@ -1,4 +1,4 @@
-use crate::domain::{Leg, Match, Score, Set};
+use crate::domain::{Leg, Match, Score, Set, INIT_SCORE};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 use dotenv::dotenv;
@@ -6,14 +6,18 @@ use std::env;
 use tracing::debug;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
+use std::sync::Arc;
 
 #[cfg(feature = "server")]
 mod server_deps {
     pub use diesel::prelude::*;
     pub use crate::backend::models::*;
-    pub use crate::schema_manual::*;
     pub use crate::schema_manual::guard::dartset::match_id;
     pub use crate::schema_manual::guard::dartleg::dsl::dartleg;
+    pub use diesel::sqlite::SqliteConnection;
+    pub use crate::backend::models::DartLeg;
+    pub use diesel::query_dsl::methods::OrderDsl;
+    pub use crate::schema_manual::guard::dartset::dsl::dartset;
 }
 
 #[cfg(feature = "server")]
@@ -137,7 +141,6 @@ pub async fn list_set(match_id_input: i32) -> Result<Vec<Set>, ServerFnError> {
     let sets = sets_db.into_iter().map(|db| Set{id: db.id as u16, status: db.status}).collect();
     Ok(sets)
 }
-
 #[server]
 pub async fn list_matches() -> Result<Vec<Match>, ServerFnError> {
     use crate::schema_manual::guard::dartmatch::dsl::*;
@@ -152,15 +155,17 @@ pub async fn list_matches() -> Result<Vec<Match>, ServerFnError> {
     Ok(matches)
 }
 
+
 #[server]
-pub async fn get_latest_leg() -> Result<u16, ServerFnError> {
-    let res: Option<u16> = DB.with(|f| {
-        let mut stmt = f.prepare("SELECT max(id) from leg")?;
-        stmt.query_row([], |row| row.get(0))
-    })?;
-    res.ok_or(ServerFnError::MissingArg(
-        "Could not find max id".to_string(),
-    ))
+pub async fn get_latest_leg() -> Result<Option<(u16, Leg)>, ServerFnError> {
+    use crate::schema_manual::guard::dartleg::dsl::*;
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+
+    let leg_result = diesel::QueryDsl::order(dartleg, id.desc()).first::<DartLeg>(conn_ref)?;
+    let leg = Leg{id: leg_result.id as u16, status: leg_result.status};
+
+    Ok(Some((leg_result.set_id as u16, leg)))
 }
 
 #[server]
@@ -175,7 +180,8 @@ pub async fn leg_exists(leg_id: u16) -> Result<bool, ServerFnError> {
 }
 
 #[server]
-pub async fn save_leg(leg: Leg) -> Result<(), ServerFnError> {
+pub async fn create_leg_chain() -> Result<(), ServerFnError> {
+    // use later as quickstart from main panel
     use crate::schema_manual::guard::dartmatch;
     use crate::schema_manual::guard::dartset;
     use crate::schema_manual::guard::dartleg;
@@ -186,17 +192,17 @@ pub async fn save_leg(leg: Leg) -> Result<(), ServerFnError> {
     let insert_match = NewDartMatch::new();
     let match_result = diesel::insert_into(dartmatch::table).values(insert_match)
         .returning(DartMatch::as_returning())
-        .get_result(conn_ref).expect("Error saving new Match");
+        .get_result(conn_ref)?;
 
     let insert_set = NewDartSet::new(match_result.id);
     let set_result = diesel::insert_into(dartset::table).values(insert_set)
         .returning(DartSet::as_returning())
-        .get_result(conn_ref).expect("Error saving new Match");
+        .get_result(conn_ref)?;
 
-    let insert_leg = NewLeg::new(match_result.id, leg.id as i32);
+    let insert_leg = NewDartLeg::new(set_result.id);
     let leg_result = diesel::insert_into(dartleg::table).values(insert_leg)
         .returning(DartLeg::as_returning())
-        .get_result(conn_ref).expect("Error saving new Match");
+        .get_result(conn_ref)?;
     Ok(())
 }
 
@@ -226,4 +232,42 @@ pub async fn new_set(match_id_input: i32) -> Result<Set, ServerFnError> {
         .returning(DartSet::as_returning())
         .get_result(conn_ref)?;
     Ok((Set{id:set_result.id as u16, status:set_result.status}))
+}
+
+#[server]
+pub async fn new_score(leg_id_input: i32, score_input: Score) -> Result<(), ServerFnError> {
+
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+
+    new_score_with_connection(conn_ref, leg_id_input, score_input)?;
+    Ok(())
+}
+
+#[cfg(feature = "server")]
+fn new_score_with_connection(conn_ref: &mut SqliteConnection, leg_id_input: i32, score_input: Score) -> Result<(), ServerFnError> {
+    let insert_score = NewDartScore::new(leg_id_input, score_input.throw_order as i32,
+                                         score_input.thrown as i32, score_input.remaining as i32);
+    use crate::schema_manual::guard::score;
+    let _ = diesel::insert_into(score::table).values(insert_score)
+        .returning(DartScore::as_returning())
+        .get_result(conn_ref)?;
+    Ok(())
+}
+
+
+
+#[server]
+pub async fn new_leg_init_score(set_id_input: i32) -> Result<Leg, ServerFnError> {
+    use crate::schema_manual::guard::dartleg;
+
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+
+    let insert_leg = NewDartLeg::new(set_id_input);
+    let leg_result = diesel::insert_into(dartleg::table).values(insert_leg)
+        .returning(DartLeg::as_returning())
+        .get_result(conn_ref)?;
+    new_score_with_connection(conn_ref, leg_result.id, INIT_SCORE)?;
+    Ok((Leg{id: leg_result.id as u16, status: leg_result.status}))
 }
