@@ -3,6 +3,7 @@ use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
+use crate::components::breadcrumb::BreadCrumbComponent;
 use crate::components::main_score_component::new_leg_wrapper;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 
@@ -21,26 +22,29 @@ pub fn DisplayMatches() -> Element {
     rsx! {
 
         div {
-            "List of matches"
-        }
+            id: "All",
+            class: "container-self",
 
-        div {
-            id: "DisplayMatchDiv",
+
             div {
-                    MatchTable{matches}
-            }
+                BreadCrumbComponent {match_signal: None, set_signal: None, leg_signal: None}
 
-                        button {id: "newMatchButton",
-                            onclick: move |_| async move {
-                                    let _ = new_match(matches).await;
-                            },
-                            class:"btn btn-soft btn-info" , "New Match" },
 
-            }
+                div {
+                        MatchTable{matches}
+                }
 
-    }
+                            button {id: "newMatchButton",
+                                onclick: move |_| async move {
+                                        let _ = new_match(matches).await;
+                                },
+                                class:"btn btn-soft btn-info" , "New Match" },
+
+                }
+
+        }
+   }
 }
-
 async fn new_match(mut matches: Signal<Vec<Match>>) ->  Result<(), ServerFnError> {
     let new_match = backend::new_match().await?;
     matches.push(new_match.clone());

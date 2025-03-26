@@ -3,6 +3,7 @@ use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
+use crate::components::breadcrumb::BreadCrumbComponent;
 
 #[component]
 pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<u16>) -> Element {
@@ -19,15 +20,18 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<u16>) -> Elemen
 
     rsx! {
 
-     div {
-            "List of legs"
-        }
-
         div {
-            id: "DisplayLegDiv",
+            id: "All",
+            class: "container-self",
+
+
             div {
+                BreadCrumbComponent {match_signal, set_signal, leg_signal: None}
+
+
+                div {
                     LegTable{match_signal, set_signal, legs_signal}
-            }
+                }
 
                         button {id: "newLegButton",
                             onclick: move |_| async move {
@@ -35,9 +39,12 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<u16>) -> Elemen
                             },
                             class:"btn btn-soft btn-info" , "New Leg" },
 
+
             }
 
-    }
+        }
+   }
+
 }
 
 async fn new_leg(set_signal: Signal<u16>, mut legs_signal: Signal<Vec<Leg>>) -> Result<(), ServerFnError>{
@@ -49,7 +56,12 @@ async fn new_leg(set_signal: Signal<u16>, mut legs_signal: Signal<Vec<Leg>>) -> 
 #[component]
 pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<u16>, legs_signal: Signal<Vec<Leg>>) -> Element {
     rsx! {
+
+     div {
+            "List of legs"
+        }
       div {
+
             id:"BottomHalf",
             class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
             div { id: "numbers",

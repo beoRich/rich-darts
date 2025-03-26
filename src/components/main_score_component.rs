@@ -9,9 +9,10 @@ use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_logger::tracing::error;
 use crate::backend::leg_exists;
+use crate::components::breadcrumb::BreadCrumbComponent;
 
 #[component]
-pub fn MainScoreComponent(set_signal: Signal<u16>, leg_signal: Signal<u16>) -> Element {
+pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<u16>, leg_signal: Signal<u16>) -> Element {
     let mut raw_input = use_signal(|| "".to_string());
     let mut scores = use_signal(|| vec![]);
 
@@ -37,29 +38,27 @@ pub fn MainScoreComponent(set_signal: Signal<u16>, leg_signal: Signal<u16>) -> E
     });
 
     rsx! {
+
         div {
             id: "All",
             class: "container-self",
 
 
-        div {
-          class:"breadcrumbs text-sm",
-          ul {
-                    li {
-                        "todo"
-                        //Link {to: Route::DisplayLegs {}, class:"text-xl", "Leg"}
-                    },
-                    li {
-                        "todo"
-                        //Link {to: Route::ManualLeg {legval: leg_signal()}, class:"text-xl", {leg_signal().to_string()}}
-                    }
-                },
-        }
+            div {
+                BreadCrumbComponent {match_signal, set_signal, leg_signal}
 
-            EnterPanel {scores, raw_input, set_signal, leg_signal, error_message, score_message, allow_score}
-            ScoreDisplay {scores}
+
+                div {
+                    EnterPanel {scores, raw_input, set_signal, leg_signal, error_message, score_message, allow_score}
+                    ScoreDisplay {scores}
+                }
+
+            }
+
         }
-    }
+   }
+
+
 }
 
 pub async fn input_wrapper(

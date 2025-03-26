@@ -59,12 +59,14 @@ enum Route {
 
 #[component]
 fn WrapDisplayScore(matchval: u16, setval: u16, legval: u16) -> Element {
+    let mut match_signal = use_signal(|| 0);
+    match_signal.set(matchval);
     let mut set_signal = use_signal(|| 0);
     set_signal.set(setval);
     let mut leg_signal = use_signal(|| 0);
     leg_signal.set(legval);
     rsx! {
-        MainScoreComponent {set_signal, leg_signal}
+        MainScoreComponent {match_signal, set_signal, leg_signal}
     }
 }
 
@@ -92,6 +94,7 @@ fn WrapDisplaySets(matchval: u16) -> Element {
 
 #[component]
 fn LatestLeg() -> Element {
+    let mut match_signal = use_signal(|| 0);
     let mut leg_signal = use_signal(|| 0);
     let mut set_signal = use_signal(|| 0);
 
@@ -114,6 +117,6 @@ fn LatestLeg() -> Element {
         }
     });
     rsx! {
-        MainScoreComponent {set_signal, leg_signal}
+        MainScoreComponent {match_signal, set_signal, leg_signal}
     }
 }

@@ -3,6 +3,7 @@ use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
+use crate::components::breadcrumb::BreadCrumbComponent;
 use crate::components::main_score_component::new_leg_wrapper;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 
@@ -22,10 +23,17 @@ pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
     rsx! {
 
         div {
-            id: "DisplaySetDiv",
+            id: "All",
+            class: "container-self",
+
+
             div {
+                BreadCrumbComponent {match_signal, set_signal: None, leg_signal: None}
+
+
+                div {
                     SetTable{match_signal, sets_signal}
-            }
+                }
 
                         button {id: "newSetButton",
                             onclick: move |_| async move {
@@ -33,9 +41,10 @@ pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
                             },
                             class:"btn btn-soft btn-info" , "New Set" },
 
-            }
+                }
 
-    }
+        }
+   }
 }
 
 async fn new_set(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>) ->  Result<(), ServerFnError> {
