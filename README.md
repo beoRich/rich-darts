@@ -40,11 +40,8 @@ Locally
 docker run -d --name test -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' -e LOG_URL='/home/server.log' registry.digitalocean.com/rich-registry/rich-darts
 
 3. docker container ls  
-3. docker inspect <containerId>
-4. 
-search for  NetworkSettings.Networks
-or 
-docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <containerId>
+4. docker inspect <containerId> earch for  NetworkSettings.Networks
+or docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <containerId>
 for local IP
 5. webbrowser <localIp>:8080 
 6. stop container: docker container stop test
@@ -75,7 +72,7 @@ Server -> Deployment 7-9
 
 All cmds in order:
 docker pull registry.digitalocean.com/rich-registry/rich-darts
-docker run -d -p 80:8080 -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' registry.digitalocean.com/rich-registry/rich-darts
+docker run -d -p 80:8080 -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' -e LOG_URL='/home/server.log'  registry.digitalocean.com/rich-registry/rich-darts
 docker container prune 
 
 
