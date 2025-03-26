@@ -1,4 +1,4 @@
-use crate::domain::{Leg, INIT_SCORE};
+use crate::domain::{IdOrder, Leg, INIT_SCORE};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
@@ -6,12 +6,11 @@ use dioxus::prelude::*;
 use crate::components::breadcrumb::BreadCrumbComponent;
 
 #[component]
-pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<u16>) -> Element {
+pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<IdOrder>) -> Element {
     let mut legs_signal = use_signal(|| vec![]);
 
     use_resource(move || async move {
-        let val = set_signal();
-        let res = backend::list_leg(val as i32).await;
+        let res = backend::list_leg(set_signal().id as i32).await;
         match res {
             Ok(val) if !val.is_empty() => legs_signal.set(val),
             _ => {}
@@ -47,14 +46,14 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<u16>) -> Elemen
 
 }
 
-async fn new_leg(set_signal: Signal<u16>, mut legs_signal: Signal<Vec<Leg>>) -> Result<(), ServerFnError>{
-    let new_leg = backend::new_leg_init_score(set_signal() as i32).await?;
+async fn new_leg(set_signal: Signal<IdOrder>, mut legs_signal: Signal<Vec<Leg>>) -> Result<(), ServerFnError>{
+    let new_leg = backend::new_leg_init_score(set_signal().id as i32).await?;
     legs_signal.push(new_leg);
     Ok(())
 }
 
 #[component]
-pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<u16>, legs_signal: Signal<Vec<Leg>>) -> Element {
+pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, legs_signal: Signal<Vec<Leg>>) -> Element {
     rsx! {
 
      div {
@@ -95,7 +94,7 @@ pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<u16>, legs_signal:
                                         style:"white-space: pre; text-align: center;",
 
                                         li {
-                                            Link {to: Route::WrapDisplayScore {matchval: match_signal(), setval: set_signal(), legval: a.id}, {a.id.to_string()}}
+                                            Link {to: Route::WrapDisplayScore {matchval: match_signal(), setval: set_signal().id, legval: a.id}, {a.id.to_string()}}
                                         }
 
                                     },

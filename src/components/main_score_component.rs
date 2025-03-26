@@ -3,16 +3,15 @@ use crate::components::enter_panel::EnterPanel;
 use crate::components::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::{CreateNewLeg, TechnicalError};
 use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
-use crate::domain::{ErrorMessageMode, Leg, Score, ScoreMessageMode, INIT_SCORE};
+use crate::domain::{ErrorMessageMode, IdOrder, Leg, Score, ScoreMessageMode, INIT_SCORE};
 use crate::{backend, Route};
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_logger::tracing::error;
-use crate::backend::leg_exists;
 use crate::components::breadcrumb::BreadCrumbComponent;
 
 #[component]
-pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<u16>, leg_signal: Signal<u16>) -> Element {
+pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, leg_signal: Signal<IdOrder>) -> Element {
     let mut raw_input = use_signal(|| "".to_string());
     let mut scores = use_signal(|| vec![]);
 
@@ -30,7 +29,7 @@ pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<u16>, le
     });
 
     use_resource(move || async move {
-        let init_score_val = backend::list_score(leg_signal()).await;
+        let init_score_val = backend::list_score(leg_signal().id).await;
         match init_score_val {
             Ok(val) if !val.is_empty() => scores.set(val),
             _ => error_message.set(CreateNewLeg),
@@ -207,5 +206,3 @@ fn get_snd_last(score: &mut Signal<Vec<Score>>) -> Score {
         .unwrap()
         .to_owned()
 }
-
-fn handle_last() {}

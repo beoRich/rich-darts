@@ -4,6 +4,7 @@ use components::Test;
 use components::{DisplayLegs, MainScoreComponent};
 use crate::components::DisplaySets;
 use crate::components::DisplayMatches;
+use crate::domain::IdOrder;
 
 mod backend;
 mod components;
@@ -39,8 +40,8 @@ enum Route {
     #[route("/match/:matchval/:setval/:legval")]
     WrapDisplayScore {matchval: u16, setval: u16, legval: u16 },
 
-    #[route("/match/:matchval/:setval")]
-    WrapDisplayLegs{matchval: u16, setval: u16},
+    #[route("/match/:matchval/:set_order")]
+    WrapDisplayLegs{matchval: u16, set_id: u16, set_order: u16},
 
     #[route("/match")]
     DisplayMatches,
@@ -71,9 +72,8 @@ fn WrapDisplayScore(matchval: u16, setval: u16, legval: u16) -> Element {
 }
 
 #[component]
-fn WrapDisplayLegs(matchval: u16, setval: u16) -> Element {
-    let mut set_signal = use_signal(|| 0);
-    set_signal.set(setval);
+fn WrapDisplayLegs(matchval: u16, set_id: u16, set_order: u16) -> Element {
+    let mut set_signal = use_signal(|| IdOrder{id: set_id, order: set_order});
 
     let mut match_signal = use_signal(|| 0);
     match_signal.set(matchval);

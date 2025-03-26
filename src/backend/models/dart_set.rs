@@ -7,6 +7,7 @@ use diesel::prelude::*;
 pub struct DartSet {
     pub id: i32,
     pub match_id: i32,
+    pub set_order: i32,
     pub status: String
 }
 
@@ -14,11 +15,12 @@ pub struct DartSet {
 #[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::dartset))]
 pub struct NewDartSet {
     pub match_id: i32,
+    pub set_order: i32,
     pub status: String
 }
 
 impl NewDartSet {
-    pub(crate) fn new (match_id: i32) -> NewDartSet {
-        NewDartSet {status: "ONGOING".to_string(), match_id}
+    pub(crate) fn new (match_id: i32, set_order: i32) -> NewDartSet {
+        NewDartSet {status: "ONGOING".to_string(), match_id, set_order}
     }
 }

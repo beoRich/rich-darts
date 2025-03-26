@@ -1,14 +1,14 @@
 use crate::backend;
 use crate::components::main_score_component::{input_wrapper, new_leg_wrapper, undo_wrapper};
-use crate::domain::{ErrorMessageMode, Score, ScoreMessageMode};
+use crate::domain::{ErrorMessageMode, IdOrder, Score, ScoreMessageMode};
 use dioxus::prelude::*;
 
 #[component]
 pub fn EnterPanel(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    set_signal: Signal<u16>,
-    leg_signal: Signal<u16>,
+    set_signal: Signal<IdOrder>,
+    leg_signal: Signal<IdOrder>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
@@ -28,7 +28,7 @@ pub fn EnterPanel(
 fn NumberFieldError(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    leg_signal: Signal<u16>,
+    leg_signal: Signal<IdOrder>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,

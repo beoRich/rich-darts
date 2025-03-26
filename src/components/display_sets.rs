@@ -4,7 +4,6 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::components::main_score_component::new_leg_wrapper;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 
 #[component]
@@ -56,7 +55,6 @@ async fn new_set(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>
 
 #[component]
 pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>) -> Element {
-    //todo coalesce into generic with score_display
     rsx! {
 
      div {
@@ -65,7 +63,7 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
 
       div {
             id:"BottomHalf",
-            class:"bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
+            class:"bg-neutral shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
             div { id: "numbers",
                     class: "table-container",
                 table {
@@ -76,7 +74,7 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
                                 scope:"col",
                                 style:"white-space: pre; text-align: center;",
                                 class:"text-primary px-6 py-3",
-                                "Id (click me)"
+                                "Nr (click me)"
                             },
                             th {
                                 scope:"col",
@@ -97,7 +95,7 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
                                         style:"white-space: pre; text-align: center;",
 
                                         li {
-                                            Link {to: Route::WrapDisplayLegs {matchval: match_signal(),setval:  a.id}, {a.id.to_string()}}
+                                            Link {to: Route::WrapDisplayLegs {matchval: match_signal(),set_order:  a.set_order, set_id: a.id}, {a.set_order.to_string()}}
                                         }
 
                                     },

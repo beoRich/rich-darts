@@ -9,6 +9,13 @@ pub const INIT_SCORE: Score = Score {
     throw_order: 0,
 };
 
+
+#[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
+pub struct IdOrder {
+    pub id: u16,
+    pub order:u16
+}
+
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Score {
     pub remaining: u16,
@@ -19,12 +26,14 @@ pub struct Score {
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Leg {
     pub id: u16,
+    pub leg_order: u16,
     pub status: String,
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Set {
     pub id: u16,
+    pub set_order: u16,
     pub status: String,
 }
 
