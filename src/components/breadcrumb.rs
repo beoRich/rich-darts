@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use tracing::debug;
 use crate::{backend, Route};
 use crate::domain::{IdOrder, Leg, Set};
 
@@ -6,8 +7,10 @@ use crate::domain::{IdOrder, Leg, Set};
 pub fn BreadCrumbComponent(
     match_signal: Option<Signal<u16>>,
     set_signal: Option<Signal<IdOrder>>,
-    leg_signal: Option<Signal<IdOrder>>,
+    leg_signal: Option<Signal<Leg>>,
 ) -> Element {
+
+    debug!("Breadcrum set_signal {:?}, leg_signal {:?}", set_signal, leg_signal);
     rsx! {
         div {
           class:"breadcrumbs text-sm",
@@ -39,7 +42,7 @@ pub fn BreadCrumbComponent(
                             leg_id: leg_signal.unwrap()().id
                         },
                             class:"text-xl",
-                            {format!{"Leg {}", leg_signal.unwrap()().order.to_string()}}}
+                            {format!{"Leg {}", leg_signal.unwrap()().leg_order.to_string()}}}
                         }
                     }
                 },

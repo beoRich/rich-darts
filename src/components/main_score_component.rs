@@ -12,7 +12,7 @@ use tracing::debug;
 use crate::components::breadcrumb::BreadCrumbComponent;
 
 #[component]
-pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, leg_signal: Signal<IdOrder>) -> Element {
+pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, leg_signal: Signal<Leg>) -> Element {
     debug!("MainScoreComponent set_signal {:?}", set_signal);
     let mut raw_input = use_signal(|| "".to_string());
     let mut scores = use_signal(|| vec![]);
@@ -21,6 +21,12 @@ pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<IdOrder>
     let mut error_message = use_signal(|| ErrorMessageMode::None);
 
     let mut allow_score = use_signal(|| true);
+
+    use_memo(move || {
+        if leg_signal().status == LegFinished.value() {
+            score_message.set(LegFinished)
+        }
+    });
 
     use_memo(move || {
         let allow: bool = { score_message }.read().to_owned() != LegFinished && { error_message }

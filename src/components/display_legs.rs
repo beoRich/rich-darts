@@ -90,26 +90,26 @@ pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, legs_sig
                     }
                     tbody {
                         id: "numbers-body",
-                        for (i, a) in legs_signal().into_iter().rev().enumerate() {
+                        for (nr, leg) in legs_signal().into_iter().rev().enumerate() {
                             tr {
                                     td {
-                                        class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
-                                        class: if i % 2 == 0 && i!=0 {"px-6 py-4 bg-base-200 text-base-content"},
-                                        class: if i % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
+                                        class: if nr == 0 {"px-6 py-4 bg-accent text-accent-content"},
+                                        class: if nr % 2 == 0 && nr!=0 {"px-6 py-4 bg-base-200 text-base-content"},
+                                        class: if nr % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
                                         style:"white-space: pre; text-align: center;",
 
                                         li {
                                             Link {to: Route::WrapDisplayScore {matchval: match_signal(), set_id: set_signal().id,
-                                            leg_id: a.id}, {a.leg_order.to_string()}}
+                                            leg_id: leg.id}, {leg.leg_order.to_string()}}
                                         }
 
                                     },
                                     td {
-                                        class: if i == 0 {"px-6 py-4 bg-accent text-accent-content"},
-                                        class: if i % 2 == 0 && i!=0 {"px-6 py-4 bg-base-200 text-base-content"},
-                                        class: if i % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
+                                        class: if nr == 0 {"px-6 py-4 bg-accent text-accent-content"},
+                                        class: if nr % 2 == 0 && nr!=0 {"px-6 py-4 bg-base-200 text-base-content"},
+                                        class: if nr % 2 == 1 {"px-6 py-4 bg-base-300 text-base-content"},
                                         style:"white-space: pre; text-align: center;",
-                                        {format!("{:>3}", a.status)}
+                                        {format!("{:>3}", leg.status)}
                                     },
                             }
                         }

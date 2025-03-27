@@ -66,24 +66,22 @@ enum Route {
 fn WrapDisplayScore(matchval: u16, set_id: u16, leg_id: u16) -> Element {
     let mut match_signal = use_signal(|| matchval);
 
-    let mut leg: ReadOnlySignal<Option<Result<Leg, ServerFnError>>> =
+    let mut leg_read_only_signal: ReadOnlySignal<Option<Result<Leg, ServerFnError>>> =
         use_server_future(move || backend::api::dart_leg::get_leg_by_id(leg_id as i32))?.value();
     let mut set: ReadOnlySignal<Option<Result<Set, ServerFnError>>> =
         use_server_future(move || backend::api::dart_set::get_set_by_id(set_id as i32))?.value();
 
     debug!("WrapDisplayScore set{:?}", set);
 
-    match (&*leg.read_unchecked(), &*set.read_unchecked()) {
+    match (&*leg_read_only_signal.read_unchecked(), &*set.read_unchecked()) {
         (Some(Ok(leg_val)), Some(Ok(set_val))) => {
             let mut set_signal = use_signal(|| IdOrder {
-                id: leg_id,
+                id: set_val.id,
                 order: set_val.set_order,
             });
-            let mut leg_signal = use_signal(|| IdOrder {
-                id: set_id,
-                order: leg_val.leg_order,
-            });
+            let mut leg_signal = use_signal(|| leg_val.clone());
             rsx! { MainScoreComponent {match_signal, set_signal, leg_signal}}
+
         }
         _ => rsx! { "Error or loading" },
     }
@@ -94,16 +92,14 @@ fn WrapDisplayLegs(matchval: u16, set_id: u16) -> Element {
     debug!("WrapDisplayLegs Set_Id {:?}", set_id);
     let mut set: ReadOnlySignal<Option<Result<Set, ServerFnError>>> =
         use_server_future(move || backend::api::dart_set::get_set_by_id(set_id as i32))?.value();
-    let mut set_signal = use_signal(|| IdOrder { id: 0, order: 0 });
 
     let mut match_signal = use_signal(|| matchval);
+    debug!("WrapDisplayLegs2 Set_Id {:?}", set_id);
+    debug!("WrapDisplayLegs2 matchval {:?}", matchval);
 
     match &*set.read_unchecked() {
         Some(Ok(set_val)) => {
-            set_signal.set(IdOrder {
-                id: set_id,
-                order: set_val.set_order,
-            });
+            let mut set_signal = use_signal(|| IdOrder { id: set_id, order: set_val.set_order });
             rsx! {
                 DisplayLegs {match_signal, set_signal}
             }
@@ -124,15 +120,15 @@ fn WrapDisplaySets(matchval: u16) -> Element {
 #[component]
 fn LatestLeg() -> Element {
 
-    let mut latest_leg_with_set_order: ReadOnlySignal<Option<Result<(IdOrderParent, IdOrder), ServerFnError>>> =
+    let mut latest_leg_with_set_order: ReadOnlySignal<Option<Result<(IdOrderParent, Leg), ServerFnError>>> =
         use_server_future(move || backend::api::dart_leg::get_latest_leg())?.value();
 
     match &*latest_leg_with_set_order.read_unchecked() {
-        Some(Ok((set_id_oder_par_ref, leg_id_order_ref))) => {
+        Some(Ok((set_id_oder_par_ref, leg_ref))) => {
             let set_id_order_par = *set_id_oder_par_ref;
             let mut set_signal = use_signal(|| IdOrder{id: set_id_order_par.id, order: set_id_order_par.order});
             let mut match_signal = use_signal(|| set_id_oder_par_ref.parent_id);
-            let mut leg_signal = use_signal(|| *leg_id_order_ref);
+            let mut leg_signal = use_signal(|| leg_ref.clone());
             rsx! { MainScoreComponent {match_signal, set_signal, leg_signal}}
         }
         _ => rsx! { "Error or loading" },

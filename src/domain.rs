@@ -57,6 +57,21 @@ pub struct ScoreMessage {
 }
 
 #[derive(Clone, PartialEq)]
+pub enum LegStatus {
+    Ongoing,
+    LegFinished,
+}
+
+impl LegStatus {
+    pub fn value(&self) -> String {
+        match self {
+            LegStatus::LegFinished => "Leg finished".to_string(),
+            LegStatus::Ongoing => "Ongoing".to_string(),
+        }
+    }
+}
+
+#[derive(Clone, PartialEq)]
 pub enum ScoreMessageMode {
     NewShot,
     UndoLastShot { last_score: u16 },
