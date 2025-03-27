@@ -1,13 +1,13 @@
 mod backend;
 mod logger;
-mod models;
+mod model;
+pub(crate) mod api;
 
 pub use backend::create_leg_chain;
 pub use backend::delete_score_by_order;
 pub use backend::get_latest_leg;
 pub use backend::get_leg_by_id;
 pub use backend::get_set_by_id;
-pub use backend::list_leg;
 pub use backend::list_matches;
 pub use backend::list_score;
 pub use backend::list_set;

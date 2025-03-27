@@ -13,7 +13,7 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<IdOrder>) -> El
     let mut legs_signal = use_signal(|| vec![]);
 
     use_resource(move || async move {
-        let res = backend::list_leg(set_signal().id as i32).await;
+        let res = backend::api::dart_leg::list_leg(set_signal().id as i32).await;
         match res {
             Ok(val) if !val.is_empty() => legs_signal.set(val),
             _ => {}

@@ -11,8 +11,8 @@ use tracing::debug;
 
 #[cfg(feature = "server")]
 mod server_deps {
-    pub use crate::backend::models::DartLeg;
-    pub use crate::backend::models::*;
+    pub use crate::backend::model::DartLeg;
+    pub use crate::backend::model::*;
     pub use crate::schema_manual::guard::dartleg::dsl::dartleg;
     pub use crate::schema_manual::guard::dartleg::set_id;
     pub use crate::schema_manual::guard::dartmatch::dsl::dartmatch;
@@ -126,28 +126,7 @@ pub async fn list_score(leg_id: u16) -> Result<Vec<Score>, ServerFnError> {
     Ok(scores)
 }
 
-#[server]
-pub async fn list_leg(set_id_input: i32) -> Result<Vec<Leg>, ServerFnError> {
-    use crate::schema_manual::guard::dartleg::dsl::*;
 
-    let mut conn = DB2.lock()?; // Lock to get mutable access
-    let conn_ref = &mut *conn;
-
-    let legs_db = dartleg
-        .filter(set_id.eq(set_id_input))
-        .select(DartLeg::as_select())
-        .load(conn_ref)?;
-
-    let legs = legs_db
-        .into_iter()
-        .map(|db| Leg {
-            id: db.id as u16,
-            status: db.status,
-            leg_order: db.leg_order as u16,
-        })
-        .collect();
-    Ok(legs)
-}
 
 #[server]
 pub async fn list_set(match_id_input: i32) -> Result<Vec<Set>, ServerFnError> {
