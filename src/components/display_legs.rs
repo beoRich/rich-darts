@@ -8,8 +8,8 @@ use crate::components::breadcrumb::BreadCrumbComponent;
 
 #[component]
 pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<IdOrder>) -> Element {
+    debug!("DisplayLegs set_signal {:?}", set_signal);
 
-    debug!("{:?}", set_signal());
     let mut legs_signal = use_signal(|| vec![]);
 
     use_resource(move || async move {

@@ -1,10 +1,10 @@
 use crate::components::DisplayMatches;
 use crate::components::DisplaySets;
-use crate::domain::{IdOrder, Leg, Set};
+use crate::domain::{IdOrder, IdOrderParent, Leg, Set};
 use components::Test;
 use components::{DisplayLegs, MainScoreComponent};
 use dioxus::prelude::*;
-use tracing::debug;
+use tracing::{debug, Id};
 
 mod backend;
 mod components;
@@ -71,22 +71,21 @@ fn WrapDisplayScore(matchval: u16, set_id: u16, leg_id: u16) -> Element {
     let mut set: ReadOnlySignal<Option<Result<Set, ServerFnError>>> =
         use_server_future(move || backend::api::dart_set::get_set_by_id(set_id as i32))?.value();
 
-    let mut set_signal = use_signal(|| IdOrder { id: 0, order: 0 });
-    let mut leg_signal = use_signal(|| IdOrder { id: 0, order: 0 });
+    debug!("WrapDisplayScore set{:?}", set);
 
     match (&*leg.read_unchecked(), &*set.read_unchecked()) {
         (Some(Ok(leg_val)), Some(Ok(set_val))) => {
-            leg_signal.set(IdOrder {
+            let mut set_signal = use_signal(|| IdOrder {
                 id: leg_id,
-                order: leg_val.leg_order,
-            });
-            set_signal.set(IdOrder {
-                id: set_id,
                 order: set_val.set_order,
+            });
+            let mut leg_signal = use_signal(|| IdOrder {
+                id: set_id,
+                order: leg_val.leg_order,
             });
             rsx! { MainScoreComponent {match_signal, set_signal, leg_signal}}
         }
-        _ => rsx! { "Error" },
+        _ => rsx! { "Error or loading" },
     }
 }
 
@@ -124,32 +123,18 @@ fn WrapDisplaySets(matchval: u16) -> Element {
 
 #[component]
 fn LatestLeg() -> Element {
-    let mut match_signal = use_signal(|| 0);
 
-    let mut set_signal: Signal<IdOrder> = use_signal(|| IdOrder { id: 0, order: 0 });
-    let mut leg_signal: Signal<IdOrder> = use_signal(|| IdOrder { id: 0, order: 0 });
+    let mut latest_leg_with_set_order: ReadOnlySignal<Option<Result<(IdOrderParent, IdOrder), ServerFnError>>> =
+        use_server_future(move || backend::api::dart_leg::get_latest_leg())?.value();
 
-    let mut init_latest_leg = use_server_future(backend::api::dart_leg::get_latest_leg)?.suspend()?;
-    use_resource(move || {
-        let latest_leg_signal = init_latest_leg.clone();
-        async move {
-            let latest_leg = latest_leg_signal()?;
-            match latest_leg {
-                Some((set_id_order, leg)) => {
-                    set_signal.set(set_id_order);
-                    leg_signal.set(IdOrder {
-                        id: leg.id,
-                        order: leg.leg_order,
-                    });
-                }
-                _ => (
-                    //todo
-                    ),
-            }
-            Ok::<(), ServerFnError>(())
+    match &*latest_leg_with_set_order.read_unchecked() {
+        Some(Ok((set_id_oder_par_ref, leg_id_order_ref))) => {
+            let set_id_order_par = *set_id_oder_par_ref;
+            let mut set_signal = use_signal(|| IdOrder{id: set_id_order_par.id, order: set_id_order_par.order});
+            let mut match_signal = use_signal(|| set_id_oder_par_ref.parent_id);
+            let mut leg_signal = use_signal(|| *leg_id_order_ref);
+            rsx! { MainScoreComponent {match_signal, set_signal, leg_signal}}
         }
-    });
-    rsx! {
-        MainScoreComponent {match_signal, set_signal, leg_signal}
+        _ => rsx! { "Error or loading" },
     }
 }

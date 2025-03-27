@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 use tracing::debug;
-use crate::domain::{IdOrder, Leg, INIT_SCORE};
+use crate::domain::{IdOrder, IdOrderParent, Leg, INIT_SCORE};
 
 #[cfg(feature = "server")]
 mod server_deps {
@@ -39,26 +39,25 @@ pub async fn list_leg(set_id_input: i32) -> Result<Vec<Leg>, ServerFnError> {
 }
 
 #[server]
-pub async fn get_latest_leg() -> Result<Option<(IdOrder, Leg)>, ServerFnError> {
+pub async fn get_latest_leg() -> Result<(IdOrderParent, IdOrder), ServerFnError> {
     use crate::schema_manual::guard::dartleg::dsl::*;
-    let mut conn = DB2.lock()?; // Lock to get mutable access
+    use crate::schema_manual::guard::dartleg::dsl::id;
+    use crate::schema_manual::guard::dartset::dsl::*;
+    let mut conn = DB2.lock()?;
     let conn_ref = &mut *conn;
 
-    let leg_result = diesel::QueryDsl::order(dartleg, id.desc()).first::<DartLeg>(conn_ref)?;
-    let leg = Leg {
+    let leg_result = QueryDsl::order(dartleg, id.desc()).first::<DartLeg>(conn_ref)?;
+    let leg_id_order = IdOrder {
         id: leg_result.id as u16,
-        status: leg_result.status,
-        leg_order: leg_result.leg_order as u16,
+        order: leg_result.leg_order as u16,
     };
-
-    //todo fix
-    Ok(Some((
-        IdOrder {
-            id: leg_result.set_id as u16,
-            order: leg_result.set_id as u16,
-        },
-        leg,
-    )))
+    let set_result = dartset.find(leg_result.set_id).first::<DartSet>(conn_ref)?;
+    let set_id_order = IdOrderParent {
+        id: set_result.id as u16,
+        order: set_result.set_order as u16,
+        parent_id: set_result.match_id as u16
+    };
+    Ok((set_id_order, leg_id_order))
 }
 
 #[server]
