@@ -29,7 +29,7 @@ pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<IdOrder>
     });
 
     use_resource(move || async move {
-        let init_score_val = backend::list_score(leg_signal().id).await;
+        let init_score_val = backend::api::dart_score::list_score(leg_signal().id).await;
         match init_score_val {
             Ok(val) if !val.is_empty() => scores.set(val),
             _ => error_message.set(CreateNewLeg),

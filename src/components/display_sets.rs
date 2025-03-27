@@ -13,7 +13,7 @@ pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
 
     use_resource(move || async move {
         let match_val = match_signal();
-        let res = backend::list_set(match_val as i32).await;
+        let res = backend::api::dart_set::list_set(match_val as i32).await;
         match res {
             Ok(val) if !val.is_empty() => sets_signal.set(val),
             _ => {}
@@ -49,7 +49,7 @@ pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
 
 async fn new_set(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>) ->  Result<(), ServerFnError> {
     let match_id = match_signal();
-    let new_set = backend::new_set(match_id as i32).await?;
+    let new_set = backend::api::dart_set::new_set(match_id as i32).await?;
     sets_signal.push(new_set);
     Ok(())
 }

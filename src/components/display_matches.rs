@@ -11,7 +11,7 @@ pub fn DisplayMatches() -> Element {
     let mut matches = use_signal(|| vec![]);
 
     use_resource(move || async move {
-        let res = backend::list_matches().await;
+        let res = backend::api::dart_match::list_matches().await;
         match res {
             Ok(val) if !val.is_empty() => matches.set(val),
             _ => {}
@@ -45,7 +45,7 @@ pub fn DisplayMatches() -> Element {
    }
 }
 async fn new_match(mut matches: Signal<Vec<Match>>) ->  Result<(), ServerFnError> {
-    let new_match = backend::new_match().await?;
+    let new_match = backend::api::dart_match::new_match().await?;
     matches.push(new_match.clone());
     Ok(())
 }

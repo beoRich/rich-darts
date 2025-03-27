@@ -187,7 +187,7 @@ async fn new_leg(
     score_message.set(NewShot);
     score.write().clear();
 
-    let new_leg_res = backend::new_leg_init_score(set_val as i32).await;
+    let new_leg_res = backend::api::dart_leg::new_leg_init_score(set_val as i32).await;
 
     match new_leg_res {
         Ok(new_leg) => {
@@ -239,10 +239,10 @@ async fn input_changed(
                             score_message.set(NewShot);
                             next_throw_order = last.throw_order;
                             let db_op_res =
-                                backend::delete_score_by_order(leg_val.id, next_throw_order).await;
+                                backend::api::dart_score::delete_score_by_order(leg_val.id, next_throw_order).await;
                             if db_op_res.is_err() {
                                 //todo error conversion between db_op_res ServerFnError -> TechnicalError
-                                return ErrorMessageMode::TechnicalError;
+                                return TechnicalError;
                             }
                             last = get_snd_last(&mut score);
                         }
@@ -253,7 +253,7 @@ async fn input_changed(
                     }
                 }
                 let new_score = calculations::calculate_remaining(last, val, next_throw_order);
-                let db_op_res = backend::save_score(leg_val.id, new_score.clone()).await;
+                let db_op_res = backend::api::dart_score::save_score(leg_val.id, new_score.clone()).await;
                 if db_op_res.is_ok() {
                     if (&new_score).remaining == 0 {
                         score_message.set(LegFinished)
@@ -262,7 +262,7 @@ async fn input_changed(
                     return ErrorMessageMode::None;
                 }
                 //todo error conversion between db_op_res ServerFnError -> TechnicalError
-                ErrorMessageMode::TechnicalError
+                TechnicalError
             } else {
                 ErrorMessageMode::NotADartsNumber
             }

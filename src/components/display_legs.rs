@@ -52,7 +52,7 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<IdOrder>) -> El
 }
 
 async fn new_leg(set_signal: Signal<IdOrder>, mut legs_signal: Signal<Vec<Leg>>) -> Result<(), ServerFnError>{
-    let new_leg = backend::new_leg_init_score(set_signal().id as i32).await?;
+    let new_leg = backend::api::dart_leg::new_leg_init_score(set_signal().id as i32).await?;
     legs_signal.push(new_leg);
     Ok(())
 }

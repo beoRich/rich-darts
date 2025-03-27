@@ -67,9 +67,9 @@ fn WrapDisplayScore(matchval: u16, set_id: u16, leg_id: u16) -> Element {
     let mut match_signal = use_signal(|| matchval);
 
     let mut leg: ReadOnlySignal<Option<Result<Leg, ServerFnError>>> =
-        use_server_future(move || backend::get_leg_by_id(leg_id as i32))?.value();
+        use_server_future(move || backend::api::dart_leg::get_leg_by_id(leg_id as i32))?.value();
     let mut set: ReadOnlySignal<Option<Result<Set, ServerFnError>>> =
-        use_server_future(move || backend::get_set_by_id(set_id as i32))?.value();
+        use_server_future(move || backend::api::dart_set::get_set_by_id(set_id as i32))?.value();
 
     let mut set_signal = use_signal(|| IdOrder { id: 0, order: 0 });
     let mut leg_signal = use_signal(|| IdOrder { id: 0, order: 0 });
@@ -94,7 +94,7 @@ fn WrapDisplayScore(matchval: u16, set_id: u16, leg_id: u16) -> Element {
 fn WrapDisplayLegs(matchval: u16, set_id: u16) -> Element {
     debug!("WrapDisplayLegs Set_Id {:?}", set_id);
     let mut set: ReadOnlySignal<Option<Result<Set, ServerFnError>>> =
-        use_server_future(move || backend::get_set_by_id(set_id as i32))?.value();
+        use_server_future(move || backend::api::dart_set::get_set_by_id(set_id as i32))?.value();
     let mut set_signal = use_signal(|| IdOrder { id: 0, order: 0 });
 
     let mut match_signal = use_signal(|| matchval);
@@ -129,7 +129,7 @@ fn LatestLeg() -> Element {
     let mut set_signal: Signal<IdOrder> = use_signal(|| IdOrder { id: 0, order: 0 });
     let mut leg_signal: Signal<IdOrder> = use_signal(|| IdOrder { id: 0, order: 0 });
 
-    let mut init_latest_leg = use_server_future(backend::get_latest_leg)?.suspend()?;
+    let mut init_latest_leg = use_server_future(backend::api::dart_leg::get_latest_leg)?.suspend()?;
     use_resource(move || {
         let latest_leg_signal = init_latest_leg.clone();
         async move {
