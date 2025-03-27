@@ -112,3 +112,33 @@ pub async fn new_leg_init_score(set_id_input: i32) -> Result<Leg, ServerFnError>
         leg_order: leg_order_val,
     }))
 }
+
+#[server]
+pub async fn create_leg_chain() -> Result<(), ServerFnError> {
+    // use later as quickstart from main panel
+    use crate::schema_manual::guard::dartleg;
+    use crate::schema_manual::guard::dartmatch;
+    use crate::schema_manual::guard::dartset;
+
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+
+    let insert_match = NewDartMatch::new();
+    let match_result = diesel::insert_into(dartmatch::table)
+        .values(insert_match)
+        .returning(DartMatch::as_returning())
+        .get_result(conn_ref)?;
+
+    let insert_set = NewDartSet::new(match_result.id, 1);
+    let set_result = diesel::insert_into(dartset::table)
+        .values(insert_set)
+        .returning(DartSet::as_returning())
+        .get_result(conn_ref)?;
+
+    let insert_leg = NewDartLeg::new(set_result.id, 1);
+    let leg_result = diesel::insert_into(dartleg::table)
+        .values(insert_leg)
+        .returning(DartLeg::as_returning())
+        .get_result(conn_ref)?;
+    Ok(())
+}
