@@ -24,19 +24,16 @@ pub async fn list_leg(set_id_input: i32) -> Result<Vec<Leg>, ServerFnError> {
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
 
-    let legs_db = dartleg
+    let db_leg_results = dartleg
         .filter(set_id.eq(set_id_input))
         .select(DartLeg::as_select())
         .load(conn_ref)?;
 
-    let legs = legs_db
+    let legs = db_leg_results
         .into_iter()
-        .map(|db| Leg {
-            id: db.id as u16,
-            status: db.status,
-            leg_order: db.leg_order as u16,
-            start_score: db.start_score as u16
-        })
+        .map(|db|
+            dart_leg::map_db_to_domain(db)
+        )
         .collect();
     Ok(legs)
 }
@@ -49,14 +46,9 @@ pub async fn get_latest_leg() -> Result<(IdOrderParent, Leg), ServerFnError> {
     let mut conn = DB2.lock()?;
     let conn_ref = &mut *conn;
 
-    let db = QueryDsl::order(dartleg, id.desc()).first::<DartLeg>(conn_ref)?;
-    let leg = Leg  {
-        id: db.id as u16,
-        leg_order: db.leg_order as u16,
-        status: db.status,
-        start_score: db.start_score as u16
-    };
-    let set_result = dartset.find(db.set_id).first::<DartSet>(conn_ref)?;
+    let db_leg_result = QueryDsl::order(dartleg, id.desc()).first::<DartLeg>(conn_ref)?;
+    let set_result = dartset.find(db_leg_result.set_id).first::<DartSet>(conn_ref)?;
+    let leg = dart_leg::map_db_to_domain(db_leg_result);
     let set_id_order = IdOrderParent {
         id: set_result.id as u16,
         order: set_result.set_order as u16,
@@ -71,15 +63,8 @@ pub async fn get_leg_by_id(id_input: i32) -> Result<Leg, ServerFnError> {
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
 
-    let db = dartleg.find(id_input).first::<DartLeg>(conn_ref)?;
-    let leg = Leg {
-        id: db.id as u16,
-        status: db.status,
-        leg_order: db.leg_order as u16,
-        start_score: db.start_score as u16
-    };
-
-    Ok(leg)
+    let db_leg_result = dartleg.find(id_input).first::<DartLeg>(conn_ref)?;
+    Ok(dart_leg::map_db_to_domain(db_leg_result))
 }
 
 #[server]
@@ -105,7 +90,7 @@ pub async fn new_leg_init_score(set_id_input: i32, start_score_input: u16) -> Re
     let insert_leg = NewDartLeg::new(set_id_input, leg_order_val as i32, start_score_input as i32);
 
     debug!("{:?}", insert_leg);
-    let leg_result = diesel::insert_into(dartleg::table)
+    let db_leg_result = diesel::insert_into(dartleg::table)
         .values(insert_leg)
         .returning(DartLeg::as_returning())
         .get_result(conn_ref)?;
@@ -115,13 +100,8 @@ pub async fn new_leg_init_score(set_id_input: i32, start_score_input: u16) -> Re
         thrown: 0,
         throw_order: 0,
     };
-    crate::backend::api::dart_score::new_score_with_connection(conn_ref, leg_result.id, init_score_struct)?;
-    Ok((Leg {
-        id: leg_result.id as u16,
-        status: leg_result.status,
-        leg_order: leg_order_val,
-        start_score: start_score_input
-    }))
+    crate::backend::api::dart_score::new_score_with_connection(conn_ref, db_leg_result.id, init_score_struct)?;
+    Ok(dart_leg::map_db_to_domain(db_leg_result))
 }
 
 #[server]
@@ -129,11 +109,11 @@ pub async fn update_leg_status(leg_id_input: i32, new_status: String) -> Result<
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
     use crate::schema_manual::guard::dartleg::dsl::*;
-    let result = diesel::update(dartleg).filter(id.eq(leg_id_input))
+    let db_leg_result = diesel::update(dartleg).filter(id.eq(leg_id_input))
         .set(status.eq(new_status))
         .returning(DartLeg::as_returning())
         .get_result(conn_ref)?;
-    Ok(Leg{id: result.id as u16, leg_order: result.leg_order as u16, status: result.status, start_score: result.start_score as u16 })
+    Ok(dart_leg::map_db_to_domain(db_leg_result))
 }
 
 #[server]

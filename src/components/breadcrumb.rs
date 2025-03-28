@@ -55,9 +55,15 @@ pub fn BreadCrumbComponent(
                         li {
                             Link {to: Route::WrapDisplayScore {matchval: match_signal.unwrap()(), set_id: set_signal.unwrap()().id,
                             leg_id: leg_signal.unwrap()().id
-                        },
+                            },
                             class:"text-xl",
                             {format!{"Leg {}", leg_signal.unwrap()().leg_order.to_string()}}}
+                        },
+
+                        li {
+                                class:"text-xl",
+                                "Score"
+
                         }
                     }
                 },

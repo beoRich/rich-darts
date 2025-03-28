@@ -73,7 +73,7 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
             div { id: "numbers",
                     class: "table-container",
                 table {
-                    class: "text-xl uppercase bg-neutral-content rounded",
+                    class: "text-xl bg-neutral-content rounded",
                     thead {
                         tr {
                             th {
