@@ -30,16 +30,24 @@ pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
             div {
                 BreadCrumbComponent {match_signal, set_signal: None, leg_signal: None}
 
+                 div {
+
+                    class:"bg-base-100 border-y-4 shadow-md rounded px-8 pt-6 pb-8",
+
+                     button {id: "newLegButton",
+                         onclick: move |_| async move {
+                                    let _ = new_set(match_signal, sets_signal).await;
+
+                         },
+                         class:"btn btn-soft btn-primary" , "New Set"
+                     },
+
+                 }
+
 
                 div {
                     SetTable{match_signal, sets_signal}
                 }
-
-                        button {id: "newSetButton",
-                            onclick: move |_| async move {
-                                    let _ = new_set(match_signal, sets_signal).await;
-                            },
-                            class:"btn btn-soft btn-info" , "New Set" },
 
                 }
 
@@ -65,7 +73,7 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
             div { id: "numbers",
                     class: "table-container",
                 table {
-                    class: "text-xl uppercase bg-neutral-content",
+                    class: "text-xl uppercase bg-neutral-content rounded",
                     thead {
                         tr {
                             th {

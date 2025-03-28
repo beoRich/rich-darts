@@ -5,6 +5,7 @@ use components::Test;
 use components::{DisplayLegs, MainScoreComponent};
 use dioxus::prelude::*;
 use tracing::{debug, Id};
+use web_sys::window;
 
 mod backend;
 mod components;
@@ -22,6 +23,7 @@ fn main() {
 fn App() -> Element {
     use_server_future(move || backend::log_init())?;
     use_server_future(move || backend::run_migrations())?;
+
     rsx! {
         // Global app resources
         document::Stylesheet {

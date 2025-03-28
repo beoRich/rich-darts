@@ -46,7 +46,7 @@ fn NumberFieldError(
                     }
 
             div {
-                class:"grid grid-cols-10 gap-4",
+                class:"grid grid-cols-12 gap-4",
                 margin: "auto",
                 input {id: "numberField",
                         autofocus: true,
@@ -97,7 +97,7 @@ fn Buttons(
 
         div {
             id: "ButtonsDiv",
-            class:"grid grid-cols-10 gap-4",
+            class:"grid grid-cols-12 gap-4",
 
                 div {
                     class:"col-span-1 grid ",
@@ -120,9 +120,9 @@ fn Buttons(
                 }
 
                 div {
-                    class:"col-span-8 grid grid-cols-subgrid gap-4",
+                    class:"col-span-10 grid grid-cols-subgrid gap-4",
                     div {
-                        class:"col-start-8",
+                        class:"col-start-11",
                         button {id: "newLegButton",
                             onclick: move |_| async move {
                                     new_leg_wrapper(set_signal().id, leg_signal, scores, error_message, score_message).await;
@@ -187,7 +187,7 @@ async fn new_leg(
     score_message.set(NewShot);
     score.write().clear();
 
-    let new_leg_res = backend::api::dart_leg::new_leg_init_score(set_val as i32).await;
+    let new_leg_res = backend::api::dart_leg::new_leg_init_score(set_val as i32, 501).await;
 
     match new_leg_res {
         Ok(new_leg) => {

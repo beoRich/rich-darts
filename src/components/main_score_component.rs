@@ -9,6 +9,7 @@ use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_logger::tracing::error;
 use tracing::debug;
+use web_sys::window;
 use crate::components::breadcrumb::BreadCrumbComponent;
 
 #[component]
@@ -48,7 +49,6 @@ pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<IdOrder>
         div {
             id: "All",
             class: "container-self",
-
 
             div {
                 BreadCrumbComponent {match_signal, set_signal, leg_signal}

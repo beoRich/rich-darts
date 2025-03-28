@@ -28,16 +28,24 @@ pub fn DisplayMatches() -> Element {
             div {
                 BreadCrumbComponent {match_signal: None, set_signal: None, leg_signal: None}
 
+                 div {
+
+                    class:"bg-base-100 border-y-4 shadow-md rounded px-8 pt-6 pb-8",
+
+                     button {id: "newLegButton",
+                         onclick: move |_| async move {
+                                        let _ = new_match(matches).await;
+
+                         },
+                         class:"btn btn-soft btn-primary" , "New Match"
+                     },
+
+                 }
+
 
                 div {
                         MatchTable{matches}
                 }
-
-                            button {id: "newMatchButton",
-                                onclick: move |_| async move {
-                                        let _ = new_match(matches).await;
-                                },
-                                class:"btn btn-soft btn-info" , "New Match" },
 
                 }
 

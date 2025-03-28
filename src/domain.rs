@@ -34,6 +34,7 @@ pub struct Score {
 pub struct Leg {
     pub id: u16,
     pub leg_order: u16,
+    pub start_score: u16,
     pub status: String,
 }
 

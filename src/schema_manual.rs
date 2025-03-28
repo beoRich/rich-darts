@@ -8,6 +8,7 @@ pub mod guard {
         id -> Integer,
         set_id -> Integer,
         leg_order -> Integer,
+        start_score -> Integer,
         status -> Text,
     }
 }

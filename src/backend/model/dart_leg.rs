@@ -1,5 +1,6 @@
 #[cfg(feature = "server")]
 use diesel::prelude::*;
+use crate::domain::LegStatus;
 
 #[cfg_attr(feature = "server", derive(Queryable, Selectable))]
 #[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::dartleg))]
@@ -9,6 +10,7 @@ pub struct DartLeg {
     pub id: i32,
     pub set_id: i32,
     pub leg_order: i32,
+    pub start_score: i32,
     pub status: String
 }
 
@@ -19,10 +21,11 @@ pub struct NewDartLeg {
     pub set_id: i32,
     pub status: String,
     pub leg_order: i32,
+    pub start_score: i32,
 }
 
 impl NewDartLeg {
-    pub(crate) fn new (set_id: i32, leg_order: i32) -> NewDartLeg {
-        NewDartLeg {status: "ONGOING".to_string(), set_id, leg_order}
+    pub(crate) fn new (set_id: i32, leg_order: i32, start_score: i32) -> NewDartLeg {
+        NewDartLeg {status: LegStatus::Ongoing.value(), set_id, leg_order, start_score}
     }
 }
