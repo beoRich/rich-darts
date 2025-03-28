@@ -19,8 +19,7 @@ pub fn EnterPanel(
     rsx! {
        div {
          id:"EnterPanel",
-        margin_left: "10%",
-         class:"bg-base-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-x-scroll",
+         class:"bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8",
          NumberFieldError {scores, raw_input, leg_signal, error_message, score_message, allow_score}
          Buttons {scores, raw_input, set_signal, leg_signal, error_message, score_message, allow_score}
      }

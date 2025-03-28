@@ -65,3 +65,7 @@ table thead, table tbody tr {
     display: table;
     table-layout: fixed;
 }
+
+@plugin "daisyui" {
+    themes: nord --default, abyss --prefersdark, cupcake, dracula;
+}

@@ -61,17 +61,14 @@ async fn new_leg(set_signal: Signal<IdOrder>, mut legs_signal: Signal<Vec<Leg>>)
 pub fn LegTable(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, legs_signal: Signal<Vec<Leg>>) -> Element {
     rsx! {
 
-     div {
-            "List of legs"
-        }
       div {
 
             id:"BottomHalf",
             class:"bg-neutral shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",
             div { id: "numbers",
-                    class: "table-container",
+                    class: "table-container ",
                 table {
-                    class: "text-xl uppercase bg-neutral-content",
+                    class: "text-xl bg-neutral-content rounded-lg",
                     thead {
                         tr {
                             th {

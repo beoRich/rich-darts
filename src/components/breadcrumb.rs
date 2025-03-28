@@ -11,9 +11,10 @@ pub fn BreadCrumbComponent(
 ) -> Element {
 
     debug!("Breadcrum set_signal {:?}, leg_signal {:?}", set_signal, leg_signal);
+
     rsx! {
         div {
-          class:"breadcrumbs text-sm",
+          class:"breadcrumbs text-sm px-8 border-2 bg-base-100",
           ul {
                     li {
                         Link {to: Route::DisplayMatches , class:"text-xl", "Matches"}
@@ -23,8 +24,15 @@ pub fn BreadCrumbComponent(
                     if match_signal.is_some() {
                         li {
                             Link {to: Route::WrapDisplaySets {matchval: match_signal.unwrap()()},
-                            class:"text-xl",
+                            class:"text-xl text-base-content",
                             {format!{"Match {}", match_signal.unwrap()().to_string()}}}
+                        }
+                       if set_signal.is_none() {
+                            li {
+                                    class:"text-xl",
+                                    "List of sets"
+
+                            }
                         }
                      }
 
@@ -33,6 +41,13 @@ pub fn BreadCrumbComponent(
                             Link {to: Route::WrapDisplayLegs {matchval: match_signal.unwrap()(), set_id: set_signal.unwrap()().id},
                             class:"text-xl",
                             {format!{"Set {}", set_signal.unwrap()().order.to_string()}}}
+                        }
+                       if leg_signal.is_none() {
+                            li {
+                                    class:"text-xl",
+                                    "List of legs"
+
+                            }
                         }
                     }
 

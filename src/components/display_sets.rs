@@ -59,10 +59,6 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
     debug!("{:?}", sets_signal());
     rsx! {
 
-     div {
-            "List of sets"
-        }
-
       div {
             id:"BottomHalf",
             class:"bg-neutral shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-y-auto",

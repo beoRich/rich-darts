@@ -45,7 +45,6 @@ pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<IdOrder>
     });
 
     rsx! {
-
         div {
             id: "All",
             class: "container-self",
