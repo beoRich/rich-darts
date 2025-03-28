@@ -33,12 +33,12 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<IdOrder>) -> El
     rsx! {
 
          div {
-             id: "All",
+             id: "DisplayLegs",
              class: "container-self",
 
 
              div {
-                 BreadCrumbComponent {match_signal, set_signal, leg_signal: None}
+                 BreadCrumbComponent {only_home: false, match_signal, set_signal, leg_signal: None}
 
                  div {
 

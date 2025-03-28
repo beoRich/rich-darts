@@ -21,12 +21,12 @@ pub fn DisplayMatches() -> Element {
     rsx! {
 
         div {
-            id: "All",
+            id: "DisplayMatches",
             class: "container-self",
 
 
             div {
-                BreadCrumbComponent {match_signal: None, set_signal: None, leg_signal: None}
+                BreadCrumbComponent {only_home: false, match_signal: None, set_signal: None, leg_signal: None}
 
                  div {
 

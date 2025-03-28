@@ -5,6 +5,7 @@ use crate::domain::{IdOrder, Leg, Set};
 
 #[component]
 pub fn BreadCrumbComponent(
+    only_home: bool,
     match_signal: Option<Signal<u16>>,
     set_signal: Option<Signal<IdOrder>>,
     leg_signal: Option<Signal<Leg>>,
@@ -17,9 +18,17 @@ pub fn BreadCrumbComponent(
           class:"breadcrumbs text-sm px-8 border-2 bg-base-100",
           ul {
                     li {
-                        Link {to: Route::DisplayMatches , class:"text-xl", "Matches"}
+                        Link {to: Route::HomeScreen , class:"text-xl", "Home"}
 
                     },
+
+                    if !only_home  {
+                        li {
+                            Link {to: Route::DisplayMatches , class:"text-xl", "Matches"}
+
+                        },
+
+                    }
 
                     if match_signal.is_some() {
                         li {

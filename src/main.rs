@@ -2,7 +2,7 @@ use crate::components::DisplayMatches;
 use crate::components::DisplaySets;
 use crate::domain::{IdOrder, IdOrderParent, Leg, Set};
 use components::Test;
-use components::{DisplayLegs, MainScoreComponent};
+use components::{DisplayLegs, MainScoreComponent, HomeScreen};
 use dioxus::prelude::*;
 use tracing::{debug, Id};
 use web_sys::window;
@@ -58,6 +58,9 @@ enum Route {
 
     //todo someday resolve this via redirect
     #[route("/")]
+    HomeScreen,
+
+    #[route("/latest")]
     LatestLeg,
 
     #[route("/test")]

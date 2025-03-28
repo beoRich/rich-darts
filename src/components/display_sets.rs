@@ -23,12 +23,12 @@ pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
     rsx! {
 
         div {
-            id: "All",
+            id: "DisplaySets",
             class: "container-self",
 
 
             div {
-                BreadCrumbComponent {match_signal, set_signal: None, leg_signal: None}
+                BreadCrumbComponent {only_home: false, match_signal, set_signal: None, leg_signal: None}
 
                  div {
 

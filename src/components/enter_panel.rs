@@ -187,7 +187,8 @@ async fn new_leg(
     score_message.set(NewShot);
     score.write().clear();
 
-    let new_leg_res = backend::api::dart_leg::new_leg_init_score(set_val as i32, 501).await;
+    let start_score = leg_signal().start_score;
+    let new_leg_res = backend::api::dart_leg::new_leg_init_score(set_val as i32, start_score).await;
 
     match new_leg_res {
         Ok(new_leg) => {

@@ -47,11 +47,11 @@ pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<IdOrder>
 
     rsx! {
         div {
-            id: "All",
+            id: "DisplayScore",
             class: "container-self",
 
             div {
-                BreadCrumbComponent {match_signal, set_signal, leg_signal}
+                BreadCrumbComponent {only_home: false, match_signal, set_signal, leg_signal}
 
 
                 div {
