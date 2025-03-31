@@ -1,19 +1,23 @@
+use crate::components::breadcrumb::BreadCrumbComponent;
 use crate::components::calculations;
 use crate::components::enter_panel::EnterPanel;
 use crate::components::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::{CreateNewLeg, TechnicalError};
 use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
-use crate::domain::{ErrorMessageMode, IdOrder, Leg, Score, ScoreMessageMode, INIT_SCORE};
+use crate::domain::{ErrorMessageMode, IdOrder, Leg, Score, ScoreMessageMode, Set, INIT_SCORE};
 use crate::{backend, Route};
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_logger::tracing::error;
 use tracing::debug;
 use web_sys::window;
-use crate::components::breadcrumb::BreadCrumbComponent;
 
 #[component]
-pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<IdOrder>, leg_signal: Signal<Leg>) -> Element {
+pub fn MainScoreComponent(
+    match_signal: Signal<u16>,
+    set_signal: Signal<Set>,
+    leg_signal: Signal<Leg>,
+) -> Element {
     debug!("MainScoreComponent set_signal {:?}", set_signal);
     let mut raw_input = use_signal(|| "".to_string());
     let mut scores = use_signal(|| vec![]);
@@ -46,24 +50,21 @@ pub fn MainScoreComponent(match_signal: Signal<u16>, set_signal: Signal<IdOrder>
     });
 
     rsx! {
-        div {
-            id: "DisplayScore",
-            class: "container-self",
+         div {
+             id: "DisplayScore",
+             class: "container-self",
 
-            div {
-                BreadCrumbComponent {only_home: false, match_signal, set_signal, leg_signal}
-
-
-                div {
-                    EnterPanel {scores, raw_input, set_signal, leg_signal, error_message, score_message, allow_score}
-                    ScoreDisplay {scores}
-                }
-
-            }
-
-        }
-   }
+             div {
+                 BreadCrumbComponent {only_home: false, match_signal, set_signal, leg_signal}
 
 
+                 div {
+                     EnterPanel {scores, raw_input, set_signal, leg_signal, error_message, score_message, allow_score}
+                     ScoreDisplay {scores}
+                 }
+
+             }
+
+         }
+    }
 }
-

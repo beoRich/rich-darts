@@ -1,14 +1,14 @@
+use crate::domain::{IdOrder, Leg, Score, INIT_SCORE};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 use tracing::debug;
-use crate::domain::{IdOrder, Leg, Score, INIT_SCORE};
 
 #[cfg(feature = "server")]
 mod server_deps {
+    pub use crate::backend::backend::DB;
     pub use crate::backend::backend::DB2;
     pub use crate::backend::model::*;
     pub use diesel::prelude::*;
-    pub use crate::backend::backend::DB;
 }
 
 #[cfg(feature = "server")]
@@ -20,17 +20,17 @@ pub async fn list_score(leg_id: u16) -> Result<Vec<Score>, ServerFnError> {
         f.prepare(
             "SELECT remaining, thrown, throw_order from score where deleted = 0 and leg_id =?1",
         )
-            .unwrap()
-            .query_map([leg_id], move |row| {
-                Ok(Score {
-                    remaining: row.get(0)?,
-                    thrown: row.get(1)?,
-                    throw_order: row.get(2)?,
-                })
+        .unwrap()
+        .query_map([leg_id], move |row| {
+            Ok(Score {
+                remaining: row.get(0)?,
+                thrown: row.get(1)?,
+                throw_order: row.get(2)?,
             })
-            .unwrap()
-            .map(|r| r.unwrap())
-            .collect()
+        })
+        .unwrap()
+        .map(|r| r.unwrap())
+        .collect()
     });
     Ok(scores)
 }

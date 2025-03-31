@@ -1,14 +1,14 @@
+use crate::domain::{IdOrder, Leg, Set};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
-use crate::domain::{IdOrder, Leg, Set};
 
 #[cfg(feature = "server")]
 mod server_deps {
     pub use crate::backend::backend::DB2;
     pub use crate::backend::model::*;
-    pub use diesel::prelude::*;
     pub use crate::schema_manual::guard::dartset::dsl::dartset;
     pub use crate::schema_manual::guard::dartset::match_id;
+    pub use diesel::prelude::*;
 }
 
 #[cfg(feature = "server")]
@@ -28,11 +28,7 @@ pub async fn list_set(match_id_input: i32) -> Result<Vec<Set>, ServerFnError> {
 
     let sets = sets_db
         .into_iter()
-        .map(|db| Set {
-            id: db.id as u16,
-            status: db.status,
-            set_order: db.set_order as u16,
-        })
+        .map(|set_db_result| dart_set::map_db_to_domain(set_db_result))
         .collect();
     Ok(sets)
 }
@@ -43,12 +39,8 @@ pub async fn get_set_by_id(id_input: i32) -> Result<Set, ServerFnError> {
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
 
-    let set_result = dartset.find(id_input).first::<DartSet>(conn_ref)?;
-    let set = Set {
-        id: set_result.id as u16,
-        status: set_result.status,
-        set_order: set_result.set_order as u16,
-    };
+    let set_db_result = dartset.find(id_input).first::<DartSet>(conn_ref)?;
+    let set = dart_set::map_db_to_domain(set_db_result);
     Ok(set)
 }
 
@@ -63,8 +55,8 @@ pub async fn new_set(match_id_input: i32) -> Result<Set, ServerFnError> {
         dartset.filter(match_id.eq(match_id_input)),
         dartset::id.desc(),
     )
-        .first::<DartSet>(conn_ref)
-        .optional()?;
+    .first::<DartSet>(conn_ref)
+    .optional()?;
 
     let set_order_val: u16;
     match latest_set_of_match {
@@ -82,4 +74,16 @@ pub async fn new_set(match_id_input: i32) -> Result<Set, ServerFnError> {
         status: set_result.status,
         set_order: set_order_val,
     }))
+}
+
+#[server]
+pub async fn get_latest_set() -> Result<(u16, Set), ServerFnError> {
+    use crate::schema_manual::guard::dartset::dsl::*;
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+
+    let set_db_result = QueryDsl::order(dartset, id.desc()).first::<DartSet>(conn_ref)?;
+    let parent_id = set_db_result.match_id as u16;
+    let set = dart_set::map_db_to_domain(set_db_result);
+    Ok((parent_id, set))
 }

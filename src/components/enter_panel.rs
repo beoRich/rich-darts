@@ -1,16 +1,16 @@
 use crate::backend;
-use crate::domain::{ErrorMessageMode, IdOrder, Leg, Score, ScoreMessageMode, INIT_SCORE};
-use dioxus::prelude::*;
 use crate::components::calculations;
 use crate::domain::ErrorMessageMode::TechnicalError;
 use crate::domain::LegStatus::Ongoing;
 use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
+use crate::domain::{ErrorMessageMode, IdOrder, Leg, Score, ScoreMessageMode, Set, INIT_SCORE};
+use dioxus::prelude::*;
 
 #[component]
 pub fn EnterPanel(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    set_signal: Signal<IdOrder>,
+    set_signal: Signal<Set>,
     leg_signal: Signal<Leg>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
@@ -87,7 +87,7 @@ fn NumberFieldError(
 fn Buttons(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    set_signal:Signal<IdOrder>,
+    set_signal: Signal<Set>,
     leg_signal: Signal<Leg>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
@@ -163,7 +163,6 @@ fn undo_wrapper(
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 
-
 async fn new_leg_wrapper(
     set_val: u16,
     leg_signal: Signal<Leg>,
@@ -194,8 +193,8 @@ async fn new_leg(
         Ok(new_leg) => {
             leg_signal.set(new_leg);
             score.set(vec![INIT_SCORE]);
-        },
-        _ => error_message.set(TechnicalError)
+        }
+        _ => error_message.set(TechnicalError),
     }
 }
 
@@ -239,8 +238,16 @@ async fn input_changed(
                             score.write().pop();
                             score_message.set(NewShot);
                             next_throw_order = last.throw_order;
-                            let delete_op_res = backend::api::dart_score::delete_score_by_order(leg_val.id, next_throw_order).await;
-                            let status_op_res = backend::api::dart_leg::update_leg_status(leg_val.id as i32, Ongoing.value()).await;
+                            let delete_op_res = backend::api::dart_score::delete_score_by_order(
+                                leg_val.id,
+                                next_throw_order,
+                            )
+                            .await;
+                            let status_op_res = backend::api::dart_leg::update_leg_status(
+                                leg_val.id as i32,
+                                Ongoing.value(),
+                            )
+                            .await;
                             if delete_op_res.is_err() || status_op_res.is_err() {
                                 //todo error conversion between db_op_res ServerFnError -> TechnicalError such that ? is possible
                                 return TechnicalError;
@@ -254,15 +261,19 @@ async fn input_changed(
                     }
                 }
                 let new_score = calculations::calculate_remaining(last, val, next_throw_order);
-                let db_op_res = backend::api::dart_score::save_score(leg_val.id, new_score.clone()).await;
+                let db_op_res =
+                    backend::api::dart_score::save_score(leg_val.id, new_score.clone()).await;
                 if db_op_res.is_ok() {
                     if (&new_score).remaining == 0 {
-                        let res = backend::api::dart_leg::update_leg_status(leg_val.id as i32, LegFinished.value()).await;
+                        let res = backend::api::dart_leg::update_leg_status(
+                            leg_val.id as i32,
+                            LegFinished.value(),
+                        )
+                        .await;
                         match res {
                             Ok(_) => score_message.set(LegFinished),
-                            _ => return TechnicalError
+                            _ => return TechnicalError,
                         }
-
                     }
                     score.write().push(new_score);
                     return ErrorMessageMode::None;

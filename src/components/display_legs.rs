@@ -1,5 +1,5 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::domain::{IdOrder, Leg, INIT_SCORE};
+use crate::domain::{IdOrder, Leg, Set, INIT_SCORE};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
@@ -7,19 +7,19 @@ use dioxus::prelude::*;
 use tracing::debug;
 
 #[component]
-pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<IdOrder>) -> Element {
+pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<Set>) -> Element {
     debug!("DisplayLegs set_signal {:?}", set_signal);
 
     let mut legs_signal = use_signal(|| vec![]);
     let mut start_score_raw_signal: Signal<String> = use_signal(|| "501".to_string());
     let mut start_score_signal: Signal<u16> = use_signal(|| 501);
-    let mut start_score_test_signal: Signal<bool>= use_signal(|| true);
+    let mut start_score_test_signal: Signal<bool> = use_signal(|| true);
 
     use_memo(move || {
-       let raw_val = start_score_raw_signal();
-       let result = raw_val.parse::<u16>();
-       start_score_test_signal.set(result.is_ok());
-       result.map( |val| start_score_signal.set(val))
+        let raw_val = start_score_raw_signal();
+        let result = raw_val.parse::<u16>();
+        start_score_test_signal.set(result.is_ok());
+        result.map(|val| start_score_signal.set(val))
     });
 
     use_resource(move || async move {
@@ -89,11 +89,12 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<IdOrder>) -> El
 }
 
 async fn new_leg(
-    set_signal: Signal<IdOrder>,
+    set_signal: Signal<Set>,
     mut legs_signal: Signal<Vec<Leg>>,
-    score_max: u16
+    score_max: u16,
 ) -> Result<(), ServerFnError> {
-    let new_leg = backend::api::dart_leg::new_leg_init_score(set_signal().id as i32, score_max).await?;
+    let new_leg =
+        backend::api::dart_leg::new_leg_init_score(set_signal().id as i32, score_max).await?;
     legs_signal.push(new_leg);
     Ok(())
 }
@@ -101,7 +102,7 @@ async fn new_leg(
 #[component]
 pub fn LegTable(
     match_signal: Signal<u16>,
-    set_signal: Signal<IdOrder>,
+    set_signal: Signal<Set>,
     legs_signal: Signal<Vec<Leg>>,
 ) -> Element {
     rsx! {

@@ -1,17 +1,19 @@
+use crate::domain::{IdOrder, Leg, Set};
+use crate::{backend, Route};
 use dioxus::prelude::*;
 use tracing::debug;
-use crate::{backend, Route};
-use crate::domain::{IdOrder, Leg, Set};
 
 #[component]
 pub fn BreadCrumbComponent(
     only_home: bool,
     match_signal: Option<Signal<u16>>,
-    set_signal: Option<Signal<IdOrder>>,
+    set_signal: Option<Signal<Set>>,
     leg_signal: Option<Signal<Leg>>,
 ) -> Element {
-
-    debug!("Breadcrum set_signal {:?}, leg_signal {:?}", set_signal, leg_signal);
+    debug!(
+        "Breadcrum set_signal {:?}, leg_signal {:?}",
+        set_signal, leg_signal
+    );
 
     rsx! {
         div {
@@ -49,7 +51,7 @@ pub fn BreadCrumbComponent(
                         li {
                             Link {to: Route::WrapDisplayLegs {matchval: match_signal.unwrap()(), set_id: set_signal.unwrap()().id},
                             class:"text-xl",
-                            {format!{"Set {}", set_signal.unwrap()().order.to_string()}}}
+                            {format!{"Set {}", set_signal.unwrap()().set_order.to_string()}}}
                         }
                        if leg_signal.is_none() {
                             li {
