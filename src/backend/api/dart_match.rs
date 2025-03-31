@@ -1,15 +1,15 @@
+use crate::domain::{IdOrder, Leg, Match, Set};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
-use crate::domain::{IdOrder, Leg, Match, Set};
 
 #[cfg(feature = "server")]
 mod server_deps {
     pub use crate::backend::backend::DB2;
+    pub use crate::backend::model::DartMatch;
     pub use crate::backend::model::*;
+    pub use crate::schema_manual::guard::dartmatch::dsl::dartmatch;
     pub use diesel::prelude::*;
     pub use diesel::{QueryDsl, RunQueryDsl, SelectableHelper};
-    pub use crate::backend::model::DartMatch;
-
 }
 
 #[cfg(feature = "server")]
@@ -52,3 +52,12 @@ pub async fn new_match() -> Result<Match, ServerFnError> {
     }))
 }
 
+#[server]
+pub async fn get_latest_match() -> Result<(u16), ServerFnError> {
+    use crate::schema_manual::guard::dartmatch::dsl::*;
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+
+    let set_db_result = QueryDsl::order(dartmatch, id.desc()).first::<DartMatch>(conn_ref)?;
+    Ok(set_db_result.id as u16)
+}

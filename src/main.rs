@@ -66,6 +66,9 @@ enum Route {
     #[route("/latest/set")]
     LatestSet,
 
+    #[route("/latest/match")]
+    LatestMatch,
+
     #[route("/test")]
     Test,
 }
@@ -146,6 +149,22 @@ fn LatestSet() -> Element {
             let set_signal = use_signal(|| set_ref.clone());
             rsx! {
                 DisplayLegs {match_signal, set_signal}
+            }
+        }
+        _ => rsx! { "Error or loading" },
+    }
+}
+
+#[component]
+fn LatestMatch() -> Element {
+    let latest_match_id: ReadOnlySignal<Option<Result<u16, ServerFnError>>> =
+        use_server_future(move || backend::api::dart_match::get_latest_match())?.value();
+
+    match &*latest_match_id.read_unchecked() {
+        Some(Ok((match_id_ref))) => {
+            let match_signal = use_signal(|| *match_id_ref);
+            rsx! {
+                DisplaySets{match_signal}
             }
         }
         _ => rsx! { "Error or loading" },
