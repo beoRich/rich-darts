@@ -91,12 +91,15 @@ There is diesel-async but it does not support sqlite.
 ORM requires CLI on developing system
 `cargo binstall diesel`
 
-## Migrations
+## Migrations manually (development)
 1. CREATE: diesel migration generate <migrationName>
 2. RUN without schemaFile : diesel migration run --no-generate-schema (since diesel is locked to backend we can't use the default schema generation of diesel)
 or 
 3.  RUN with schemaFile: diesel migration run -> copy entries to from schema.rs -> schema_manual.rs
 3. TEST: diesel migration redo
+
+## Migrations 
+
 
 
 
