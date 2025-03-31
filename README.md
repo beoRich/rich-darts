@@ -37,7 +37,7 @@ Locally
 1. docker build . -t registry.digitalocean.com/rich-registry/rich-darts  
 2. docker run -t <tag> 
 
-docker run -d --name test -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' -e LOG_URL='/home/server.log' registry.digitalocean.com/rich-registry/rich-darts
+docker run -d ... <see shell scripct docker-build.sh>
 
 3. docker container ls  
 4. docker inspect <containerId> earch for  NetworkSettings.Networks
@@ -68,12 +68,10 @@ Server -> Deployment 7-9
 6. setup docker inside the droplet
 7. docker login into container registry
 8. pull image from container registry
-9. docker run -d -p 80:8080 -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' registry.digitalocean.com/rich-registry/rich-darts
+9. docker run 
 
 All cmds in order:
-docker pull registry.digitalocean.com/rich-registry/rich-darts
-docker run -d -p 80:8080 -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' -e LOG_URL='/home/server.log'  registry.digitalocean.com/rich-registry/rich-darts
-docker container prune 
+see shell script docker-build.sh
 
 
 10. access ip4 address of that droplet

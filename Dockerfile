@@ -33,6 +33,9 @@ WORKDIR /app
 # Copy the entire web directory from the builder stage
 COPY --from=builder /usr/src/app/target/dx/rich_darts/release/web ./
 
+COPY migrations /app/migrations
+ENV MIGRATION_URI="/app/migrations"
+
 ENV PORT=8080
 ENV IP=0.0.0.0
 # Expose the port your server listens on (adjust if necessary)

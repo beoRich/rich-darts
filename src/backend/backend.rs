@@ -14,6 +14,7 @@ mod server_deps {
     pub use diesel::prelude::*;
     pub use diesel::query_dsl::methods::OrderDsl;
     pub use diesel::sqlite::SqliteConnection;
+    pub use diesel_migrations::FileBasedMigrations;
     pub use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 }
 
@@ -42,14 +43,29 @@ pub static DB2: Lazy<Mutex<SqliteConnection>> = Lazy::new(|| {
 
 #[server]
 pub async fn run_migrations() -> Result<(), ServerFnError> {
+    dotenv::dotenv().ok();
+    let url_maybe = env::var("MIGRATION_URI");
+    let migration_uri: String;
+    match url_maybe {
+        Ok(val) => {
+            migration_uri = val;
+            log::debug!("Found migration dir  at {}", migration_uri);
+        }
+        _ => {
+            panic!("Could not find diesel migration files")
+        }
+    }
+
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
     // This will run the necessary migrations.
     //
     // See the documentation for `MigrationHarness` for
     // all available methods.
-    const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
-    conn_ref.run_pending_migrations(MIGRATIONS).unwrap();
+    let file_base_migration = FileBasedMigrations::from_path(migration_uri)?;
+    conn_ref
+        .run_pending_migrations(file_base_migration)
+        .unwrap();
 
     Ok(())
 }
@@ -74,8 +90,3 @@ thread_local! {
         conn
     };
 }
-
-
-
-
-
