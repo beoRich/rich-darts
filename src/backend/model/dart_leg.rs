@@ -25,8 +25,9 @@ pub struct NewDartLeg {
 }
 
 impl NewDartLeg {
-    pub(crate) fn new (set_id: i32, leg_order: i32, start_score: i32) -> NewDartLeg {
-        NewDartLeg {status: LegStatus::Ongoing.value(), set_id, leg_order, start_score}
+    pub(crate) fn new (set_id: u16, leg_order: u16, start_score: u16) -> NewDartLeg {
+        NewDartLeg {status: LegStatus::Ongoing.value(), set_id: set_id as i32,
+            leg_order: leg_order as i32, start_score: start_score as i32}
     }
 }
 

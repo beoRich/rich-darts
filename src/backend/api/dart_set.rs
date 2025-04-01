@@ -45,14 +45,14 @@ pub async fn get_set_by_id(id_input: i32) -> Result<Set, ServerFnError> {
 }
 
 #[server]
-pub async fn new_set(match_id_input: i32) -> Result<Set, ServerFnError> {
+pub async fn new_set(match_id_input: u16, leg_amount_input: u16) -> Result<Set, ServerFnError> {
     use crate::schema_manual::guard::dartset;
 
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
 
     let latest_set_of_match: Option<DartSet> = QueryDsl::order(
-        dartset.filter(match_id.eq(match_id_input)),
+        dartset.filter(match_id.eq(match_id_input as i32)),
         dartset::id.desc(),
     )
     .first::<DartSet>(conn_ref)
@@ -64,16 +64,12 @@ pub async fn new_set(match_id_input: i32) -> Result<Set, ServerFnError> {
         None => set_order_val = 1,
     }
 
-    let insert_set = NewDartSet::new(match_id_input, set_order_val as i32);
+    let insert_set = NewDartSet::new(match_id_input as i32, set_order_val as i32, leg_amount_input as i32);
     let set_result = diesel::insert_into(dartset::table)
         .values(insert_set)
         .returning(DartSet::as_returning())
         .get_result(conn_ref)?;
-    Ok((Set {
-        id: set_result.id as u16,
-        status: set_result.status,
-        set_order: set_order_val,
-    }))
+    Ok(dart_set::map_db_to_domain(set_result))
 }
 
 #[server]

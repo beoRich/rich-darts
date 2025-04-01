@@ -4,6 +4,7 @@ CREATE TABLE dartset
     id INTEGER PRIMARY KEY NOT NULL ,
     match_id      INTEGER NOT NULL ,
     set_order INTEGER NOT NULL,
+    leg_amount INTEGER NOT NULL,
     status TEXT NOT NULL DEFAULT ('ONGOING'), --references statusType(dart_type),
     FOREIGN KEY (match_id) REFERENCES dartmatch (id)
 );

@@ -1,4 +1,4 @@
-use crate::domain::{IdOrder, IdOrderParent, Leg, Score, Set, INIT_SCORE};
+use crate::domain::{IdOrder, IdOrderParent, Leg, LegStatus, Score, Set, INIT_SCORE};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 use tracing::debug;
@@ -9,9 +9,7 @@ mod server_deps {
     pub use crate::backend::model::*;
     pub use crate::schema_manual::guard::dartleg::dsl::dartleg;
     pub use crate::schema_manual::guard::dartleg::set_id;
-    pub use crate::schema_manual::guard::dartleg::start_score;
     pub use diesel::prelude::*;
-    pub use diesel::result;
 }
 
 #[cfg(feature = "server")]
@@ -66,7 +64,7 @@ pub async fn get_leg_by_id(id_input: i32) -> Result<Leg, ServerFnError> {
 
 #[server]
 pub async fn new_leg_init_score(
-    set_id_input: i32,
+    set_id_input: u16,
     start_score_input: u16,
 ) -> Result<Leg, ServerFnError> {
     use crate::schema_manual::guard::dartleg;
@@ -75,7 +73,7 @@ pub async fn new_leg_init_score(
     let conn_ref = &mut *conn;
 
     let latest_leg_of_set_test =
-        QueryDsl::order(dartleg.filter(set_id.eq(set_id_input)), dartleg::id.desc())
+        QueryDsl::order(dartleg.filter(set_id.eq(set_id_input as i32)), dartleg::id.desc())
             .first::<DartLeg>(conn_ref)
             .optional();
 
@@ -84,10 +82,10 @@ pub async fn new_leg_init_score(
     let leg_order_val: u16;
     match latest_leg_of_set {
         Some(val) => leg_order_val = (val.leg_order + 1) as u16,
-        None => leg_order_val = 1,
+        None => leg_order_val = 0,
     }
 
-    let insert_leg = NewDartLeg::new(set_id_input, leg_order_val as i32, start_score_input as i32);
+    let insert_leg = NewDartLeg::new(set_id_input, leg_order_val , start_score_input);
 
     debug!("{:?}", insert_leg);
     let db_leg_result = diesel::insert_into(dartleg::table)
@@ -110,15 +108,15 @@ pub async fn new_leg_init_score(
 
 #[server]
 pub async fn update_leg_status(
-    leg_id_input: i32,
-    new_status: String,
+    leg_id_input: u16,
+    new_status: LegStatus,
 ) -> Result<Leg, ServerFnError> {
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
     use crate::schema_manual::guard::dartleg::dsl::*;
     let db_leg_result = diesel::update(dartleg)
-        .filter(id.eq(leg_id_input))
-        .set(status.eq(new_status))
+        .filter(id.eq(leg_id_input as i32))
+        .set(status.eq(new_status.value()))
         .returning(DartLeg::as_returning())
         .get_result(conn_ref)?;
     Ok(dart_leg::map_db_to_domain(db_leg_result))
@@ -140,13 +138,13 @@ pub async fn create_leg_chain() -> Result<(), ServerFnError> {
         .returning(DartMatch::as_returning())
         .get_result(conn_ref)?;
 
-    let insert_set = NewDartSet::new(match_result.id, 1);
+    let insert_set = NewDartSet::new(match_result.id, 1, 3);
     let set_result = diesel::insert_into(dartset::table)
         .values(insert_set)
         .returning(DartSet::as_returning())
         .get_result(conn_ref)?;
 
-    let insert_leg = NewDartLeg::new(set_result.id, 1, 501);
+    let insert_leg = NewDartLeg::new(set_result.id as u16, 1, 501);
     let leg_result = diesel::insert_into(dartleg::table)
         .values(insert_leg)
         .returning(DartLeg::as_returning())

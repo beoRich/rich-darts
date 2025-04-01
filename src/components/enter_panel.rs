@@ -3,7 +3,7 @@ use crate::components::calculations;
 use crate::domain::ErrorMessageMode::TechnicalError;
 use crate::domain::LegStatus::Ongoing;
 use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
-use crate::domain::{ErrorMessageMode, IdOrder, Leg, Score, ScoreMessageMode, Set, INIT_SCORE};
+use crate::domain::{ErrorMessageMode, IdOrder, Leg, LegStatus, Score, ScoreMessageMode, Set, INIT_SCORE};
 use dioxus::prelude::*;
 
 #[component]
@@ -42,7 +42,7 @@ fn NumberFieldError(
                 label {
                     class:"block text-gray-700 text-xl text-primary font-bold mb-2",
                     for: "numberField",
-                    {score_message.read().value()}
+                    {score_message.read().display()}
                     }
 
             div {
@@ -120,14 +120,29 @@ fn Buttons(
                 }
 
                 div {
-                    class:"col-span-10 grid grid-cols-subgrid gap-4",
+                    class:"col-span-9 grid grid-cols-subgrid gap-4",
                     div {
-                        class:"col-start-11",
+                        class:"col-start-9",
                         button {id: "newLegButton",
                             onclick: move |_| async move {
-                                    new_leg_wrapper(set_signal().id, leg_signal, scores, error_message, score_message).await;
+                                    new_leg(set_signal().id, leg_signal, scores, error_message, score_message).await;
                             },
-                            class:"btn btn-soft btn-info" , "New Leg" },
+                            title: "Cancel current leg (if unfinished) and start a new one",
+                            class:"btn btn-soft btn-primary" , "New Leg" },
+
+                    }
+                }
+
+                div {
+                    class:"col-span-1 grid grid-cols-subgrid gap-4",
+                    div {
+                        class:"col-start-11",
+                        button {id: "cancelLegButton",
+                            onclick: move |_| async move {
+                                    cancel_leg(leg_signal().id, error_message, score_message).await;
+                            },
+                            title: "Cancel current leg",
+                            class:"btn btn-soft btn-secondary" , "Cancel" },
 
                     }
                 }
@@ -163,18 +178,6 @@ fn undo_wrapper(
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 
-async fn new_leg_wrapper(
-    set_val: u16,
-    leg_signal: Signal<Leg>,
-    score: Signal<Vec<Score>>,
-    error_message: Signal<ErrorMessageMode>,
-    score_message: Signal<ScoreMessageMode>,
-) {
-    new_leg(set_val, leg_signal, score, error_message, score_message).await;
-    document::eval(&"document.getElementById('numberField').value = ' '".to_string());
-    document::eval(&"document.getElementById('numberField').select()".to_string());
-}
-
 async fn new_leg(
     set_val: u16,
     mut leg_signal: Signal<Leg>,
@@ -187,12 +190,34 @@ async fn new_leg(
     score.write().clear();
 
     let start_score = leg_signal().start_score;
-    let new_leg_res = backend::api::dart_leg::new_leg_init_score(set_val as i32, start_score).await;
+    let cancel_leg_res = backend::api::dart_leg::update_leg_status(leg_signal().id, LegStatus::Cancelled).await;
+    let new_leg_res = backend::api::dart_leg::new_leg_init_score(set_val, start_score).await;
 
     match new_leg_res {
         Ok(new_leg) => {
             leg_signal.set(new_leg);
             score.set(vec![INIT_SCORE]);
+            document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+            document::eval(&"document.getElementById('numberField').select()".to_string());
+        }
+        _ => error_message.set(TechnicalError),
+    }
+}
+
+async fn cancel_leg(
+    leg_id: u16,
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
+) {
+
+    let cancel_leg_res = backend::api::dart_leg::update_leg_status(leg_id, LegStatus::Cancelled).await;
+
+    match cancel_leg_res {
+        Ok(_) => {
+            error_message.set(ErrorMessageMode::None);
+            score_message.set(ScoreMessageMode::LegCancelled);
+            document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+            document::eval(&"document.getElementById('numberField').select()".to_string());
         }
         _ => error_message.set(TechnicalError),
     }
@@ -244,8 +269,8 @@ async fn input_changed(
                             )
                             .await;
                             let status_op_res = backend::api::dart_leg::update_leg_status(
-                                leg_val.id as i32,
-                                Ongoing.value(),
+                                leg_val.id,
+                                Ongoing,
                             )
                             .await;
                             if delete_op_res.is_err() || status_op_res.is_err() {
@@ -257,7 +282,7 @@ async fn input_changed(
                         NewShot => {
                             next_throw_order = last.throw_order + 1;
                         }
-                        LegFinished => return (ErrorMessageMode::LegAlreadyFinished),
+                        _ => return (ErrorMessageMode::LegAlreadyFinished),
                     }
                 }
                 let new_score = calculations::calculate_remaining(last, val, next_throw_order);
@@ -266,8 +291,8 @@ async fn input_changed(
                 if db_op_res.is_ok() {
                     if (&new_score).remaining == 0 {
                         let res = backend::api::dart_leg::update_leg_status(
-                            leg_val.id as i32,
-                            LegFinished.value(),
+                            leg_val.id,
+                            LegStatus::Finished,
                         )
                         .await;
                         match res {

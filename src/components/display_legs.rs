@@ -1,5 +1,5 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::domain::{IdOrder, Leg, Set, INIT_SCORE};
+use crate::domain::{IdOrder, Leg, Set};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
@@ -12,13 +12,13 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<Set>) -> Elemen
 
     let mut legs_signal = use_signal(|| vec![]);
     let mut start_score_raw_signal: Signal<String> = use_signal(|| "501".to_string());
-    let mut start_score_signal: Signal<u16> = use_signal(|| 501);
     let mut start_score_test_signal: Signal<bool> = use_signal(|| true);
+    let mut start_score_signal: Signal<u16> = use_signal(|| 501);
 
     use_memo(move || {
         let raw_val = start_score_raw_signal();
         let result = raw_val.parse::<u16>();
-        start_score_test_signal.set(result.is_ok());
+        start_score_test_signal.set(result.is_ok() && result.clone().unwrap() > 0);
         result.map(|val| start_score_signal.set(val))
     });
 
@@ -46,7 +46,7 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<Set>) -> Elemen
 
                      button {id: "newLegButton",
                          onclick: move |_| async move {
-                                 let _ = new_leg(set_signal, legs_signal, start_score_signal()).await;
+                                 let _ = new_leg(set_signal().id, legs_signal, start_score_signal()).await;
 
                          },
                          class:"btn btn-soft btn-primary col-span-1 grid" ,
@@ -59,14 +59,14 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<Set>) -> Elemen
                         value: "501",
                         class:"text-1xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline\
                         col-span-1 grid",
-                        type: "number", maxlength:10, min:0, oninput: move |e| start_score_raw_signal.set((*e.value()).parse().unwrap()),
+                        type: "number", oninput: move |e| start_score_raw_signal.set((*e.value()).parse().unwrap()),
                         onfocusin: move |_| {
                                 document::eval(&"document.getElementById('numberField').select()".to_string());
                             },
                         onkeypress: move |e| async move {
                                 let key = e.key();
-                                if key == Key::Enter  {
-                                   let _ = new_leg(set_signal, legs_signal, start_score_signal()).await;
+                                if key == Key::Enter && start_score_test_signal() {
+                                   let _ = new_leg(set_signal().id, legs_signal, start_score_signal()).await;
                                 } ;
                         },
 
@@ -89,12 +89,12 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<Set>) -> Elemen
 }
 
 async fn new_leg(
-    set_signal: Signal<Set>,
+    set_signal_id: u16,
     mut legs_signal: Signal<Vec<Leg>>,
     score_max: u16,
 ) -> Result<(), ServerFnError> {
     let new_leg =
-        backend::api::dart_leg::new_leg_init_score(set_signal().id as i32, score_max).await?;
+        backend::api::dart_leg::new_leg_init_score(set_signal_id, score_max).await?;
     legs_signal.push(new_leg);
     Ok(())
 }
@@ -115,6 +115,7 @@ pub fn LegTable(
                     class: "table-container ",
                 table {
                     class: "text-xl bg-neutral-content rounded-lg",
+                    style: "width: 40%",
                     thead {
                         tr {
                             th {

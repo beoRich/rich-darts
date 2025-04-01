@@ -25,6 +25,7 @@ pub mod guard {
         id -> Integer,
         match_id -> Integer,
         set_order -> Integer,
+        leg_amount -> Integer,
         status -> Text,
     }
 }

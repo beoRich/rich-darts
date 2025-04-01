@@ -43,6 +43,8 @@ pub struct Set {
     pub id: u16,
     pub set_order: u16,
     pub status: String,
+    pub best_of: u16,
+    pub leg_amount: u16
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
@@ -57,17 +59,36 @@ pub struct ScoreMessage {
     pub score_message_label: u16,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize, Debug)]
 pub enum LegStatus {
     Ongoing,
-    LegFinished,
+    Finished,
+    Cancelled,
 }
 
 impl LegStatus {
     pub fn value(&self) -> String {
         match self {
-            LegStatus::LegFinished => "Leg finished".to_string(),
+            LegStatus::Finished => "Leg finished".to_string(),
             LegStatus::Ongoing => "Ongoing".to_string(),
+            LegStatus::Cancelled => "Leg cancelled".to_string(),
+        }
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub enum SetStatus {
+    Ongoing,
+    Finished,
+    Cancelled,
+}
+
+impl SetStatus {
+    pub fn value(&self) -> String {
+        match self {
+            SetStatus::Finished => "Set finished".to_string(),
+            SetStatus::Ongoing => "Ongoing".to_string(),
+            SetStatus::Cancelled => "Set cancelled".to_string(),
         }
     }
 }
@@ -77,10 +98,11 @@ pub enum ScoreMessageMode {
     NewShot,
     UndoLastShot { last_score: u16 },
     LegFinished,
+    LegCancelled,
 }
 
 impl ScoreMessageMode {
-    pub fn value(&self) -> String {
+    pub fn display(&self) -> String {
         match self {
             ScoreMessageMode::NewShot => "Enter Shot".to_string(),
             ScoreMessageMode::UndoLastShot { last_score } => format!(
@@ -89,9 +111,26 @@ impl ScoreMessageMode {
                 last_score.to_string()
             ),
             ScoreMessageMode::LegFinished => "Leg finished".to_string(),
+            ScoreMessageMode::LegCancelled => "Leg cancelled".to_string(),
+        }
+    }
+
+    pub fn allow_score(&self) -> bool {
+        match self {
+            ScoreMessageMode::NewShot => true,
+            ScoreMessageMode::UndoLastShot { last_score: _}  => true,
+            _ => false
         }
     }
 }
+pub fn parse_score_message(status_str: String) -> ScoreMessageMode {
+    match status_str {
+        s if s == ScoreMessageMode::LegFinished.display() => ScoreMessageMode::LegFinished,
+        s if s == ScoreMessageMode::LegCancelled.display() => ScoreMessageMode::LegCancelled,
+        _ => ScoreMessageMode::NewShot
+    }
+}
+
 
 #[derive(Clone, PartialEq)]
 pub enum ErrorMessageMode {
@@ -112,6 +151,15 @@ impl ErrorMessageMode {
             ErrorMessageMode::LegAlreadyFinished => Some("Leg already finished".to_string()),
             ErrorMessageMode::TechnicalError => Some("Technical error".to_string()),
             ErrorMessageMode::CreateNewLeg => Some("Create a new  leg".to_string())
+        }
+    }
+
+    pub fn allow_score(&self) -> bool {
+        match self {
+            ErrorMessageMode::None => true,
+            ErrorMessageMode::NotADartsNumber => true,
+            ErrorMessageMode::NotANumber => true,
+            _ => false
         }
     }
 }
