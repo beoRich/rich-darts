@@ -1,4 +1,4 @@
-use crate::domain::{IdOrder, Leg, Set};
+use crate::domain::{IdOrder, Leg, LegStatus, Set, SetStatus};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 
@@ -82,4 +82,20 @@ pub async fn get_latest_set() -> Result<(u16, Set), ServerFnError> {
     let parent_id = set_db_result.match_id as u16;
     let set = dart_set::map_db_to_domain(set_db_result);
     Ok((parent_id, set))
+}
+
+#[server]
+pub async fn update_set_status(
+    set_id_input: u16,
+    new_status: SetStatus,
+) -> Result<Set, ServerFnError> {
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+    use crate::schema_manual::guard::dartset::dsl::*;
+    let db_set_result = diesel::update(dartset)
+        .filter(id.eq(set_id_input as i32))
+        .set(status.eq(new_status.value()))
+        .returning(DartSet::as_returning())
+        .get_result(conn_ref)?;
+    Ok(dart_set::map_db_to_domain(db_set_result))
 }

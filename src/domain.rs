@@ -76,7 +76,7 @@ impl LegStatus {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize, Debug)]
 pub enum SetStatus {
     Ongoing,
     Finished,

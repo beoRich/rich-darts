@@ -68,12 +68,13 @@ pub async fn new_leg_init_score(
     start_score_input: u16,
 ) -> Result<Leg, ServerFnError> {
     use crate::schema_manual::guard::dartleg;
+    use crate::schema_manual::guard::dartleg::status;
 
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
 
     let latest_leg_of_set_test =
-        QueryDsl::order(dartleg.filter(set_id.eq(set_id_input as i32)), dartleg::id.desc())
+        QueryDsl::order(dartleg.filter(set_id.eq(set_id_input as i32)).filter(status.ne(LegStatus::Cancelled.value())), dartleg::id.desc())
             .first::<DartLeg>(conn_ref)
             .optional();
 

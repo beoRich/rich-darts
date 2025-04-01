@@ -1,4 +1,4 @@
-use crate::domain::{IdOrder, Leg, Set};
+use crate::domain::{IdOrder, Leg, Set, SetStatus};
 use crate::{backend, Route};
 use dioxus::prelude::*;
 use tracing::debug;
@@ -14,6 +14,8 @@ pub fn BreadCrumbComponent(
         "Breadcrum set_signal {:?}, leg_signal {:?}",
         set_signal, leg_signal
     );
+
+
 
     rsx! {
         div {
@@ -51,8 +53,15 @@ pub fn BreadCrumbComponent(
                         li {
                             Link {to: Route::WrapDisplayLegs {matchval: match_signal.unwrap()(), set_id: set_signal.unwrap()().id},
                             class:"text-xl",
-                            {format!{"Set {} ({} legs to win)", set_signal.unwrap()().set_order.to_string(),
-                                set_signal.unwrap()().leg_amount.to_string()}}}
+                            if set_signal.unwrap()().status == SetStatus::Finished.value() {
+                                {format!{"Set {} Finished ({} legs)", set_signal.unwrap()().set_order.to_string(),
+                                    set_signal.unwrap()().leg_amount.to_string()}}
+
+                            }  else {
+                                {format!{"Set {} ({} legs to win)", set_signal.unwrap()().set_order.to_string(),
+                                    set_signal.unwrap()().leg_amount.to_string()}}
+                                }
+                            }
                         }
                        if leg_signal.is_none() {
                             li {
