@@ -16,14 +16,14 @@ mod server_deps {
 use server_deps::*;
 
 #[server]
-pub async fn list_leg(set_id_input: i32) -> Result<Vec<Leg>, ServerFnError> {
+pub async fn list_leg(set_id_input: u16) -> Result<Vec<Leg>, ServerFnError> {
     use crate::schema_manual::guard::dartleg::dsl::*;
 
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
 
     let db_leg_results = dartleg
-        .filter(set_id.eq(set_id_input))
+        .filter(set_id.eq(set_id_input as i32))
         .select(DartLeg::as_select())
         .load(conn_ref)?;
 
@@ -82,7 +82,7 @@ pub async fn new_leg_init_score(
     let leg_order_val: u16;
     match latest_leg_of_set {
         Some(val) => leg_order_val = (val.leg_order + 1) as u16,
-        None => leg_order_val = 0,
+        None => leg_order_val = 1,
     }
 
     let insert_leg = NewDartLeg::new(set_id_input, leg_order_val , start_score_input);

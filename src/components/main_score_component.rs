@@ -1,6 +1,6 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
 use crate::components::calculations;
-use crate::components::enter_panel::EnterPanel;
+use crate::components::enter_panel::{Buttons, NumberFieldError};
 use crate::components::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::{CreateNewLeg, TechnicalError};
 use crate::domain::ScoreMessageMode::{LegCancelled, LegFinished, UndoLastShot};
@@ -55,8 +55,13 @@ pub fn MainScoreComponent(
 
 
                  div {
-                     EnterPanel {scores, raw_input, set_signal, leg_signal, error_message, score_message, allow_score}
-                     ScoreDisplay {scores}
+                    div {
+                      id:"EnterPanel",
+                      class:"bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8",
+                      NumberFieldError {scores, raw_input, set: set_signal(), leg_signal, error_message, score_message, allow_score},
+                      Buttons {scores, raw_input, set: set_signal(), leg_signal, error_message, score_message, allow_score},
+                    }
+                    ScoreDisplay {scores}
                  }
 
              }

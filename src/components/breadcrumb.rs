@@ -51,7 +51,8 @@ pub fn BreadCrumbComponent(
                         li {
                             Link {to: Route::WrapDisplayLegs {matchval: match_signal.unwrap()(), set_id: set_signal.unwrap()().id},
                             class:"text-xl",
-                            {format!{"Set {}", set_signal.unwrap()().set_order.to_string()}}}
+                            {format!{"Set {} ({} legs to win)", set_signal.unwrap()().set_order.to_string(),
+                                set_signal.unwrap()().leg_amount.to_string()}}}
                         }
                        if leg_signal.is_none() {
                             li {
@@ -68,7 +69,8 @@ pub fn BreadCrumbComponent(
                             leg_id: leg_signal.unwrap()().id
                             },
                             class:"text-xl",
-                            {format!{"Leg {}", leg_signal.unwrap()().leg_order.to_string()}}}
+                            {format!{"Leg {}/{}", leg_signal.unwrap()().leg_order.to_string(),
+                                set_signal.unwrap()().leg_amount.to_string()}}}
                         },
 
                         li {

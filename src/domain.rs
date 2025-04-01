@@ -99,6 +99,7 @@ pub enum ScoreMessageMode {
     UndoLastShot { last_score: u16 },
     LegFinished,
     LegCancelled,
+    SetFinished,
 }
 
 impl ScoreMessageMode {
@@ -112,6 +113,7 @@ impl ScoreMessageMode {
             ),
             ScoreMessageMode::LegFinished => "Leg finished".to_string(),
             ScoreMessageMode::LegCancelled => "Leg cancelled".to_string(),
+            ScoreMessageMode::SetFinished => "Set finished".to_string(),
         }
     }
 
@@ -122,11 +124,19 @@ impl ScoreMessageMode {
             _ => false
         }
     }
+
+    pub fn allow_new_leg(&self) -> bool {
+        match self {
+            ScoreMessageMode::SetFinished => false,
+            _ => true
+        }
+    }
 }
 pub fn parse_score_message(status_str: String) -> ScoreMessageMode {
     match status_str {
         s if s == ScoreMessageMode::LegFinished.display() => ScoreMessageMode::LegFinished,
         s if s == ScoreMessageMode::LegCancelled.display() => ScoreMessageMode::LegCancelled,
+        s if s == ScoreMessageMode::SetFinished.display() => ScoreMessageMode::SetFinished,
         _ => ScoreMessageMode::NewShot
     }
 }

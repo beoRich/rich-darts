@@ -2,34 +2,15 @@ use crate::backend;
 use crate::components::calculations;
 use crate::domain::ErrorMessageMode::TechnicalError;
 use crate::domain::LegStatus::Ongoing;
-use crate::domain::ScoreMessageMode::{LegFinished, NewShot, UndoLastShot};
+use crate::domain::ScoreMessageMode::{NewShot, UndoLastShot};
 use crate::domain::{ErrorMessageMode, IdOrder, Leg, LegStatus, Score, ScoreMessageMode, Set, INIT_SCORE};
 use dioxus::prelude::*;
 
 #[component]
-pub fn EnterPanel(
+pub fn NumberFieldError(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    set_signal: Signal<Set>,
-    leg_signal: Signal<Leg>,
-    mut error_message: Signal<ErrorMessageMode>,
-    score_message: Signal<ScoreMessageMode>,
-    allow_score: Signal<bool>,
-) -> Element {
-    rsx! {
-       div {
-         id:"EnterPanel",
-         class:"bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8",
-         NumberFieldError {scores, raw_input, leg_signal, error_message, score_message, allow_score}
-         Buttons {scores, raw_input, set_signal, leg_signal, error_message, score_message, allow_score}
-     }
-    }
-}
-
-#[component]
-fn NumberFieldError(
-    scores: Signal<Vec<Score>>,
-    mut raw_input: Signal<String>,
+    set: Set,
     leg_signal: Signal<Leg>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
@@ -58,7 +39,7 @@ fn NumberFieldError(
                     onkeypress: move |e| async move {
                             let key = e.key();
                             if key == Key::Enter && allow_score() {
-                                input_wrapper(raw_input, leg_signal, scores, error_message, score_message).await;
+                                input_wrapper(raw_input, leg_signal, scores, error_message, score_message, set.leg_amount).await;
                             } else if key == Key::Home  {
                                 undo_wrapper(scores, error_message, score_message);
                             };
@@ -84,10 +65,10 @@ fn NumberFieldError(
 }
 
 #[component]
-fn Buttons(
+pub fn Buttons(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
-    set_signal: Signal<Set>,
+    set: Set,
     leg_signal: Signal<Leg>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
@@ -103,7 +84,7 @@ fn Buttons(
                     class:"col-span-1 grid ",
                     button {id: "confirmButton",
                         onclick: move |_| async move {
-                                input_wrapper(raw_input, leg_signal, scores, error_message, score_message).await;
+                                input_wrapper(raw_input, leg_signal, scores, error_message, score_message, set.leg_amount).await;
                         },
                         disabled: if !allow_score() {true},
                         class:"btn btn-soft btn-primary" , "Ok" },
@@ -125,10 +106,12 @@ fn Buttons(
                         class:"col-start-9",
                         button {id: "newLegButton",
                             onclick: move |_| async move {
-                                    new_leg(set_signal().id, leg_signal, scores, error_message, score_message).await;
+                                    new_leg(set.id, leg_signal, scores, error_message, score_message).await;
                             },
                             title: "Cancel current leg (if unfinished) and start a new one",
-                            class:"btn btn-soft btn-primary" , "New Leg" },
+                            class:"btn btn-soft btn-primary" ,
+                            disabled: if !score_message().allow_new_leg() {true},
+                            "New Leg" },
 
                     }
                 }
@@ -156,8 +139,9 @@ async fn input_wrapper(
     score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
+    max_amount_of_legs: u16
 ) {
-    let (error_message_mode) = input_changed(leg_signal, score, raw_input, score_message).await;
+    let (error_message_mode) = input_changed(leg_signal, score, raw_input, score_message, max_amount_of_legs).await;
     if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
         raw_input.set(" ".to_string());
@@ -248,6 +232,7 @@ async fn input_changed(
     mut score: Signal<Vec<Score>>,
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>,
+    max_amount_of_legs: u16
 ) -> ErrorMessageMode {
     let score_message_mode = score_message();
     let result = input_ref.read().parse();
@@ -286,31 +271,29 @@ async fn input_changed(
                     }
                 }
                 let new_score = calculations::calculate_remaining(last, val, next_throw_order);
-                let db_op_res =
-                    backend::api::dart_score::save_score(leg_val.id, new_score.clone()).await;
-                if db_op_res.is_ok() {
-                    if (&new_score).remaining == 0 {
-                        let res = backend::api::dart_leg::update_leg_status(
-                            leg_val.id,
-                            LegStatus::Finished,
-                        )
-                        .await;
-                        match res {
-                            Ok(_) => score_message.set(LegFinished),
-                            _ => return TechnicalError,
-                        }
-                    }
-                    score.write().push(new_score);
-                    return ErrorMessageMode::None;
+                match handle_new_score(&mut score, &mut score_message, leg_val, &new_score).await {
+                    Ok(_) => ErrorMessageMode::None,
+                    Err(value) => TechnicalError,
                 }
-                //todo error conversion between db_op_res ServerFnError -> TechnicalError
-                TechnicalError
             } else {
                 ErrorMessageMode::NotADartsNumber
             }
         }
         Err(_) => ErrorMessageMode::NotANumber,
     }
+}
+
+async fn handle_new_score(score: &mut Signal<Vec<Score>>, score_message: &mut Signal<ScoreMessageMode>, leg_val: Leg, new_score: &Score) -> Result<(), ServerFnError> {
+    backend::api::dart_score::save_score(leg_val.id, new_score.clone()).await?;
+    if (&new_score).remaining == 0 {
+        backend::api::dart_leg::update_leg_status(
+            leg_val.id,
+            LegStatus::Finished,
+        ).await?;
+        score_message.set(ScoreMessageMode::LegFinished)
+    }
+    score.write().push(new_score.clone());
+    Ok(())
 }
 
 fn get_last(score: &mut Signal<Vec<Score>>) -> Score {
