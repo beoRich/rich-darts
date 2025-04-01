@@ -36,6 +36,7 @@ pub struct Leg {
     pub leg_order: u16,
     pub start_score: u16,
     pub status: String,
+    pub last_score: Option<u16>
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]

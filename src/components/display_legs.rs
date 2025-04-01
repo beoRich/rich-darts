@@ -23,7 +23,7 @@ pub fn DisplayLegs(match_signal: Signal<u16>, set_signal: Signal<Set>) -> Elemen
     });
 
     use_resource(move || async move {
-        let res = backend::api::dart_leg::list_leg(set_signal().id).await;
+        let res = backend::api::dart_leg::list_leg_with_last_score(set_signal().id).await;
         match res {
             Ok(val) if !val.is_empty() => legs_signal.set(val),
             _ => {}

@@ -16,11 +16,13 @@ mod server_deps {
 use server_deps::*;
 
 #[server]
-pub async fn list_leg(set_id_input: u16) -> Result<Vec<Leg>, ServerFnError> {
+pub async fn list_leg_with_last_score(set_id_input: u16) -> Result<Vec<Leg>, ServerFnError> {
     use crate::schema_manual::guard::dartleg::dsl::*;
+    use crate::schema_manual::guard::score::dsl::*;
 
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
+
 
     let db_leg_results = dartleg
         .filter(set_id.eq(set_id_input as i32))

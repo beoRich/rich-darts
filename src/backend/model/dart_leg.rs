@@ -1,8 +1,17 @@
 #[cfg(feature = "server")]
 use diesel::prelude::*;
+use serde::Serialize;
+use crate::backend::model::DartScore;
 use crate::domain::{Leg, LegStatus};
 
-#[cfg_attr(feature = "server", derive(Queryable, Selectable))]
+#[cfg_attr(feature = "server", derive(Serialize))]
+struct LegWithScores {
+    #[cfg_attr(feature = "server", serde(flatten))]
+    leg: DartLeg,
+    scores: Vec<DartScore>,
+}
+
+#[cfg_attr(feature = "server", derive(Queryable, Selectable, Serialize))]
 #[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::dartleg))]
 #[cfg_attr(feature = "server", diesel(check_for_backend(diesel::sqlite::Sqlite)))]
 #[derive(Debug)]
@@ -36,6 +45,16 @@ pub fn map_db_to_domain(db: DartLeg) -> Leg {
         id: db.id as u16,
         status: db.status,
         leg_order: db.leg_order as u16,
-        start_score: db.start_score as u16
+        start_score: db.start_score as u16,
+        last_score: None
+    }
+}
+pub fn map_db_to_domain_with_last_score(db: DartLeg) -> Leg {
+    Leg {
+        id: db.id as u16,
+        status: db.status,
+        leg_order: db.leg_order as u16,
+        start_score: db.start_score as u16,
+        last_score: None
     }
 }

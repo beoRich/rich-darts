@@ -1,7 +1,8 @@
 #[cfg(feature = "server")]
 use diesel::prelude::*;
+use serde::Serialize;
 
-#[cfg_attr(feature = "server", derive(Queryable, Selectable))]
+#[cfg_attr(feature = "server", derive(Queryable, Selectable, Serialize))]
 #[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::score))]
 #[cfg_attr(feature = "server", diesel(check_for_backend(diesel::sqlite::Sqlite)))]
 pub struct DartScore {
