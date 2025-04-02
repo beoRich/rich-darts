@@ -23,7 +23,6 @@ pub fn BreadCrumbComponent(
                         class: "text-xl",
                         "Home"
                     }
-                
                 }
                 if !only_home {
                     li {
@@ -32,27 +31,21 @@ pub fn BreadCrumbComponent(
                             class: "text-xl",
                             "Matches"
                         }
-                    
                     }
                 }
-                if match_signal.is_some() {
-                    li {
-                        Link {
-                            to: Route::WrapDisplaySets {
-                                matchval: match_signal.unwrap()(),
-                            },
-                            class: "text-xl text-base-content",
-                            {
-                                format!("Match {}", match_signal.unwrap()().to_string());
-                            }
-                        }
+                li {
+                    Link {
+                        to: Route::WrapDisplaySets {
+                            matchval: match_signal.unwrap()(),
+                        },
+                        class: "text-xl",
+                        {{ format!("Match {}", match_signal.unwrap()().to_string()) }}
                     }
-                    if set_signal.is_none() {
-                        li {
-                            class: "text-xl",
-                            "List of sets"
-                        
-                        }
+                }
+                if set_signal.is_none() {
+                    li {
+                        class: "text-xl",
+                        "List of sets"
                     }
                 }
                 if set_signal.is_some() {
@@ -65,19 +58,23 @@ pub fn BreadCrumbComponent(
                             class: "text-xl",
                             if set_signal.unwrap()().status == SetStatus::Finished.value() {
                                 {
-                                    format!(
-                                        "Set {} Finished ({} legs)",
-                                        set_signal.unwrap()().set_order.to_string(),
-                                        set_signal.unwrap()().leg_amount.to_string(),
-                                    );
+                                    {
+                                        format!(
+                                            "Set {} Finished ({} legs)",
+                                            set_signal.unwrap()().set_order.to_string(),
+                                            set_signal.unwrap()().leg_amount.to_string(),
+                                        )
+                                    }
                                 }
                             } else {
                                 {
-                                    format!(
-                                        "Set {} ({} legs to win)",
-                                        set_signal.unwrap()().set_order.to_string(),
-                                        set_signal.unwrap()().leg_amount.to_string(),
-                                    );
+                                    {
+                                        format!(
+                                            "Set {} ({} legs to win)",
+                                            set_signal.unwrap()().set_order.to_string(),
+                                            set_signal.unwrap()().leg_amount.to_string(),
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -86,7 +83,6 @@ pub fn BreadCrumbComponent(
                         li {
                             class: "text-xl",
                             "List of legs"
-                        
                         }
                     }
                 }
@@ -100,18 +96,19 @@ pub fn BreadCrumbComponent(
                             },
                             class: "text-xl",
                             {
-                                format!(
-                                    "Leg {}/{}",
-                                    leg_signal.unwrap()().leg_order.to_string(),
-                                    set_signal.unwrap()().leg_amount.to_string(),
-                                );
+                                {
+                                    format!(
+                                        "Leg {}/{}",
+                                        leg_signal.unwrap()().leg_order.to_string(),
+                                        set_signal.unwrap()().leg_amount.to_string(),
+                                    )
+                                }
                             }
                         }
                     }
                     li {
                         class: "text-xl",
                         "Score"
-                    
                     }
                 }
             }
