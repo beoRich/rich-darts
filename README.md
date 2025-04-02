@@ -36,8 +36,7 @@ npx tailwindcss -i ./input.css -o ./assets/tailwind.css --watch
 Locally
 1. docker build . -t registry.digitalocean.com/rich-registry/rich-darts  
 2. docker run -t <tag> 
-
-docker run -d ... <see shell scripct docker-build.sh>
+3. docker run -d -p 80:8080 ...rest  see shell script
 
 3. docker container ls  
 4. docker inspect <containerId> earch for  NetworkSettings.Networks
@@ -70,7 +69,7 @@ Server -> Deployment 7-9
 8. pull image from container registry
 9. docker run 
 
-All cmds in order:
+All build cmds in order:
 see shell script docker-build.sh
 
 
