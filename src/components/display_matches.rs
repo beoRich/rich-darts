@@ -23,8 +23,8 @@ pub fn DisplayMatches() -> Element {
                 BreadCrumbComponent {
                     only_home: false,
                     match_id: None,
-                    set_signal: None,
-                    leg_signal: None,
+                    set_input: None,
+                    leg_input: None,
                 }
                 div {
                     class: "bg-base-100 border-y-4 shadow-md rounded px-8 pt-6 pb-8",

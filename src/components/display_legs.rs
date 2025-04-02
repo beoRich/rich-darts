@@ -8,7 +8,7 @@ use tracing::debug;
 #[component]
 pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
     let match_signal = use_signal(|| match_id);
-    let set_signal = use_signal(|| set_input);
+    let set_signal = use_signal(|| set_input.clone());
     let mut legs_signal = use_signal(|| vec![]);
     let mut start_score_raw_signal: Signal<String> = use_signal(|| "501".to_string());
     let mut start_score_test_signal: Signal<bool> = use_signal(|| true);
@@ -34,8 +34,8 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
                 BreadCrumbComponent {
                     only_home: false,
                     match_id,
-                    set_signal,
-                    leg_signal: None,
+                    set_input,
+                    leg_input: None,
                 }
                 div {
                     class: "bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8 grid grid-cols-12 gap-4",
