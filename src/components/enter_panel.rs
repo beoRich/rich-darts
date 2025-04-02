@@ -62,7 +62,7 @@ pub fn NumberFieldError(
                     id: "displayError",
                     if error_message.read().value().is_some() {
                         p {
-                            class: "text-xl text-error",
+                            class: "text-l text-error",
                             {error_message.read().value()}
                         }
                     }

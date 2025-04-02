@@ -1,6 +1,6 @@
 use dioxus::core_macro::Props;
-use dioxus::prelude::*;
 use dioxus::prelude::server_fn::serde::Deserialize;
+use dioxus::prelude::*;
 use serde::Serialize;
 
 pub const INIT_SCORE: Score = Score {
@@ -9,17 +9,16 @@ pub const INIT_SCORE: Score = Score {
     throw_order: 0,
 };
 
-
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize, Copy)]
 pub struct IdOrder {
     pub id: u16,
-    pub order:u16
+    pub order: u16,
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize, Copy)]
 pub struct IdOrderParent {
     pub id: u16,
-    pub order:u16,
+    pub order: u16,
     pub parent_id: u16,
 }
 
@@ -27,7 +26,7 @@ pub struct IdOrderParent {
 pub struct Score {
     pub remaining: u16,
     pub thrown: u16,
-    pub throw_order: u16
+    pub throw_order: u16,
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
@@ -36,7 +35,7 @@ pub struct Leg {
     pub leg_order: u16,
     pub start_score: u16,
     pub status: String,
-    pub last_score: Option<u16>
+    pub last_score: Option<u16>,
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
@@ -45,7 +44,7 @@ pub struct Set {
     pub set_order: u16,
     pub status: String,
     pub best_of: u16,
-    pub leg_amount: u16
+    pub leg_amount: u16,
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
@@ -121,15 +120,15 @@ impl ScoreMessageMode {
     pub fn allow_score(&self) -> bool {
         match self {
             ScoreMessageMode::NewShot => true,
-            ScoreMessageMode::UndoLastShot { last_score: _}  => true,
-            _ => false
+            ScoreMessageMode::UndoLastShot { last_score: _ } => true,
+            _ => false,
         }
     }
 
     pub fn allow_new_leg(&self) -> bool {
         match self {
             ScoreMessageMode::SetFinished => false,
-            _ => true
+            _ => true,
         }
     }
 }
@@ -138,10 +137,9 @@ pub fn parse_score_message(status_str: String) -> ScoreMessageMode {
         s if s == ScoreMessageMode::LegFinished.display() => ScoreMessageMode::LegFinished,
         s if s == ScoreMessageMode::LegCancelled.display() => ScoreMessageMode::LegCancelled,
         s if s == ScoreMessageMode::SetFinished.display() => ScoreMessageMode::SetFinished,
-        _ => ScoreMessageMode::NewShot
+        _ => ScoreMessageMode::NewShot,
     }
 }
-
 
 #[derive(Clone, PartialEq)]
 pub enum ErrorMessageMode {
@@ -157,11 +155,11 @@ impl ErrorMessageMode {
     pub fn value(&self) -> Option<String> {
         match self {
             ErrorMessageMode::None => None,
-            ErrorMessageMode::NotADartsNumber => Some("Not a valid Darts number".to_string()),
+            ErrorMessageMode::NotADartsNumber => Some("Invalid Darts number".to_string()),
             ErrorMessageMode::NotANumber => Some("Not a number".to_string()),
             ErrorMessageMode::LegAlreadyFinished => Some("Leg already finished".to_string()),
             ErrorMessageMode::TechnicalError => Some("Technical error".to_string()),
-            ErrorMessageMode::CreateNewLeg => Some("Create a new  leg".to_string())
+            ErrorMessageMode::CreateNewLeg => Some("Create a new  leg".to_string()),
         }
     }
 
@@ -170,7 +168,7 @@ impl ErrorMessageMode {
             ErrorMessageMode::None => true,
             ErrorMessageMode::NotADartsNumber => true,
             ErrorMessageMode::NotANumber => true,
-            _ => false
+            _ => false,
         }
     }
 }

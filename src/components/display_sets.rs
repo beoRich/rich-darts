@@ -53,6 +53,7 @@ pub fn DisplaySets(match_id: u16) -> Element {
                     input {
                         id: "numberField",
                         autofocus: true,
+                        value: 3,
                         placeholder: "#winlegs",
                         class: "input text-1xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline\
                              col-span-1 grid",
