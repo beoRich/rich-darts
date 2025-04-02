@@ -16,13 +16,10 @@ use tracing::debug;
 use web_sys::js_sys::JSON::parse;
 use web_sys::window;
 #[component]
-pub fn MainScoreComponent(
-    match_signal: Signal<u16>,
-    set_signal: Signal<Set>,
-    leg_signal: Signal<Leg>,
-) -> Element {
-    debug!("MainScoreComponent set_signal {:?}", set_signal);
-    debug!("MainScoreComponent leg_signal {:?}", leg_signal);
+pub fn MainScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element {
+    debug!("MainScoreComponent leg {:?}", leg_input);
+    let set_signal = use_signal(|| set_input);
+    let leg_signal = use_signal(|| leg_input);
     let mut raw_input = use_signal(|| "".to_string());
     let mut scores = use_signal(|| vec![]);
     let mut score_message = use_signal(|| ScoreMessageMode::NewShot);
@@ -52,7 +49,7 @@ pub fn MainScoreComponent(
             div {
                 BreadCrumbComponent {
                     only_home: false,
-                    match_signal,
+                    match_id,
                     set_signal,
                     leg_signal,
                 }

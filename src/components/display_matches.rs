@@ -22,7 +22,7 @@ pub fn DisplayMatches() -> Element {
             div {
                 BreadCrumbComponent {
                     only_home: false,
-                    match_signal: None,
+                    match_id: None,
                     set_signal: None,
                     leg_signal: None,
                 }
@@ -42,9 +42,9 @@ pub fn DisplayMatches() -> Element {
                         matches,
                     }
                 }
-
+            
             }
-
+        
         }
     }
 }
@@ -97,7 +97,7 @@ pub fn MatchTable(matches: Signal<Vec<Match>>) -> Element {
                                             {a.id.to_string()}
                                         }
                                     }
-
+                                
                                 }
                                 td {
                                     class: if i == 0 { "px-6 py-4 bg-accent text-accent-content" },
@@ -109,7 +109,7 @@ pub fn MatchTable(matches: Signal<Vec<Match>>) -> Element {
                             }
                         }
                     }
-
+                
                 }
             }
         }

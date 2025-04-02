@@ -7,7 +7,8 @@ use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
 use tracing::debug;
 #[component]
-pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
+pub fn DisplaySets(match_id: u16) -> Element {
+    let mut match_signal = use_signal(|| match_id);
     let mut sets_signal = use_signal(|| vec![]);
     let mut leg_amount_raw_signal: Signal<String> = use_signal(|| "5".to_string());
     let mut leg_amount_test_signal: Signal<bool> = use_signal(|| true);
@@ -33,7 +34,7 @@ pub fn DisplaySets(match_signal: Signal<u16>) -> Element {
             div {
                 BreadCrumbComponent {
                     only_home: false,
-                    match_signal,
+                    match_id,
                     set_signal: None,
                     leg_signal: None,
                 }

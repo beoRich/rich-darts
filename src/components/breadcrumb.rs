@@ -5,7 +5,7 @@ use tracing::debug;
 #[component]
 pub fn BreadCrumbComponent(
     only_home: bool,
-    match_signal: Option<Signal<u16>>,
+    match_id: Option<u16>,
     set_signal: Option<Signal<Set>>,
     leg_signal: Option<Signal<Leg>>,
 ) -> Element {
@@ -33,13 +33,15 @@ pub fn BreadCrumbComponent(
                         }
                     }
                 }
-                li {
-                    Link {
-                        to: Route::WrapDisplaySets {
-                            matchval: match_signal.unwrap()(),
-                        },
-                        class: "text-xl",
-                        {{ format!("Match {}", match_signal.unwrap()().to_string()) }}
+                if match_id.is_some() {
+                    li {
+                        Link {
+                            to: Route::WrapDisplaySets {
+                                matchval: match_id.unwrap(),
+                            },
+                            class: "text-xl",
+                            {{ format!("Match {}", match_id.unwrap().to_string()) }}
+                        }
                     }
                 }
                 if set_signal.is_none() {
@@ -52,7 +54,7 @@ pub fn BreadCrumbComponent(
                     li {
                         Link {
                             to: Route::WrapDisplayLegs {
-                                matchval: match_signal.unwrap()(),
+                                matchval: match_id.unwrap(),
                                 set_id: set_signal.unwrap()().id,
                             },
                             class: "text-xl",
@@ -90,7 +92,7 @@ pub fn BreadCrumbComponent(
                     li {
                         Link {
                             to: Route::WrapDisplayScore {
-                                matchval: match_signal.unwrap()(),
+                                matchval: match_id.unwrap(),
                                 set_id: set_signal.unwrap()().id,
                                 leg_id: leg_signal.unwrap()().id,
                             },
