@@ -20,6 +20,7 @@ pub fn MainScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Elem
     debug!("MainScoreComponent leg {:?}", leg_input);
     let set_signal = use_signal(|| set_input.clone());
     let leg_signal = use_signal(|| leg_input.clone());
+    let mut legs_signal = use_signal(|| vec![]);
     let mut raw_input = use_signal(|| "".to_string());
     let mut scores = use_signal(|| vec![]);
     let mut score_message = use_signal(|| ScoreMessageMode::NewShot);
@@ -40,6 +41,14 @@ pub fn MainScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Elem
         match init_score_val {
             Ok(val) if !val.is_empty() => scores.set(val),
             _ => error_message.set(CreateNewLeg),
+        };
+    });
+
+    use_resource(move || async move {
+        let res = backend::api::dart_leg::list_leg_with_last_score(set_signal().id).await;
+        match res {
+            Ok(val) if !val.is_empty() => legs_signal.set(val),
+            _ => {}
         };
     });
     rsx! {
@@ -71,6 +80,7 @@ pub fn MainScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Elem
                             raw_input,
                             set_signal,
                             leg_signal,
+                            legs_signal,
                             error_message,
                             score_message,
                             allow_score,

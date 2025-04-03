@@ -79,6 +79,7 @@ pub fn Buttons(
     mut raw_input: Signal<String>,
     set_signal: Signal<Set>,
     leg_signal: Signal<Leg>,
+    legs_signal: Signal<Vec<Leg>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
@@ -126,12 +127,12 @@ pub fn Buttons(
                     button {
                         id: "newLegButton",
                         onclick: move |_| async move {
-                            new_leg(set_signal().id, leg_signal, scores, error_message, score_message).await;
+                            new_next_leg(set_signal().id, leg_signal, legs_signal, scores, error_message, score_message).await;
                         },
-                        title: "Cancel current leg (if unfinished) and start a new one",
+                        title: "Cancel current leg (if unfinished) and start/switch to a new one",
                         class: "btn btn-soft btn-primary",
                         disabled: if !score_message().allow_new_leg() { true },
-                        "New Leg"
+                        "New/Next Leg"
                     }
                 
                 }
@@ -183,9 +184,10 @@ fn undo_wrapper(
     ));
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
-async fn new_leg(
+async fn new_next_leg(
     set_val: u16,
     mut leg_signal: Signal<Leg>,
+    mut legs_signal: Signal<Vec<Leg>>,
     mut score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,

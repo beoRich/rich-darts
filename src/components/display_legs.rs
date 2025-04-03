@@ -5,6 +5,7 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
 use tracing::debug;
+
 #[component]
 pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
     let match_signal = use_signal(|| match_id);
@@ -28,11 +29,13 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
         };
     });
 
+
     let leg_amount_set_input = set_input.leg_amount;
     use_memo(move || {
         let count_nr = legs_signal().into_iter().map(|leg| parse_leg_status(leg.status))
             .filter(|status| status.count_towards_leg_amount()).count();
-        new_legs_missing_signal.set(leg_amount_set_input - count_nr as u16)
+        let val = if leg_amount_set_input >= count_nr as u16  {leg_amount_set_input - count_nr as u16} else {0};
+        new_legs_missing_signal.set(val)
     });
     debug!("new_legs_missing {:?}", new_legs_missing_signal());
     rsx! {
