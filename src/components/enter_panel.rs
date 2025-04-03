@@ -152,10 +152,11 @@ pub fn Buttons(
                     button {
                         id: "cancelLegButton",
                         onclick: move |_| async move {
-                            cancel_leg(leg_signal().id, error_message, score_message).await;
+                            cancel_leg(leg_signal, error_message, score_message).await;
                         },
                         title: "Cancel current leg",
                         class: "btn btn-soft btn-secondary",
+                        disabled: if score_message() == ScoreMessageMode::LegCancelled { true },
                         "Cancel"
                     }
                 
@@ -205,18 +206,15 @@ async fn new_next_leg(
     let last_score_val = score().last().map(|score| score.remaining);
     score.write().clear();
     let start_score = leg_signal().start_score;
-    match last_score_val {
-        Some(val) if val > 0 => {
-            let _ =
-                backend::api::dart_leg::update_leg_status(leg_signal().id, LegStatus::Cancelled)
-                    .await;
-        }
-        _ => {}
-    }
+    let next_order_val = if leg_signal().status == LegStatus::Cancelled.display() {
+        leg_signal().leg_order
+    } else {
+        leg_signal().leg_order + 1
+    };
     let new_leg_res = backend::api::dart_leg::new_leg_with_init_score_if_not_exists(
         set_val,
         start_score,
-        leg_signal().leg_order + 1,
+        next_order_val,
     )
     .await;
     match new_leg_res {
@@ -230,14 +228,15 @@ async fn new_next_leg(
     }
 }
 async fn cancel_leg(
-    leg_id: u16,
+    mut leg_signal: Signal<Leg>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
 ) {
     let cancel_leg_res =
-        backend::api::dart_leg::update_leg_status(leg_id, LegStatus::Cancelled).await;
+        backend::api::dart_leg::update_leg_status(leg_signal().id, LegStatus::Cancelled).await;
     match cancel_leg_res {
-        Ok(_) => {
+        Ok(cancelled_leg) => {
+            leg_signal.set(cancelled_leg);
             error_message.set(ErrorMessageMode::None);
             score_message.set(ScoreMessageMode::LegCancelled);
             document::eval(&"document.getElementById('numberField').value = ' '".to_string());

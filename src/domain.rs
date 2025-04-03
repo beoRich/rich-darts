@@ -91,7 +91,7 @@ pub fn parse_leg_status(status_str: String) -> LegStatus {
         s if s == LegStatus::Cancelled.display() => LegStatus::Cancelled,
         s if s == LegStatus::Future.display() => LegStatus::Future,
         s if s == LegStatus::Finished.display() => LegStatus::Finished,
-        _ => panic!("Unknown leg status {:?}", status_str)
+        _ => panic!("Unknown leg status {:?}", status_str),
     }
 }
 
@@ -146,8 +146,9 @@ impl ScoreMessageMode {
 
     pub fn allow_new_leg(&self) -> bool {
         match self {
-            ScoreMessageMode::SetFinished => false,
-            _ => true,
+            ScoreMessageMode::LegFinished => true,
+            ScoreMessageMode::LegCancelled => true,
+            _ => false,
         }
     }
 }

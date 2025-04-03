@@ -60,7 +60,7 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
                                     set_signal().id,
                                     legs_signal,
                                     start_score_signal(),
-                                    leg_amount_set_input,
+                                    new_legs_missing_signal(),
                                 )
                                 .await;
                         },

@@ -95,7 +95,13 @@ pub async fn new_leg_with_init_score_if_not_exists(
     let conn_ref = &mut *conn;
     let exists_maybe = leg_by_order_if_exists(conn_ref, set_id_input, leg_order_input)?;
     if exists_maybe.is_none() {
-        let test = new_legs_with_init_score_func(conn_ref, set_id_input, start_score_input, 1)?;
+        let test = new_legs_with_init_score_func(
+            conn_ref,
+            set_id_input,
+            start_score_input,
+            leg_order_input,
+            1,
+        )?;
         Ok(test.get(0).unwrap().clone())
     } else {
         Ok(dart_leg::map_db_to_domain(exists_maybe.unwrap()))
@@ -110,7 +116,14 @@ pub async fn new_legs_with_init_score(
 ) -> Result<Vec<Leg>, ServerFnError> {
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
-    new_legs_with_init_score_func(conn_ref, set_id_input, start_score_input, leg_amount_input)
+    let leg_order_start: u16 = get_next_ongoing_leg_order_of_set(conn_ref, set_id_input)?;
+    new_legs_with_init_score_func(
+        conn_ref,
+        set_id_input,
+        start_score_input,
+        leg_order_start,
+        leg_amount_input,
+    )
 }
 
 #[cfg(feature = "server")]
@@ -118,12 +131,12 @@ fn new_legs_with_init_score_func(
     conn_ref: &mut SqliteConnection,
     set_id_input: u16,
     start_score_input: u16,
+    leg_order_start: u16,
     leg_amount_input: u16,
 ) -> Result<Vec<Leg>, ServerFnError> {
     use crate::schema_manual::guard::dartleg;
     debug!("leg_amount_input {:?}", leg_amount_input);
 
-    let leg_order_start: u16 = get_next_ongoing_leg_order_of_set(conn_ref, set_id_input)?;
     let insert_legs: Vec<NewDartLeg> = (leg_order_start..leg_order_start + leg_amount_input)
         .map(|leg_order_input| {
             NewDartLeg::new_cond(
