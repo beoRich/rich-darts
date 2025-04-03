@@ -6,12 +6,12 @@ use tracing::debug;
 pub fn BreadCrumbComponent(
     only_home: bool,
     match_id: Option<u16>,
-    set_input: Option<Set>,
-    leg_input: Option<Leg>,
+    set_signal: Option<Signal<Set>>,
+    leg_signal: Option<Signal<Leg>>,
 ) -> Element {
     debug!(
         "Breadcrum set_signal {:?}, leg_signal {:?}",
-        set_input, leg_input
+        set_signal, leg_signal
     );
     rsx! {
         div {
@@ -44,27 +44,27 @@ pub fn BreadCrumbComponent(
                         }
                     }
                 }
-                if set_input.is_none() {
+                if set_signal.is_none() {
                     li {
                         class: "text-xl",
                         "List of sets"
                     }
                 }
-                if set_input.is_some() {
+                if set_signal.is_some() {
                     li {
                         Link {
                             to: Route::WrapDisplayLegs {
                                 matchval: match_id.unwrap(),
-                                set_id: set_input.as_ref().unwrap().id,
+                                set_id: set_signal.as_ref().unwrap()().id,
                             },
                             class: "text-xl",
-                            if set_input.as_ref().unwrap().status == SetStatus::Finished.value() {
+                            if set_signal.as_ref().unwrap()().status == SetStatus::Finished.value() {
                                 {
                                     {
                                         format!(
                                             "Set {} Finished ({} legs)",
-                                            set_input.as_ref().unwrap().set_order.to_string(),
-                                            set_input.as_ref().unwrap().leg_amount.to_string(),
+                                            set_signal.as_ref().unwrap()().set_order.to_string(),
+                                            set_signal.as_ref().unwrap()().leg_amount.to_string(),
                                         )
                                     }
                                 }
@@ -73,37 +73,37 @@ pub fn BreadCrumbComponent(
                                     {
                                         format!(
                                             "Set {} ({} legs to win)",
-                                            set_input.as_ref().unwrap().set_order.to_string(),
-                                            set_input.as_ref().unwrap().leg_amount.to_string(),
+                                            set_signal.as_ref().unwrap()().set_order.to_string(),
+                                            set_signal.as_ref().unwrap()().leg_amount.to_string(),
                                         )
                                     }
                                 }
                             }
                         }
                     }
-                    if leg_input.is_none() {
+                    if leg_signal.is_none() {
                         li {
                             class: "text-xl",
                             "List of legs"
                         }
                     }
                 }
-                if leg_input.is_some() {
+                if leg_signal.is_some() {
                     li {
                         Link {
                             to: Route::WrapDisplayScore {
                                 matchval: match_id.unwrap(),
-                                set_id: set_input.as_ref().unwrap().id,
-                                leg_id: leg_input.as_ref().unwrap().id,
+                                set_id: set_signal.as_ref().unwrap()().id,
+                                leg_id: leg_signal.as_ref().unwrap()().id,
                             },
                             class: "text-xl",
                             {
                                 {
                                     format!(
                                         "Leg {}/{} ({})",
-                                        leg_input.as_ref().unwrap().leg_order.to_string(),
-                                        set_input.as_ref().unwrap().leg_amount.to_string(),
-                                        leg_input.as_ref().unwrap().status,
+                                        leg_signal.as_ref().unwrap()().leg_order.to_string(),
+                                        set_signal.as_ref().unwrap()().leg_amount.to_string(),
+                                        leg_signal.as_ref().unwrap()().status,
                                     )
                                 }
                             }

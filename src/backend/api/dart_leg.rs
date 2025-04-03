@@ -62,32 +62,91 @@ pub async fn get_leg_by_id(id_input: i32) -> Result<Leg, ServerFnError> {
     Ok(dart_leg::map_db_to_domain(db_leg_result))
 }
 
+#[cfg(feature = "server")]
+fn leg_by_order_if_exists(
+    conn_ref: &mut SqliteConnection,
+    set_id_input: u16,
+    leg_order_input: u16,
+) -> Result<Option<DartLeg>, ServerFnError> {
+    use crate::schema_manual::guard::dartleg::dsl::*;
+
+    let test = vec![1];
+    !test.is_empty();
+
+    let db_leg_result = dartleg
+        .filter(
+            set_id
+                .eq(set_id_input as i32)
+                .and(leg_order.eq(leg_order_input as i32))
+                .and(status.ne(LegStatus::Cancelled.display())),
+        )
+        .first::<DartLeg>(conn_ref)
+        .optional()?;
+    Ok(db_leg_result)
+}
+
+#[server]
+pub async fn new_leg_with_init_score_if_not_exists(
+    set_id_input: u16,
+    start_score_input: u16,
+    leg_order_input: u16,
+) -> Result<Leg, ServerFnError> {
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+    let exists_maybe = leg_by_order_if_exists(conn_ref, set_id_input, leg_order_input)?;
+    if exists_maybe.is_none() {
+        let test = new_legs_with_init_score_func(conn_ref, set_id_input, start_score_input, 1)?;
+        Ok(test.get(0).unwrap().clone())
+    } else {
+        Ok(dart_leg::map_db_to_domain(exists_maybe.unwrap()))
+    }
+}
+
 #[server]
 pub async fn new_legs_with_init_score(
     set_id_input: u16,
     start_score_input: u16,
-    leg_amount_input: u16
+    leg_amount_input: u16,
 ) -> Result<Vec<Leg>, ServerFnError> {
-    use crate::schema_manual::guard::dartleg;
-
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
+    new_legs_with_init_score_func(conn_ref, set_id_input, start_score_input, leg_amount_input)
+}
 
+#[cfg(feature = "server")]
+fn new_legs_with_init_score_func(
+    conn_ref: &mut SqliteConnection,
+    set_id_input: u16,
+    start_score_input: u16,
+    leg_amount_input: u16,
+) -> Result<Vec<Leg>, ServerFnError> {
+    use crate::schema_manual::guard::dartleg;
     debug!("leg_amount_input {:?}", leg_amount_input);
 
-    let leg_order_start: u16 = get_next_non_cancelled_leg_order_of_set(conn_ref, set_id_input)?;
-    let insert_legs: Vec<NewDartLeg> = (leg_order_start..leg_order_start +leg_amount_input)
-        .map(|leg_order_input| NewDartLeg::new_cond(set_id_input, leg_order_input, start_score_input,
-                                                    leg_order_input == leg_order_start
-        )).collect();
+    let leg_order_start: u16 = get_next_ongoing_leg_order_of_set(conn_ref, set_id_input)?;
+    let insert_legs: Vec<NewDartLeg> = (leg_order_start..leg_order_start + leg_amount_input)
+        .map(|leg_order_input| {
+            NewDartLeg::new_cond(
+                set_id_input,
+                leg_order_input,
+                start_score_input,
+                leg_order_input == leg_order_start,
+            )
+        })
+        .collect();
 
     debug!("insert_leg {:?}", insert_legs);
 
     //batch insert did not work with sqlite :(
-    let db_leg_results_maybe: Result<Vec<DartLeg>, _> = insert_legs.into_iter().map(|insert_leg| diesel::insert_into(dartleg::table)
-        .values(insert_leg)
-        .returning(DartLeg::as_returning())
-        .get_result(conn_ref)).collect();
+    let db_leg_results_maybe: Result<Vec<DartLeg>, _> = insert_legs
+        .into_iter()
+        .map(|insert_leg| {
+            diesel::insert_into(dartleg::table)
+                .values(insert_leg)
+                .returning(DartLeg::as_returning())
+                .get_result(conn_ref)
+        })
+        .collect();
 
     let db_leg_results = db_leg_results_maybe?;
 
@@ -96,19 +155,26 @@ pub async fn new_legs_with_init_score(
         thrown: 0,
         throw_order: 0,
     };
-    let res_score: Result<Vec<_>, _> = db_leg_results.iter().map(|db_leg_result|
-        crate::backend::api::dart_score::new_score_with_connection(
-            conn_ref,
-            db_leg_result.id,
-            init_score_struct.clone(),
-        )).collect();
-    let res: Vec<Leg> = db_leg_results.into_iter().map(|db_leg_result| dart_leg::map_db_to_domain(db_leg_result)).collect();
+    let res_score: Result<Vec<_>, _> = db_leg_results
+        .iter()
+        .map(|db_leg_result| {
+            crate::backend::api::dart_score::new_score_with_connection(
+                conn_ref,
+                db_leg_result.id,
+                init_score_struct.clone(),
+            )
+        })
+        .collect();
+    let res: Vec<Leg> = db_leg_results
+        .into_iter()
+        .map(|db_leg_result| dart_leg::map_db_to_domain(db_leg_result))
+        .collect();
     debug!("end of {:?}", res);
     Ok(res)
 }
 
 #[cfg(feature = "server")]
-fn get_next_non_cancelled_leg_order_of_set(
+fn get_next_ongoing_leg_order_of_set(
     conn_ref: &mut SqliteConnection,
     set_id_input: u16,
 ) -> Result<u16, ServerFnError> {

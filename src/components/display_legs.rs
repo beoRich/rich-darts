@@ -5,7 +5,6 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
 use tracing::debug;
-
 #[component]
 pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
     let match_signal = use_signal(|| match_id);
@@ -20,7 +19,6 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
         start_score_test_signal.set(result.as_ref().map(|val| *val > 0).is_ok());
         result.map(|val| start_score_signal.set(val))
     });
-
     use_resource(move || async move {
         let res = backend::api::dart_leg::list_leg_with_last_score(set_signal().id).await;
         match res {
@@ -28,13 +26,18 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
             _ => {}
         };
     });
-
-
     let leg_amount_set_input = set_input.leg_amount;
     use_memo(move || {
-        let count_nr = legs_signal().into_iter().map(|leg| parse_leg_status(leg.status))
-            .filter(|status| status.count_towards_leg_amount()).count();
-        let val = if leg_amount_set_input >= count_nr as u16  {leg_amount_set_input - count_nr as u16} else {0};
+        let count_nr = legs_signal()
+            .into_iter()
+            .map(|leg| parse_leg_status(leg.status))
+            .filter(|status| status.count_towards_leg_amount())
+            .count();
+        let val = if leg_amount_set_input >= count_nr as u16 {
+            leg_amount_set_input - count_nr as u16
+        } else {
+            0
+        };
         new_legs_missing_signal.set(val)
     });
     debug!("new_legs_missing {:?}", new_legs_missing_signal());
@@ -46,15 +49,20 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
                 BreadCrumbComponent {
                     only_home: false,
                     match_id,
-                    set_input,
-                    leg_input: None,
+                    set_signal,
                 }
                 div {
                     class: "bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8 grid grid-cols-12 gap-4",
                     button {
                         id: "newLegsButton",
                         onclick: move |_| async move {
-                            let _ = new_legs(set_signal().id, legs_signal, start_score_signal(),leg_amount_set_input).await;
+                            let _ = new_legs(
+                                    set_signal().id,
+                                    legs_signal,
+                                    start_score_signal(),
+                                    leg_amount_set_input,
+                                )
+                                .await;
                         },
                         class: "btn btn-soft btn-primary col-span-1 grid",
                         title: "Create Legs if set amount allows it",
@@ -86,7 +94,8 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
                         onkeypress: move |e| async move {
                             let key = e.key();
                             if key == Key::Enter && start_score_test_signal() {
-                                let _ = new_legs(set_signal().id, legs_signal, start_score_signal(), 1).await;
+                                let _ = new_legs(set_signal().id, legs_signal, start_score_signal(), 1)
+                                    .await;
                             }
                         },
                     
@@ -110,10 +119,17 @@ async fn new_legs(
     set_signal_id: u16,
     mut legs_signal: Signal<Vec<Leg>>,
     score_max: u16,
-    leg_amount_input: u16
+    leg_amount_input: u16,
 ) -> Result<(), ServerFnError> {
-    let new_legs = backend::api::dart_leg::new_legs_with_init_score(set_signal_id, score_max, leg_amount_input).await?;
-    new_legs.into_iter().for_each(|new_leg| legs_signal.push(new_leg));
+    let new_legs = backend::api::dart_leg::new_legs_with_init_score(
+        set_signal_id,
+        score_max,
+        leg_amount_input,
+    )
+    .await?;
+    new_legs
+        .into_iter()
+        .for_each(|new_leg| legs_signal.push(new_leg));
     Ok(())
 }
 #[component]

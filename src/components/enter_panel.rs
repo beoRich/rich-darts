@@ -127,7 +127,15 @@ pub fn Buttons(
                     button {
                         id: "newLegButton",
                         onclick: move |_| async move {
-                            new_next_leg(set_signal().id, leg_signal, legs_signal, scores, error_message, score_message).await;
+                            new_next_leg(
+                                    set_signal().id,
+                                    leg_signal,
+                                    legs_signal,
+                                    scores,
+                                    error_message,
+                                    score_message,
+                                )
+                                .await;
                         },
                         title: "Cancel current leg (if unfinished) and start/switch to a new one",
                         class: "btn btn-soft btn-primary",
@@ -205,10 +213,15 @@ async fn new_next_leg(
         }
         _ => {}
     }
-    let new_leg_res = backend::api::dart_leg::new_legs_with_init_score(set_val, start_score, 1).await;
+    let new_leg_res = backend::api::dart_leg::new_leg_with_init_score_if_not_exists(
+        set_val,
+        start_score,
+        leg_signal().leg_order + 1,
+    )
+    .await;
     match new_leg_res {
-        Ok(new_legs) => {
-            new_legs.into_iter().for_each(|new_leg| leg_signal.set(new_leg));
+        Ok(new_leg) => {
+            leg_signal.set(new_leg);
             score.set(vec![INIT_SCORE]);
             document::eval(&"document.getElementById('numberField').value = ' '".to_string());
             document::eval(&"document.getElementById('numberField').select()".to_string());

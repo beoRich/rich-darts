@@ -43,7 +43,6 @@ pub fn MainScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Elem
             _ => error_message.set(CreateNewLeg),
         };
     });
-
     use_resource(move || async move {
         let res = backend::api::dart_leg::list_leg_with_last_score(set_signal().id).await;
         match res {
@@ -59,8 +58,8 @@ pub fn MainScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Elem
                 BreadCrumbComponent {
                     only_home: false,
                     match_id,
-                    set_input,
-                    leg_input,
+                    set_signal,
+                    leg_signal,
                 }
                 div {
                     div {

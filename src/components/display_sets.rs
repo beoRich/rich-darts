@@ -35,8 +35,6 @@ pub fn DisplaySets(match_id: u16) -> Element {
                 BreadCrumbComponent {
                     only_home: false,
                     match_id,
-                    set_input: None,
-                    leg_input: None,
                 }
                 div {
                     class: "bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8 grid grid-cols-12 gap-4",
