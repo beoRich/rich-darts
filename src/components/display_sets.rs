@@ -10,7 +10,7 @@ use tracing::debug;
 pub fn DisplaySets(match_id: u16) -> Element {
     let mut match_signal = use_signal(|| match_id);
     let mut sets_signal = use_signal(|| vec![]);
-    let mut leg_amount_raw_signal: Signal<String> = use_signal(|| "5".to_string());
+    let mut leg_amount_raw_signal: Signal<String> = use_signal(|| "3".to_string());
     let mut leg_amount_test_signal: Signal<bool> = use_signal(|| true);
     let mut leg_amount_signal: Signal<u16> = use_signal(|| 5);
     use_memo(move || {
@@ -53,7 +53,7 @@ pub fn DisplaySets(match_id: u16) -> Element {
                     input {
                         id: "numberField",
                         autofocus: true,
-                        value: 3,
+                        value: leg_amount_raw_signal(),
                         placeholder: "#winlegs",
                         class: "input text-1xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline\
                              col-span-1 grid",

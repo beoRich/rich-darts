@@ -34,9 +34,17 @@ pub struct NewDartLeg {
 }
 
 impl NewDartLeg {
-    pub(crate) fn new (set_id: u16, leg_order: u16, start_score: u16) -> NewDartLeg {
-        NewDartLeg {status: LegStatus::Ongoing.value(), set_id: set_id as i32,
+    pub(crate) fn new (set_id: u16, leg_order: u16, start_score: u16, status: LegStatus) -> NewDartLeg {
+        NewDartLeg {status: status.display(), set_id: set_id as i32,
             leg_order: leg_order as i32, start_score: start_score as i32}
+    }
+
+    pub(crate) fn new_cond (set_id: u16, leg_order: u16, start_score: u16, set_ongoing: bool) -> NewDartLeg {
+        let status = match set_ongoing {
+            true => LegStatus::Ongoing,
+            false => LegStatus::Future
+        };
+        NewDartLeg::new(set_id, leg_order, start_score, status)
     }
 }
 

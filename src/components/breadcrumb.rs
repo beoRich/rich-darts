@@ -100,9 +100,10 @@ pub fn BreadCrumbComponent(
                             {
                                 {
                                     format!(
-                                        "Leg {}/{}",
+                                        "Leg {}/{} ({})",
                                         leg_input.as_ref().unwrap().leg_order.to_string(),
                                         set_input.as_ref().unwrap().leg_amount.to_string(),
+                                        leg_input.as_ref().unwrap().status,
                                     )
                                 }
                             }

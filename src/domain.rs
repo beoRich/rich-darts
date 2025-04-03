@@ -64,15 +64,34 @@ pub enum LegStatus {
     Ongoing,
     Finished,
     Cancelled,
+    Future,
 }
 
 impl LegStatus {
-    pub fn value(&self) -> String {
+    pub fn display(&self) -> String {
         match self {
             LegStatus::Finished => "Leg finished".to_string(),
             LegStatus::Ongoing => "Ongoing".to_string(),
             LegStatus::Cancelled => "Leg cancelled".to_string(),
+            LegStatus::Future => "Not started yet".to_string(),
         }
+    }
+
+    pub fn count_towards_leg_amount(&self) -> bool {
+        match self {
+            LegStatus::Cancelled => false,
+            _ => true,
+        }
+    }
+}
+
+pub fn parse_leg_status(status_str: String) -> LegStatus {
+    match status_str {
+        s if s == LegStatus::Ongoing.display() => LegStatus::Ongoing,
+        s if s == LegStatus::Cancelled.display() => LegStatus::Cancelled,
+        s if s == LegStatus::Future.display() => LegStatus::Future,
+        s if s == LegStatus::Finished.display() => LegStatus::Finished,
+        _ => panic!("Unknown leg status {:?}", status_str)
     }
 }
 

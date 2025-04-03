@@ -203,10 +203,10 @@ async fn new_leg(
         }
         _ => {}
     }
-    let new_leg_res = backend::api::dart_leg::new_leg_init_score(set_val, start_score).await;
+    let new_leg_res = backend::api::dart_leg::new_legs_with_init_score(set_val, start_score, 1).await;
     match new_leg_res {
-        Ok(new_leg) => {
-            leg_signal.set(new_leg);
+        Ok(new_legs) => {
+            new_legs.into_iter().for_each(|new_leg| leg_signal.set(new_leg));
             score.set(vec![INIT_SCORE]);
             document::eval(&"document.getElementById('numberField').value = ' '".to_string());
             document::eval(&"document.getElementById('numberField').select()".to_string());
