@@ -1,12 +1,6 @@
-use crate::domain::{IdOrder, Leg, Match, Score, Set, INIT_SCORE};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
-use dotenv::dotenv;
-use once_cell::sync::Lazy;
 use std::env;
-use std::error::Error;
-use std::sync::Arc;
-use std::sync::Mutex;
 use tracing::debug;
 
 #[cfg(feature = "server")]
@@ -16,6 +10,9 @@ mod server_deps {
     pub use diesel::sqlite::SqliteConnection;
     pub use diesel_migrations::FileBasedMigrations;
     pub use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+    pub use dotenv::dotenv;
+    pub use once_cell::sync::Lazy;
+    pub use std::sync::Mutex;
 }
 
 #[cfg(feature = "server")]

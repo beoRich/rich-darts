@@ -1,8 +1,8 @@
+use crate::backend::model::DartScore;
+use crate::domain::{Leg, LegStatus};
 #[cfg(feature = "server")]
 use diesel::prelude::*;
 use serde::Serialize;
-use crate::backend::model::DartScore;
-use crate::domain::{Leg, LegStatus};
 
 #[cfg_attr(feature = "server", derive(Serialize))]
 struct LegWithScores {
@@ -20,7 +20,7 @@ pub struct DartLeg {
     pub set_id: i32,
     pub leg_order: i32,
     pub start_score: i32,
-    pub status: String
+    pub status: String,
 }
 
 #[cfg_attr(feature = "server", derive(Insertable))]
@@ -34,15 +34,29 @@ pub struct NewDartLeg {
 }
 
 impl NewDartLeg {
-    pub(crate) fn new (set_id: u16, leg_order: u16, start_score: u16, status: LegStatus) -> NewDartLeg {
-        NewDartLeg {status: status.display(), set_id: set_id as i32,
-            leg_order: leg_order as i32, start_score: start_score as i32}
+    pub(crate) fn new(
+        set_id: u16,
+        leg_order: u16,
+        start_score: u16,
+        status: LegStatus,
+    ) -> NewDartLeg {
+        NewDartLeg {
+            status: status.display(),
+            set_id: set_id as i32,
+            leg_order: leg_order as i32,
+            start_score: start_score as i32,
+        }
     }
 
-    pub(crate) fn new_cond (set_id: u16, leg_order: u16, start_score: u16, set_ongoing: bool) -> NewDartLeg {
+    pub(crate) fn new_cond(
+        set_id: u16,
+        leg_order: u16,
+        start_score: u16,
+        set_ongoing: bool,
+    ) -> NewDartLeg {
         let status = match set_ongoing {
             true => LegStatus::Ongoing,
-            false => LegStatus::Future
+            false => LegStatus::Future,
         };
         NewDartLeg::new(set_id, leg_order, start_score, status)
     }
@@ -54,7 +68,7 @@ pub fn map_db_to_domain(db: DartLeg) -> Leg {
         status: db.status,
         leg_order: db.leg_order as u16,
         start_score: db.start_score as u16,
-        last_score: None
+        last_score: None,
     }
 }
 pub fn map_db_to_domain_with_last_score(db: DartLeg) -> Leg {
@@ -63,6 +77,6 @@ pub fn map_db_to_domain_with_last_score(db: DartLeg) -> Leg {
         status: db.status,
         leg_order: db.leg_order as u16,
         start_score: db.start_score as u16,
-        last_score: None
+        last_score: None,
     }
 }

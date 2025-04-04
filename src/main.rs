@@ -1,11 +1,9 @@
 use crate::components::DisplayMatches;
 use crate::components::DisplaySets;
-use crate::domain::{IdOrder, IdOrderParent, Leg, Set};
+use crate::domain::{Leg, Set};
 use components::Test;
 use components::{DisplayLegs, HomeScreen, MainScoreComponent};
 use dioxus::prelude::*;
-use tracing::{debug, Id};
-use web_sys::window;
 mod backend;
 mod components;
 mod domain;
@@ -28,7 +26,6 @@ fn App() -> Element {
             href: CUSTOM_CSS,
         }
         Router::<Route> {
-        
         
         }
     }
