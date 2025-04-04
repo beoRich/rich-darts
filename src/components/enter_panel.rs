@@ -7,6 +7,7 @@ use crate::domain::{
     ErrorMessageMode, IdOrder, Leg, LegStatus, Score, ScoreMessageMode, Set, SetStatus, INIT_SCORE,
 };
 use dioxus::prelude::*;
+use tracing::debug;
 #[component]
 pub fn NumberFieldError(
     scores: Signal<Vec<Score>>,
@@ -17,42 +18,43 @@ pub fn NumberFieldError(
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
 ) -> Element {
+    debug!("score_messaage {:?}", score_message);
     rsx! {
         div {
             id: "NumberFieldError",
             class: "mb-4",
             div {
-                class: "grid grid-cols-10 gap-4",
+                class: "grid grid-cols-8 gap-4",
                 margin: "auto",
-                label {
-                    class: "input",
-                    input {
-                        id: "numberField",
-                        class: "text-xs shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
-                        placeholder: {score_message.read().display()},
-                        r#type: "number",
-                        oninput: move |e| raw_input.set(e.value()),
-                        onfocusin: move |_| {
-                            document::eval(&"document.getElementById('numberField').select()".to_string());
-                        },
-                        onkeypress: move |e| async move {
-                            let key = e.key();
-                            if key == Key::Enter && allow_score() {
-                                input_wrapper(
-                                        raw_input,
-                                        set_signal,
-                                        leg_signal,
-                                        scores,
-                                        error_message,
-                                        score_message,
-                                    )
-                                    .await;
-                            } else if key == Key::Home {
-                                undo_wrapper(scores, error_message, score_message);
-                            }
-                        },
-                    }
-                
+                input {
+                    id: "numberField",
+                    class: "text-xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
+                    class: if allow_score() { "input input-primary" },
+                    class: if !allow_score() { "input input-secondary" },
+                    class: if score_message() == ScoreMessageMode::UndoLastShot { "input input-warning" },
+                    class: if error_message() != ErrorMessageMode::None { "input input-error" },
+                    placeholder: {score_message.read().display()},
+                    r#type: "number",
+                    oninput: move |e| raw_input.set(e.value()),
+                    onfocusin: move |_| {
+                        document::eval(&"document.getElementById('numberField').select()".to_string());
+                    },
+                    onkeypress: move |e| async move {
+                        let key = e.key();
+                        if key == Key::Enter && allow_score() {
+                            input_wrapper(
+                                    raw_input,
+                                    set_signal,
+                                    leg_signal,
+                                    scores,
+                                    error_message,
+                                    score_message,
+                                )
+                                .await;
+                        } else if key == Key::Home {
+                            undo_wrapper(scores, error_message, score_message);
+                        }
+                    },
                 }
                 div {
                     id: "displayError",
@@ -63,9 +65,7 @@ pub fn NumberFieldError(
                         }
                     }
                 }
-            
             }
-        
         }
     }
 }
@@ -80,10 +80,11 @@ pub fn Buttons(
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
 ) -> Element {
+    debug!("scores {:?}", scores());
     rsx! {
         div {
             id: "ButtonsDiv",
-            class: "grid grid-cols-12 gap-4",
+            class: "grid grid-cols-8 gap-4",
             div {
                 class: "col-span-1 grid ",
                 button {
@@ -112,8 +113,13 @@ pub fn Buttons(
                         undo_wrapper(scores, error_message, score_message);
                     },
                     disabled: if scores.read().len() < 2 { true },
-                    class: "btn btn-soft btn-secondary",
-                    "Undo"
+                    class: "btn btn-soft btn-warning",
+                    if scores.read().len() >= 2 {
+                        {format!("Undo ({}) ", scores().last().unwrap().thrown.to_string())}
+                    }
+                    if scores.read().len() < 2 {
+                        "Undo"
+                    }
                 }
             }
             div {
@@ -136,7 +142,6 @@ pub fn Buttons(
                     disabled: if !score_message().allow_new_leg() { true },
                     "Next"
                 }
-            
             }
             div {
                 class: "col-span-1 col-start-12 grid grid-cols-subgrid gap-4",
@@ -150,7 +155,6 @@ pub fn Buttons(
                     disabled: if score_message() == ScoreMessageMode::LegCancelled { true },
                     "Cancel"
                 }
-            
             }
         }
     }
@@ -246,9 +250,7 @@ fn undo_last_score(
     match last_score {
         Some(val) => {
             let last_thrown = val.thrown;
-            score_message.set(UndoLastShot {
-                last_score: last_thrown,
-            });
+            score_message.set(UndoLastShot);
             last_thrown
         }
         None => 0,
@@ -311,7 +313,7 @@ async fn handle_score_message_mode(
 ) -> Result<(Score, u16), ServerFnError> {
     let last = get_last(&mut score);
     match score_message_mode {
-        UndoLastShot { last_score: _ } => {
+        UndoLastShot => {
             score.write().pop();
             score_message.set(NewShot);
             let next_throw_order = last.throw_order;
