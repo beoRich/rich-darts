@@ -282,7 +282,7 @@ async fn input_changed(
                         &mut score,
                         &mut score_message,
                         score_message_mode,
-                        &leg_val,
+                        leg_signal,
                         &current_set,
                     )
                     .await
@@ -292,7 +292,7 @@ async fn input_changed(
                         match handle_new_score(
                             &mut score,
                             &mut score_message,
-                            leg_val,
+                            leg_signal,
                             &new_score,
                             current_set,
                         )
@@ -316,7 +316,7 @@ async fn handle_score_message_mode(
     mut score: &mut Signal<Vec<Score>>,
     score_message: &mut Signal<ScoreMessageMode>,
     score_message_mode: ScoreMessageMode,
-    leg_val: &Leg,
+    mut leg_signal: Signal<Leg>,
     current_set: &Set,
 ) -> Result<(Score, u16), ServerFnError> {
     let last = get_last(&mut score);
@@ -325,15 +325,21 @@ async fn handle_score_message_mode(
             score.write().pop();
             score_message.set(NewShot);
             let next_throw_order = last.throw_order;
-            let _ = backend::api::dart_score::delete_score_by_order(leg_val.id, next_throw_order)
-                .await?;
+            let _ =
+                backend::api::dart_score::delete_score_by_order(leg_signal().id, next_throw_order)
+                    .await?;
             let _ = backend::api::dart_set::update_set_status(current_set.id, SetStatus::Ongoing)
                 .await?;
-            let _ = backend::api::dart_leg::update_leg_status(leg_val.id, Ongoing).await?;
+            let updatet_leg =
+                backend::api::dart_leg::update_leg_status(leg_signal().id, Ongoing).await?;
+            leg_signal.set(updatet_leg);
             let last = get_snd_last(&mut score);
             Ok((last, next_throw_order))
         }
         NewShot => {
+            let updatet_leg =
+                backend::api::dart_leg::update_leg_status(leg_signal().id, Ongoing).await?;
+            leg_signal.set(updatet_leg);
             let next_throw_order = last.throw_order + 1;
             Ok((last, next_throw_order))
         }
@@ -343,15 +349,17 @@ async fn handle_score_message_mode(
 async fn handle_new_score(
     score: &mut Signal<Vec<Score>>,
     score_message: &mut Signal<ScoreMessageMode>,
-    leg_val: Leg,
+    mut leg_signal: Signal<Leg>,
     new_score: &Score,
     current_set: &Set,
 ) -> Result<(), ServerFnError> {
-    backend::api::dart_score::save_score(leg_val.id, new_score.clone()).await?;
+    backend::api::dart_score::save_score(leg_signal().id, new_score.clone()).await?;
     if (&new_score).remaining == 0 {
-        backend::api::dart_leg::update_leg_status(leg_val.id, LegStatus::Finished).await?;
+        let updatet_leg =
+            backend::api::dart_leg::update_leg_status(leg_signal().id, LegStatus::Finished).await?;
+        leg_signal.set(updatet_leg);
         score_message.set(ScoreMessageMode::LegFinished);
-        if leg_val.leg_order == current_set.leg_amount {
+        if leg_signal().leg_order == current_set.leg_amount {
             backend::api::dart_set::update_set_status(current_set.id, SetStatus::Finished).await?;
             score_message.set(ScoreMessageMode::SetFinished);
         }

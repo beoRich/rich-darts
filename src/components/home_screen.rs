@@ -81,6 +81,13 @@ pub fn HomeScreen() -> Element {
                 }
             
             }
+            div {
+                "About:"
+                p {
+                    "A work in progress page for creating dart matches and tracking dart scores"
+                }
+            
+            }
         
         }
     }

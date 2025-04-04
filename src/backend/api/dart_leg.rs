@@ -138,14 +138,7 @@ fn new_legs_with_init_score_func(
     debug!("leg_amount_input {:?}", leg_amount_input);
 
     let insert_legs: Vec<NewDartLeg> = (leg_order_start..leg_order_start + leg_amount_input)
-        .map(|leg_order_input| {
-            NewDartLeg::new_cond(
-                set_id_input,
-                leg_order_input,
-                start_score_input,
-                leg_order_input == leg_order_start,
-            )
-        })
+        .map(|leg_order_input| NewDartLeg::new(set_id_input, leg_order_input, start_score_input))
         .collect();
 
     debug!("insert_leg {:?}", insert_legs);
@@ -247,7 +240,7 @@ pub async fn create_leg_chain() -> Result<(), ServerFnError> {
         .returning(DartSet::as_returning())
         .get_result(conn_ref)?;
 
-    let insert_leg = NewDartLeg::new(set_result.id as u16, 1, 501, LegStatus::Ongoing);
+    let insert_leg = NewDartLeg::new(set_result.id as u16, 1, 501);
     let leg_result = diesel::insert_into(dartleg::table)
         .values(insert_leg)
         .returning(DartLeg::as_returning())
