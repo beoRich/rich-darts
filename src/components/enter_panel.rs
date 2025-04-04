@@ -21,41 +21,37 @@ pub fn NumberFieldError(
         div {
             id: "NumberFieldError",
             class: "mb-4",
-            label {
-                class: "block text-gray-700 text-xl text-primary font-bold mb-2",
-                r#for: "numberField",
-                {score_message.read().display()}
-            }
             div {
-                class: "grid grid-cols-12 gap-4",
+                class: "grid grid-cols-10 gap-4",
                 margin: "auto",
-                input {
-                    id: "numberField",
-                    autofocus: true,
-                    class: "text-2xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
-                    r#type: "number",
-                    maxlength: 10,
-                    min: 0,
-                    oninput: move |e| raw_input.set(e.value()),
-                    onfocusin: move |_| {
-                        document::eval(&"document.getElementById('numberField').select()".to_string());
-                    },
-                    onkeypress: move |e| async move {
-                        let key = e.key();
-                        if key == Key::Enter && allow_score() {
-                            input_wrapper(
-                                    raw_input,
-                                    set_signal,
-                                    leg_signal,
-                                    scores,
-                                    error_message,
-                                    score_message,
-                                )
-                                .await;
-                        } else if key == Key::Home {
-                            undo_wrapper(scores, error_message, score_message);
-                        }
-                    },
+                label {
+                    class: "input",
+                    input {
+                        id: "numberField",
+                        class: "text-xs shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
+                        placeholder: {score_message.read().display()},
+                        r#type: "number",
+                        oninput: move |e| raw_input.set(e.value()),
+                        onfocusin: move |_| {
+                            document::eval(&"document.getElementById('numberField').select()".to_string());
+                        },
+                        onkeypress: move |e| async move {
+                            let key = e.key();
+                            if key == Key::Enter && allow_score() {
+                                input_wrapper(
+                                        raw_input,
+                                        set_signal,
+                                        leg_signal,
+                                        scores,
+                                        error_message,
+                                        score_message,
+                                    )
+                                    .await;
+                            } else if key == Key::Home {
+                                undo_wrapper(scores, error_message, score_message);
+                            }
+                        },
+                    }
                 
                 }
                 div {
@@ -121,46 +117,40 @@ pub fn Buttons(
                 }
             }
             div {
-                class: "col-span-9 grid grid-cols-subgrid gap-4",
-                div {
-                    class: "col-start-9",
-                    button {
-                        id: "newLegButton",
-                        onclick: move |_| async move {
-                            new_next_leg(
-                                    set_signal().id,
-                                    leg_signal,
-                                    legs_signal,
-                                    scores,
-                                    error_message,
-                                    score_message,
-                                )
-                                .await;
-                        },
-                        title: "Cancel current leg (if unfinished) and start/switch to a new one",
-                        class: "btn btn-soft btn-primary",
-                        disabled: if !score_message().allow_new_leg() { true },
-                        "New/Next Leg"
-                    }
-                
+                class: "col-span-1 col-start-11 grid grid-cols-subgrid gap-4",
+                button {
+                    id: "nextLegButton",
+                    onclick: move |_| async move {
+                        new_next_leg(
+                                set_signal().id,
+                                leg_signal,
+                                legs_signal,
+                                scores,
+                                error_message,
+                                score_message,
+                            )
+                            .await;
+                    },
+                    title: "Cancel current leg (if unfinished) and start/switch to a new one",
+                    class: "btn btn-soft btn-primary",
+                    disabled: if !score_message().allow_new_leg() { true },
+                    "Next"
                 }
+            
             }
             div {
-                class: "col-span-1 grid grid-cols-subgrid gap-4",
-                div {
-                    class: "col-start-11",
-                    button {
-                        id: "cancelLegButton",
-                        onclick: move |_| async move {
-                            cancel_leg(leg_signal, error_message, score_message).await;
-                        },
-                        title: "Cancel current leg",
-                        class: "btn btn-soft btn-secondary",
-                        disabled: if score_message() == ScoreMessageMode::LegCancelled { true },
-                        "Cancel"
-                    }
-                
+                class: "col-span-1 col-start-12 grid grid-cols-subgrid gap-4",
+                button {
+                    id: "cancelLegButton",
+                    onclick: move |_| async move {
+                        cancel_leg(leg_signal, error_message, score_message).await;
+                    },
+                    title: "Cancel current leg",
+                    class: "btn btn-soft btn-secondary",
+                    disabled: if score_message() == ScoreMessageMode::LegCancelled { true },
+                    "Cancel"
                 }
+            
             }
         }
     }

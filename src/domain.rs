@@ -70,9 +70,9 @@ pub enum LegStatus {
 impl LegStatus {
     pub fn display(&self) -> String {
         match self {
-            LegStatus::Finished => "Leg finished".to_string(),
+            LegStatus::Finished => "Finished".to_string(),
             LegStatus::Ongoing => "Ongoing".to_string(),
-            LegStatus::Cancelled => "Leg cancelled".to_string(),
+            LegStatus::Cancelled => "Cancelled".to_string(),
             LegStatus::Future => "Not started yet".to_string(),
         }
     }
@@ -124,14 +124,14 @@ pub enum ScoreMessageMode {
 impl ScoreMessageMode {
     pub fn display(&self) -> String {
         match self {
-            ScoreMessageMode::NewShot => "Enter Shot".to_string(),
+            ScoreMessageMode::NewShot => "Score".to_string(),
             ScoreMessageMode::UndoLastShot { last_score } => format!(
                 "{} {}",
                 "Correct last Shot: ".to_string(),
                 last_score.to_string()
             ),
-            ScoreMessageMode::LegFinished => "Leg finished".to_string(),
-            ScoreMessageMode::LegCancelled => "Leg cancelled".to_string(),
+            ScoreMessageMode::LegFinished => "Leg Finished".to_string(),
+            ScoreMessageMode::LegCancelled => "Cancelled".to_string(),
             ScoreMessageMode::SetFinished => "Set finished".to_string(),
         }
     }
