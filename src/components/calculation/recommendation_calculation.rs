@@ -66,7 +66,7 @@ fn determine_finish_rec(remaining_val: u16) -> FinishRecValue {
                 secondary_rec: secondary_ref.map(|(single, double)| format!("S{single} D{double}")),
             }
         },
-        remaining_val if remaining_val <= 56 && remaining_val > 40 => {
+        remaining_val if remaining_val <= 52 && remaining_val > 40 => {
             let (single, double) = (remaining_val - 32, 16);
             let (single_snd, double_snd) = (remaining_val - 40, 20);
             FinishRecValue {
@@ -74,7 +74,7 @@ fn determine_finish_rec(remaining_val: u16) -> FinishRecValue {
                 secondary_rec: Some(format!("S{single_snd} D{double_snd}"))
             }
         },
-        remaining_val if remaining_val <= 60 && remaining_val > 56  => {
+        remaining_val if remaining_val <= 60 && remaining_val > 52  => {
             let (single, double) = (remaining_val - 40, 20);
             FinishRecValue {
                 primary_rec: format!("S{single} D{double}"),
