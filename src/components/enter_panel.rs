@@ -1,5 +1,5 @@
 use crate::backend;
-use crate::components::calculations;
+use crate::components::calculation::score_calculation;
 use crate::domain::ErrorMessageMode::TechnicalError;
 use crate::domain::LegStatus::Ongoing;
 use crate::domain::ScoreMessageMode::{NewShot, UndoLastShot};
@@ -276,7 +276,7 @@ async fn input_changed(
     let leg_val = leg_signal();
     match result {
         Ok(val) => {
-            if calculations::valid_thrown(val) {
+            if score_calculation::valid_thrown(val) {
                 {
                     if let Ok((last, next_throw_order)) = handle_score_message_mode(
                         &mut score,
@@ -288,7 +288,7 @@ async fn input_changed(
                     .await
                     {
                         let new_score =
-                            calculations::calculate_remaining(last, val, next_throw_order);
+                            score_calculation::calculate_remaining(last, val, next_throw_order);
                         match handle_new_score(
                             &mut score,
                             &mut score_message,

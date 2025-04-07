@@ -1,4 +1,3 @@
-mod calculations;
 mod main_score_component;
 mod test;
 mod score_display;
@@ -8,6 +7,7 @@ mod display_sets;
 mod display_matches;
 mod breadcrumb;
 mod home_screen;
+mod calculation;
 
 pub use main_score_component::MainScoreComponent;
 pub use display_legs::DisplayLegs;

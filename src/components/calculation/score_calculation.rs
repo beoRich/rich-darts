@@ -64,9 +64,7 @@ fn check_possible_remaining(possible_remaining: u16, val: u16) -> bool {
 
 #[cfg(test)]
 mod test {
-    use crate::components::calculations::{
-        calculate_remaining, check_possible_remaining, valid_thrown,
-    };
+    use crate::components::calculation::score_calculation::{calculate_remaining, check_possible_remaining, valid_thrown};
     use crate::domain::Score;
 
     #[test]
