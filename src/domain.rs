@@ -124,8 +124,8 @@ pub enum ScoreMessageMode {
 impl ScoreMessageMode {
     pub fn display(&self) -> String {
         match self {
-            ScoreMessageMode::NewShot => "Score".to_string(),
-            ScoreMessageMode::UndoLastShot => "Undo".to_string(),
+            ScoreMessageMode::NewShot => "Enter Score".to_string(),
+            ScoreMessageMode::UndoLastShot => "Undo Score".to_string(),
             ScoreMessageMode::LegFinished => "Leg Finished".to_string(),
             ScoreMessageMode::LegCancelled => "Cancelled".to_string(),
             ScoreMessageMode::SetFinished => "Set finished".to_string(),

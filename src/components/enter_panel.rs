@@ -26,35 +26,40 @@ pub fn NumberFieldError(
             div {
                 class: "grid grid-cols-8 gap-4",
                 margin: "auto",
-                input {
-                    id: "numberField",
-                    class: "text-xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
-                    class: if allow_score() { "input input-primary" },
-                    class: if !allow_score() { "input input-secondary" },
-                    class: if score_message() == ScoreMessageMode::UndoLastShot { "input input-warning" },
-                    class: if error_message() != ErrorMessageMode::None { "input input-error" },
-                    placeholder: {score_message.read().display()},
-                    r#type: "number",
-                    oninput: move |e| raw_input.set(e.value()),
-                    onfocusin: move |_| {
-                        document::eval(&"document.getElementById('numberField').select()".to_string());
-                    },
-                    onkeypress: move |e| async move {
-                        let key = e.key();
-                        if key == Key::Enter && allow_score() {
-                            input_wrapper(
-                                    raw_input,
-                                    set_signal,
-                                    leg_signal,
-                                    scores,
-                                    error_message,
-                                    score_message,
-                                )
-                                .await;
-                        } else if key == Key::Home {
-                            undo_wrapper(scores, error_message, score_message);
-                        }
-                    },
+                label {
+                    class: "floating-label",
+                    span {
+                        {score_message.read().display()}
+                    }
+                    input {
+                        id: "numberField",
+                        class: "input input-md text-xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
+                        class: if allow_score() { "input input-primary" },
+                        class: if !allow_score() { "input input-secondary" },
+                        class: if score_message() == UndoLastShot { "input input-warning" },
+                        class: if error_message() != ErrorMessageMode::None { "input input-error" },
+                        placeholder: "180",
+                        oninput: move |e| raw_input.set(e.value()),
+                        onfocusin: move |_| {
+                            document::eval(&"document.getElementById('numberField').select()".to_string());
+                        },
+                        onkeypress: move |e| async move {
+                            let key = e.key();
+                            if key == Key::Enter && allow_score() {
+                                input_wrapper(
+                                        raw_input,
+                                        set_signal,
+                                        leg_signal,
+                                        scores,
+                                        error_message,
+                                        score_message,
+                                    )
+                                    .await;
+                            } else if key == Key::Home {
+                                undo_wrapper(scores, error_message, score_message);
+                            }
+                        },
+                    }
                 }
                 div {
                     id: "displayError",
