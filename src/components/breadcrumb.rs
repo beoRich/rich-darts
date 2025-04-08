@@ -62,7 +62,7 @@ pub fn BreadCrumbComponent(
                                 {
                                     {
                                         format!(
-                                            "Set {} Finished ({} legs)",
+                                            "set {} finished ({} legs)",
                                             set_signal.as_ref().unwrap()().set_order.to_string(),
                                             set_signal.as_ref().unwrap()().leg_amount.to_string(),
                                         )

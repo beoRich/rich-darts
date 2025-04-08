@@ -7,6 +7,7 @@ use crate::domain::{
     ErrorMessageMode, IdOrder, Leg, LegStatus, Score, ScoreMessageMode, Set, SetStatus, INIT_SCORE,
 };
 use dioxus::prelude::*;
+use tracing::debug;
 #[component]
 pub fn NumberFieldError(
     scores: Signal<Vec<Score>>,
@@ -17,25 +18,23 @@ pub fn NumberFieldError(
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
 ) -> Element {
+    debug!("score_messaage {:?}", score_message);
     rsx! {
         div {
             id: "NumberFieldError",
             class: "mb-4",
-            label {
-                class: "block text-gray-700 text-xl text-primary font-bold mb-2",
-                r#for: "numberField",
-                {score_message.read().display()}
-            }
             div {
-                class: "grid grid-cols-12 gap-4",
+                class: "grid grid-cols-8 gap-4",
                 margin: "auto",
                 input {
                     id: "numberField",
-                    autofocus: true,
-                    class: "text-2xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
+                    class: "text-xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
+                    class: if allow_score() { "input input-primary" },
+                    class: if !allow_score() { "input input-secondary" },
+                    class: if score_message() == ScoreMessageMode::UndoLastShot { "input input-warning" },
+                    class: if error_message() != ErrorMessageMode::None { "input input-error" },
+                    placeholder: {score_message.read().display()},
                     r#type: "number",
-                    maxlength: 10,
-                    min: 0,
                     oninput: move |e| raw_input.set(e.value()),
                     onfocusin: move |_| {
                         document::eval(&"document.getElementById('numberField').select()".to_string());
@@ -56,7 +55,6 @@ pub fn NumberFieldError(
                             undo_wrapper(scores, error_message, score_message);
                         }
                     },
-                
                 }
                 div {
                     id: "displayError",
@@ -67,9 +65,7 @@ pub fn NumberFieldError(
                         }
                     }
                 }
-            
             }
-        
         }
     }
 }
@@ -84,10 +80,11 @@ pub fn Buttons(
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
 ) -> Element {
+    debug!("scores {:?}", scores());
     rsx! {
         div {
             id: "ButtonsDiv",
-            class: "grid grid-cols-12 gap-4",
+            class: "grid grid-cols-8 gap-4",
             div {
                 class: "col-span-1 grid ",
                 button {
@@ -116,50 +113,47 @@ pub fn Buttons(
                         undo_wrapper(scores, error_message, score_message);
                     },
                     disabled: if scores.read().len() < 2 { true },
+                    class: "btn btn-soft btn-warning",
+                    if scores.read().len() >= 2 {
+                        {format!("Undo ({}) ", scores().last().unwrap().thrown.to_string())}
+                    }
+                    if scores.read().len() < 2 {
+                        "Undo"
+                    }
+                }
+            }
+            div {
+                class: "col-span-1 col-start-11 grid grid-cols-subgrid gap-4",
+                button {
+                    id: "nextLegButton",
+                    onclick: move |_| async move {
+                        new_next_leg(
+                                set_signal().id,
+                                leg_signal,
+                                legs_signal,
+                                scores,
+                                error_message,
+                                score_message,
+                            )
+                            .await;
+                    },
+                    title: "Cancel current leg (if unfinished) and start/switch to a new one",
+                    class: "btn btn-soft btn-primary",
+                    disabled: if !score_message().allow_new_leg() { true },
+                    "Next"
+                }
+            }
+            div {
+                class: "col-span-1 col-start-12 grid grid-cols-subgrid gap-4",
+                button {
+                    id: "cancelLegButton",
+                    onclick: move |_| async move {
+                        cancel_leg(leg_signal, error_message, score_message).await;
+                    },
+                    title: "Cancel current leg",
                     class: "btn btn-soft btn-secondary",
-                    "Undo"
-                }
-            }
-            div {
-                class: "col-span-9 grid grid-cols-subgrid gap-4",
-                div {
-                    class: "col-start-9",
-                    button {
-                        id: "newLegButton",
-                        onclick: move |_| async move {
-                            new_next_leg(
-                                    set_signal().id,
-                                    leg_signal,
-                                    legs_signal,
-                                    scores,
-                                    error_message,
-                                    score_message,
-                                )
-                                .await;
-                        },
-                        title: "Cancel current leg (if unfinished) and start/switch to a new one",
-                        class: "btn btn-soft btn-primary",
-                        disabled: if !score_message().allow_new_leg() { true },
-                        "New/Next Leg"
-                    }
-                
-                }
-            }
-            div {
-                class: "col-span-1 grid grid-cols-subgrid gap-4",
-                div {
-                    class: "col-start-11",
-                    button {
-                        id: "cancelLegButton",
-                        onclick: move |_| async move {
-                            cancel_leg(leg_signal, error_message, score_message).await;
-                        },
-                        title: "Cancel current leg",
-                        class: "btn btn-soft btn-secondary",
-                        disabled: if score_message() == ScoreMessageMode::LegCancelled { true },
-                        "Cancel"
-                    }
-                
+                    disabled: if score_message() == ScoreMessageMode::LegCancelled { true },
+                    "Cancel"
                 }
             }
         }
@@ -256,9 +250,7 @@ fn undo_last_score(
     match last_score {
         Some(val) => {
             let last_thrown = val.thrown;
-            score_message.set(UndoLastShot {
-                last_score: last_thrown,
-            });
+            score_message.set(UndoLastShot);
             last_thrown
         }
         None => 0,
@@ -321,7 +313,7 @@ async fn handle_score_message_mode(
 ) -> Result<(Score, u16), ServerFnError> {
     let last = get_last(&mut score);
     match score_message_mode {
-        UndoLastShot { last_score: _ } => {
+        UndoLastShot => {
             score.write().pop();
             score_message.set(NewShot);
             let next_throw_order = last.throw_order;
