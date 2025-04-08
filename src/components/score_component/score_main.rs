@@ -14,6 +14,8 @@ use dioxus_logger::tracing::error;
 use tracing::debug;
 use web_sys::js_sys::JSON::parse;
 use web_sys::window;
+use crate::components::score_component::score_statistic::ScoreStatistic;
+
 #[component]
 pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element {
     debug!("ScoreComponent leg {:?}", leg_input);
@@ -64,10 +66,10 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
 
                     div {
                         id: "TopBar",
-                        class: "grid grid-cols-4 gap-1",
+                        class: "grid grid-cols-5 gap-1",
                         div {
                             id: "EnterPanel",
-                            class: "col-span-1 grid bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8",
+                            class: "col-span-1 grid bg-base-100 border-y-4 shadow-md rounded px-8 py-4",
                             NumberFieldError {
                                 scores,
                                 raw_input,
@@ -90,12 +92,12 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
                         }
                         div {
                             id: "LegStatistic",
-                            class: "col-span-2 grid bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8",
-                            "statistics Todo"
+                            class: "col-span-3 grid bg-base-100 border-y-4 shadow-md rounded px-8",
+                            ScoreStatistic {scores}
                         }
                         div {
                             id: "CancelUndoButton",
-                            class: "col-span-1 grid bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8",
+                            class: "col-span-1 grid bg-base-100 border-y-4 shadow-md rounded px-8 py-4",
                             NewCancelButton {
                                 scores,
                                 raw_input,

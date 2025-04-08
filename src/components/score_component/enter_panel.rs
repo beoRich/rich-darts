@@ -22,9 +22,9 @@ pub fn NumberFieldError(
     rsx! {
         div {
             id: "NumberFieldError",
-            class: "mb-4",
+            class: "mb-4 join-vertical",
             div {
-                class: "grid grid-cols-2 gap-4",
+                class: "grid grid-cols-2 gap-4 join-item",
                 margin: "auto",
                 label {
                     class: "floating-label",
@@ -63,6 +63,7 @@ pub fn NumberFieldError(
                 }
                 div {
                     id: "displayError",
+                    class: "join-item",
                     if error_message.read().value().is_some() {
                         p {
                             class: "text-l text-error",
