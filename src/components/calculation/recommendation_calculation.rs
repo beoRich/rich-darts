@@ -211,7 +211,7 @@ fn determine_finish_rec(remaining_val: u16) -> FinishRecValue {
         },
         83 => FinishRecValue {
             primary_rec: Some(vec![T(17), D(16)]),
-            secondary_rec: Some(vec![S(50), S(18), D(20)]),
+            secondary_rec: Some(vec![S(50), S(17), D(8)]),
         },
         84 => FinishRecValue {
             primary_rec: Some(vec![T(20), D(12)]),
@@ -306,23 +306,30 @@ mod test {
             .into_iter()
             .map(|input_val| (input_val as u16, determine_rec(input_val as u16)))
             .collect();
-        for (input_val, rec_value) in result {
+        result.into_iter().for_each(|(input_val, rec_value) | {
             match rec_value {
                 RecValue::IsFinish(is_finish_value) => {
-                    let primary_rec_maybe = is_finish_value.primary_rec;
-                    match primary_rec_maybe {
-                        Some(primary_rec_val) => {
-                            let sum_val = sum_parser(primary_rec_val);
-                            assert_eq!(
-                                sum_val, input_val,
-                                "Primary Sum Recommendation Fail: Should {input_val}, Is {sum_val}"
-                            )
-                        }
-                        None => {}
-                    }
+                    let FinishRecValue{primary_rec, secondary_rec} = is_finish_value;
+                    check_finish_sum_expect_remaining(input_val, primary_rec);
+                    check_finish_sum_expect_remaining(input_val, secondary_rec);
                 }
-                RecValue::NoFinish(non_finish_value) => {}
+                RecValue::NoFinish(_) => {
+                    //todo
+                }
             }
+        });
+    }
+
+    fn check_finish_sum_expect_remaining(input_val: u16, rec_vector_maybe: Option<Vec<ScoreType>>) {
+        match rec_vector_maybe {
+            Some(rec_vector) => {
+                let sum_val = sum_parser(rec_vector);
+                assert_eq!(
+                    sum_val, input_val,
+                    "Sum Recommendation for {input_val } failed: Should {input_val}, Is {sum_val}"
+                )
+            }
+            None => {}
         }
     }
 
@@ -338,19 +345,17 @@ mod test {
                 }
             })
             .collect();
-        result.into_iter().for_each(|(input_val, rec_value) | check_finishes_end_with_double(input_val, rec_value));
+        result.into_iter().for_each(|(input_val, rec_value) | {
+            let FinishRecValue{primary_rec, secondary_rec} = rec_value;
+            check_finish_ends_with_double(input_val, primary_rec);
+            check_finish_ends_with_double(input_val, secondary_rec);
+        });
     }
 
-    fn check_finishes_end_with_double(input_val: u16, rec_value: FinishRecValue) {
-        let FinishRecValue{primary_rec, secondary_rec} = rec_value;
-        check_finish_ends_with_double(input_val, primary_rec);
-        check_finish_ends_with_double(input_val, secondary_rec);
-    }
-
-    fn check_finish_ends_with_double(input_val: u16, rec_vector: Option<Vec<ScoreType>>) {
-        match rec_vector {
-            Some(primary_rec_val) => {
-                let last_val_maybe = primary_rec_val.last();
+    fn check_finish_ends_with_double(input_val: u16, rec_vector_maybe: Option<Vec<ScoreType>>) {
+        match rec_vector_maybe {
+            Some(rec_vector) => {
+                let last_val_maybe = rec_vector.last();
                 assert!(last_val_maybe.is_some());
                 let last_val = last_val_maybe.unwrap();
                 match last_val {
