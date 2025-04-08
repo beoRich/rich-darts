@@ -24,7 +24,7 @@ pub fn NumberFieldError(
             id: "NumberFieldError",
             class: "mb-4",
             div {
-                class: "grid grid-cols-8 gap-4",
+                class: "grid grid-cols-2 gap-4",
                 margin: "auto",
                 label {
                     class: "floating-label",
@@ -75,7 +75,7 @@ pub fn NumberFieldError(
     }
 }
 #[component]
-pub fn Buttons(
+pub fn OkUndoButton(
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
     set_signal: Signal<Set>,
@@ -89,7 +89,7 @@ pub fn Buttons(
     rsx! {
         div {
             id: "ButtonsDiv",
-            class: "grid grid-cols-8 gap-4",
+            class: "grid grid-cols-4 gap-2",
             div {
                 class: "col-span-1 grid ",
                 button {
@@ -127,6 +127,26 @@ pub fn Buttons(
                     }
                 }
             }
+        }
+    }
+}
+
+#[component]
+pub fn NewCancelButton(
+    scores: Signal<Vec<Score>>,
+    mut raw_input: Signal<String>,
+    set_signal: Signal<Set>,
+    leg_signal: Signal<Leg>,
+    legs_signal: Signal<Vec<Leg>>,
+    mut error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+    allow_score: Signal<bool>,
+) -> Element {
+    debug!("scores {:?}", scores());
+    rsx! {
+        div {
+            id: "ButtonsDiv",
+            class: "grid grid-cols-8 gap-4",
             div {
                 class: "col-span-1 col-start-11 grid grid-cols-subgrid gap-4",
                 button {

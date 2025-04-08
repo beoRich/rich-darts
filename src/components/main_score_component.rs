@@ -1,5 +1,5 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::components::enter_panel::{Buttons, NumberFieldError};
+use crate::components::enter_panel::{OkUndoButton, NumberFieldError, NewCancelButton};
 use crate::components::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::{CreateNewLeg, TechnicalError};
 use crate::domain::ScoreMessageMode::{LegCancelled, LegFinished, UndoLastShot};
@@ -61,28 +61,53 @@ pub fn MainScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Elem
                     leg_signal,
                 }
                 div {
+
                     div {
-                        id: "EnterPanel",
-                        class: "bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8",
-                        NumberFieldError {
-                            scores,
-                            raw_input,
-                            set_signal,
-                            leg_signal,
-                            error_message,
-                            score_message,
-                            allow_score,
+                        id: "TopBar",
+                        class: "grid grid-cols-4 gap-1",
+                        div {
+                            id: "EnterPanel",
+                            class: "col-span-1 grid bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8",
+                            NumberFieldError {
+                                scores,
+                                raw_input,
+                                set_signal,
+                                leg_signal,
+                                error_message,
+                                score_message,
+                                allow_score,
+                            }
+                            OkUndoButton {
+                                scores,
+                                raw_input,
+                                set_signal,
+                                leg_signal,
+                                legs_signal,
+                                error_message,
+                                score_message,
+                                allow_score,
+                            }
                         }
-                        Buttons {
-                            scores,
-                            raw_input,
-                            set_signal,
-                            leg_signal,
-                            legs_signal,
-                            error_message,
-                            score_message,
-                            allow_score,
+                        div {
+                            id: "LegStatistic",
+                            class: "col-span-2 grid bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8",
+                            "statistics Todo"
                         }
+                        div {
+                            id: "CancelUndoButton",
+                            class: "col-span-1 grid bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8",
+                            NewCancelButton {
+                                scores,
+                                raw_input,
+                                set_signal,
+                                leg_signal,
+                                legs_signal,
+                                error_message,
+                                score_message,
+                                allow_score,
+                            }
+                        }
+
                     }
                     ScoreDisplay {
                         scores,
