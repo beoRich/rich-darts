@@ -1,6 +1,6 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::components::enter_panel::{OkUndoButton, NumberFieldError, NewCancelButton};
-use crate::components::score_display::ScoreDisplay;
+use crate::components::score_component::enter_panel::{OkUndoButton, NumberFieldError, NewCancelButton};
+use crate::components::score_component::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::{CreateNewLeg, TechnicalError};
 use crate::domain::ScoreMessageMode::{LegCancelled, LegFinished, UndoLastShot};
 use crate::domain::{
@@ -15,8 +15,8 @@ use tracing::debug;
 use web_sys::js_sys::JSON::parse;
 use web_sys::window;
 #[component]
-pub fn MainScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element {
-    debug!("MainScoreComponent leg {:?}", leg_input);
+pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element {
+    debug!("ScoreComponent leg {:?}", leg_input);
     let set_signal = use_signal(|| set_input.clone());
     let leg_signal = use_signal(|| leg_input.clone());
     let mut legs_signal = use_signal(|| vec![]);
@@ -51,7 +51,7 @@ pub fn MainScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Elem
     });
     rsx! {
         div {
-            id: "DisplayScore",
+            id: "MainScoreComponent",
             class: "container-self",
             div {
                 BreadCrumbComponent {

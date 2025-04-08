@@ -1,8 +1,9 @@
 use crate::components::DisplayMatches;
 use crate::components::DisplaySets;
+use crate::components::score_component::score_main::ScoreComponent;
 use crate::domain::{Leg, Set};
 use components::Test;
-use components::{DisplayLegs, HomeScreen, MainScoreComponent};
+use components::{DisplayLegs, HomeScreen};
 use dioxus::prelude::*;
 mod backend;
 mod components;
@@ -68,7 +69,7 @@ fn WrapDisplayScore(matchval: u16, set_id: u16, leg_id: u16) -> Element {
     ) {
         (Some(Ok(leg_val)), Some(Ok(set_val))) => {
             rsx! {
-                MainScoreComponent {
+                ScoreComponent {
                     match_id: matchval,
                     set_input: set_val.clone(),
                     leg_input: leg_val.clone(),
@@ -110,7 +111,7 @@ fn LatestLeg() -> Element {
     match &*latest_leg_with_set_order.read_unchecked() {
         Some(Ok((match_id_ref, set_ref, leg_ref))) => {
             rsx! {
-                MainScoreComponent {
+                ScoreComponent {
                     match_id: *match_id_ref,
                     set_input: set_ref.clone(),
                     leg_input: leg_ref.clone(),
