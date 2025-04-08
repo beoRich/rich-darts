@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 pub enum RecValue {
     IsFinish(FinishRecValue),
     NoFinish(NonFinishRecValue),
+    NoRec,
 }
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
@@ -46,6 +47,13 @@ pub struct NonFinishRecValue {
     pub goal: u16,
 }
 
+impl Display for NonFinishRecValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let NonFinishRecValue{rec, goal } = self;
+        write!(f, "Score {} => {}", rec, goal)
+    }
+}
+
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct FinishRecValue {
     pub primary_rec: Option<Vec<ScoreType>>,
@@ -56,35 +64,36 @@ pub fn display_score_types(input_vec: &Option<Vec<ScoreType>>) -> String {
     match input_vec {
         Some(primary_rec_val) => primary_rec_val
             .into_iter()
-            .map(|val| val.display())
+            .map(|val| format!("{val}"))
             .join(" "),
         None => "-".to_string(),
     }
 }
 
-enum IsFinish {
-    Yes,
-    No { goal: u16 },
-}
-
 pub fn determine_rec(remaining_val: u16) -> RecValue {
     match remaining_val {
-        remaining_val if remaining_val < 91 => {
+        remaining_val if remaining_val <= 100 => {
             RecValue::IsFinish(determine_finish_rec(remaining_val))
         }
-        remaining_val if remaining_val > 180 => {
+
+        remaining_val if remaining_val == 170 + 171 => {
             let val = NonFinishRecValue {
-                goal: remaining_val - 180,
-                rec: 180,
+                goal: 170,
+                rec: 171,
             };
             RecValue::NoFinish(val)
         }
-        _ => {
+
+        remaining_val if remaining_val < 32 + 160 => {
             let val = NonFinishRecValue {
                 goal: 32,
                 rec: remaining_val - 32,
             };
             RecValue::NoFinish(val)
+        }
+
+        _ => {
+            RecValue::NoRec
         }
     }
 }
@@ -346,6 +355,7 @@ mod test {
                 RecValue::NoFinish(_) => {
                     //todo
                 }
+                _ => {}
             }
         });
     }

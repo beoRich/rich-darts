@@ -14,9 +14,10 @@ pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
                 id: "numbers",
                 class: "table-container",
                 table {
-                    class: "text-xl uppercase bg-neutral-content rounded",
+                    class: "text-xl bg-neutral-content rounded",
                     style: "width: 50%; border: 1px solid black;",
                     thead {
+                        class: "uppercase",
                         tr {
                             th {
                                 scope: "col",
@@ -94,23 +95,18 @@ fn RecommendationRow(rec_value: RecValue, row_nr: u16) -> Element {
         }
         RecValue::NoFinish(no_finished_rec_value) => {
             rsx! {
-                NoFinishedRecommendationRow{no_finished_rec_value, row_nr}
+                        div {
+                            "{no_finished_rec_value}"
+                        }
             }
         }
-    }
-}
-
-#[component]
-fn NoFinishedRecommendationRow(no_finished_rec_value: NonFinishRecValue, row_nr: u16) -> Element {
-    let NonFinishRecValue{rec, goal} = no_finished_rec_value;
-    rsx! {
-
-                                div {
-                                    div {
-                                        "{rec} -> {goal}"
-                                    }
-                                }
-
+        RecValue::NoRec => {
+            rsx! {
+                div {
+                    "Score as high as possible"
+                }
+            }
+        }
     }
 }
 
