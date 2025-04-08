@@ -1,6 +1,7 @@
 use crate::domain::Score;
-use itertools::{iproduct};
+use itertools::iproduct;
 use std::collections::HashSet;
+use crate::components::calculation::common;
 
 pub fn valid_thrown(val: u16) -> bool {
     let all_possible_values: HashSet<u16> = possible_values();
@@ -51,12 +52,7 @@ fn check_possible_remaining(possible_remaining: u16, val: u16) -> bool {
     match possible_remaining {
         1 => false,
         0 => {
-            let boogey_nr: Vec<u16> = vec![169, 168, 166, 165, 163, 162, 159];
-            match val {
-                val if boogey_nr.contains(&val) => false,
-                0..170 => true,
-                _ => false,
-            }
+            common::is_boogey_nr(val)
         }
         _ => true,
     }

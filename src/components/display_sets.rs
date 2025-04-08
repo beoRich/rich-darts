@@ -19,7 +19,7 @@ pub fn DisplaySets(match_id: u16) -> Element {
         leg_amount_test_signal.set(result.is_ok() && result.clone().unwrap() > 0);
         result.map(|val| leg_amount_signal.set(val))
     });
-    use_resource(move || async move {
+    let _ = use_resource(move || async move {
         let match_val = match_signal();
         let res = backend::api::dart_set::list_set(match_val as i32).await;
         match res {

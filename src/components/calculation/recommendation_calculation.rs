@@ -1,24 +1,49 @@
-use dioxus::core_macro::Props;
-use serde::{Deserialize, Serialize};
-use dioxus::prelude::*;
+use std::fmt::{Display, Formatter};
 use crate::components::calculation::recommendation_calculation::ScoreType::{D, S, T};
+use dioxus::core_macro::Props;
+use dioxus::prelude::*;
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub enum RecValue {
     IsFinish(FinishRecValue),
-    NoFinish(NonFinishRecValue)
-
+    NoFinish(NonFinishRecValue),
 }
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub enum ScoreType {
-    T(u16), D(u16), S(u16)
+    T(u16),
+    D(u16),
+    S(u16),
+}
+
+impl Display for ScoreType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str_val = match self {
+            T(val) => format!("T{val}"),
+            D(val) => format!("D{val}"),
+            S(val) => format!("S{val}"),
+        };
+        write!(f, "{}", str_val)
+    }
+}
+
+
+impl ScoreType {
+    pub(crate) fn display(&self) -> String {
+        match self {
+            T(val) => format!("T{val}"),
+            D(val) => format!("D{val}"),
+            S(val) => format!("S{val}"),
+        }
+    }
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct NonFinishRecValue {
-    pub rec: String,
-    pub goal: u16
+    pub rec: u16,
+    pub goal: u16,
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
@@ -27,31 +52,40 @@ pub struct FinishRecValue {
     pub secondary_rec: Option<Vec<ScoreType>>,
 }
 
-
+pub fn display_score_types(input_vec: &Option<Vec<ScoreType>>) -> String {
+    match input_vec {
+        Some(primary_rec_val) => primary_rec_val
+            .into_iter()
+            .map(|val| val.display())
+            .join(" "),
+        None => "-".to_string(),
+    }
+}
 
 enum IsFinish {
     Yes,
     No { goal: u16 },
 }
 
-
 pub fn determine_rec(remaining_val: u16) -> RecValue {
     match remaining_val {
-        remaining_val if remaining_val < 91 => { RecValue::IsFinish(determine_finish_rec(remaining_val))}
+        remaining_val if remaining_val < 91 => {
+            RecValue::IsFinish(determine_finish_rec(remaining_val))
+        }
         remaining_val if remaining_val > 180 => {
-        let val = NonFinishRecValue{
-            goal: remaining_val - 180,
-            rec: "D20 D20 D20".to_string(),
-        };
-        RecValue::NoFinish(val)
-        },
-        _ => {
-            let val = NonFinishRecValue{
-                goal: 32,
-                rec: format!("{}", remaining_val - 32),
+            let val = NonFinishRecValue {
+                goal: remaining_val - 180,
+                rec: 180,
             };
             RecValue::NoFinish(val)
-        },
+        }
+        _ => {
+            let val = NonFinishRecValue {
+                goal: 32,
+                rec: remaining_val - 32,
+            };
+            RecValue::NoFinish(val)
+        }
     }
 }
 
@@ -71,91 +105,266 @@ fn determine_finish_rec(remaining_val: u16) -> FinishRecValue {
                 primary_rec: Some(vec![S(single), D(double)]),
                 secondary_rec: secondary_ref.map(|(single, double)| vec![S(single), D(double)]),
             }
-        },
+        }
         remaining_val if remaining_val <= 52 && remaining_val > 40 => {
             let (single, double) = (remaining_val - 32, 16);
             let (single_snd, double_snd) = (remaining_val - 40, 20);
             FinishRecValue {
                 primary_rec: Some(vec![S(single), D(double)]),
-                secondary_rec: Some(vec![S(single_snd), D(double_snd)])
+                secondary_rec: Some(vec![S(single_snd), D(double_snd)]),
             }
-        },
-        remaining_val if remaining_val <= 60 && remaining_val > 52  => {
+        }
+        remaining_val if remaining_val <= 60 && remaining_val > 52 => {
             let (single, double) = (remaining_val - 40, 20);
             FinishRecValue {
                 primary_rec: Some(vec![S(single), D(double)]),
-                secondary_rec: None
+                secondary_rec: None,
             }
+        }
+        61 => FinishRecValue {
+            primary_rec: Some(vec![S(25), D(18)]),
+            secondary_rec: Some(vec![T(15), D(8)]),
         },
-        61 => FinishRecValue {primary_rec: Some(vec![S(25), D(18)]), secondary_rec: Some(vec![T(15), D(8)])},
-        62 => FinishRecValue {primary_rec: Some(vec![T(10), D(16)]), secondary_rec: Some(vec![T(14), D(10)])},
-        63 => FinishRecValue {primary_rec:Some(vec![T(13), D(12)]), secondary_rec: None},
-        64 => FinishRecValue {primary_rec:Some(vec![T(16), D(8)]), secondary_rec: Some(vec![T(8), D(20)])},
-        65 => FinishRecValue {primary_rec:Some(vec![S(25), D(20)]), secondary_rec: Some(vec![T(11), D(16)])},
-        66 => FinishRecValue {primary_rec:Some(vec![T(10), D(18)]), secondary_rec: Some(vec![T(18), D(6)])},
-        67 => FinishRecValue {primary_rec:Some(vec![T(9), D(20)]), secondary_rec: None},
-        68 => FinishRecValue {primary_rec:Some(vec![T(20), D(4)]), secondary_rec: Some(vec![T(16), D(10)])},
-        69 => FinishRecValue {primary_rec:Some(vec![T(11),D(18)]), secondary_rec: Some(vec![T(15), D(12)])},
-        70 => FinishRecValue {primary_rec:Some(vec![T(18),D(8)]), secondary_rec: Some(vec![T(10), D(20)])},
-        71 => FinishRecValue {primary_rec:Some(vec![T(13),D(16)]), secondary_rec: Some(vec![T(17), D(10)])},
-        72 => FinishRecValue {primary_rec:Some(vec![T(20),D(6)]), secondary_rec: Some(vec![T(12), D(18)])},
-        73 => FinishRecValue {primary_rec:Some(vec![T(19),D(8)]), secondary_rec: None},
-        74 => FinishRecValue {primary_rec:Some(vec![T(14),D(16)]), secondary_rec: Some(vec![T(16), D(13)])},
-        75 => FinishRecValue {primary_rec:Some(vec![T(17),D(12)]), secondary_rec: Some(vec![S(25), S(50)])},
-        76 => FinishRecValue {primary_rec:Some(vec![T(16),D(14)]), secondary_rec: None},
-        77 => FinishRecValue {primary_rec:Some(vec![T(19),D(10)]), secondary_rec: None},
-        78 => FinishRecValue {primary_rec:Some(vec![T(18),D(12)]), secondary_rec: None},
-        79 => FinishRecValue {primary_rec:Some(vec![T(19),D(11)]), secondary_rec: Some(vec![T(13), D(20)])},
-        80 => FinishRecValue {primary_rec:Some(vec![T(20),D(10)]), secondary_rec: Some(vec![D(20), D(20)])},
-        81 => FinishRecValue {primary_rec:Some(vec![T(19),D(12)]), secondary_rec: Some(vec![T(15), D(18)])},
-        82 => FinishRecValue {primary_rec:Some(vec![T(14),D(20)]), secondary_rec: Some(vec![S(50), D(16)])},
-        83 => FinishRecValue {primary_rec:Some(vec![T(17),D(16)]), secondary_rec: Some(vec![S(50), S(18), D(20)])},
-        84 => FinishRecValue {primary_rec:Some(vec![T(20),D(12)]), secondary_rec: Some(vec![T(16), D(18)])},
-        85 => FinishRecValue {primary_rec:Some(vec![T(15),D(20)]), secondary_rec: Some(vec![T(19), D(14)])},
-        86 => FinishRecValue {primary_rec:Some(vec![T(18),D(16)]), secondary_rec: None},
-        87 => FinishRecValue {primary_rec:Some(vec![T(17),D(18)]), secondary_rec: None},
-        88 => FinishRecValue {primary_rec:Some(vec![T(20),D(14)]), secondary_rec: None},
-        89 => FinishRecValue {primary_rec:Some(vec![T(19),D(16)]), secondary_rec: None},
-        90 => FinishRecValue {primary_rec:Some(vec![T(20),D(15)]), secondary_rec: Some(vec![S(50), D(20)])},
-        _ => panic!("Todo: Unreachable state {remaining_val}")
+        62 => FinishRecValue {
+            primary_rec: Some(vec![T(10), D(16)]),
+            secondary_rec: Some(vec![T(14), D(10)]),
+        },
+        63 => FinishRecValue {
+            primary_rec: Some(vec![T(13), D(12)]),
+            secondary_rec: None,
+        },
+        64 => FinishRecValue {
+            primary_rec: Some(vec![T(16), D(8)]),
+            secondary_rec: Some(vec![T(8), D(20)]),
+        },
+        65 => FinishRecValue {
+            primary_rec: Some(vec![S(25), D(20)]),
+            secondary_rec: Some(vec![T(11), D(16)]),
+        },
+        66 => FinishRecValue {
+            primary_rec: Some(vec![T(10), D(18)]),
+            secondary_rec: Some(vec![T(18), D(6)]),
+        },
+        67 => FinishRecValue {
+            primary_rec: Some(vec![T(9), D(20)]),
+            secondary_rec: None,
+        },
+        68 => FinishRecValue {
+            primary_rec: Some(vec![T(20), D(4)]),
+            secondary_rec: Some(vec![T(16), D(10)]),
+        },
+        69 => FinishRecValue {
+            primary_rec: Some(vec![T(11), D(18)]),
+            secondary_rec: Some(vec![T(15), D(12)]),
+        },
+        70 => FinishRecValue {
+            primary_rec: Some(vec![T(18), D(8)]),
+            secondary_rec: Some(vec![T(10), D(20)]),
+        },
+        71 => FinishRecValue {
+            primary_rec: Some(vec![T(13), D(16)]),
+            secondary_rec: Some(vec![T(17), D(10)]),
+        },
+        72 => FinishRecValue {
+            primary_rec: Some(vec![T(20), D(6)]),
+            secondary_rec: Some(vec![T(12), D(18)]),
+        },
+        73 => FinishRecValue {
+            primary_rec: Some(vec![T(19), D(8)]),
+            secondary_rec: None,
+        },
+        74 => FinishRecValue {
+            primary_rec: Some(vec![T(14), D(16)]),
+            secondary_rec: Some(vec![T(16), D(13)]),
+        },
+        75 => FinishRecValue {
+            primary_rec: Some(vec![T(17), D(12)]),
+            secondary_rec: Some(vec![S(25), S(50)]),
+        },
+        76 => FinishRecValue {
+            primary_rec: Some(vec![T(16), D(14)]),
+            secondary_rec: None,
+        },
+        77 => FinishRecValue {
+            primary_rec: Some(vec![T(19), D(10)]),
+            secondary_rec: None,
+        },
+        78 => FinishRecValue {
+            primary_rec: Some(vec![T(18), D(12)]),
+            secondary_rec: None,
+        },
+        79 => FinishRecValue {
+            primary_rec: Some(vec![T(19), D(11)]),
+            secondary_rec: Some(vec![T(13), D(20)]),
+        },
+        80 => FinishRecValue {
+            primary_rec: Some(vec![T(20), D(10)]),
+            secondary_rec: Some(vec![D(20), D(20)]),
+        },
+        81 => FinishRecValue {
+            primary_rec: Some(vec![T(19), D(12)]),
+            secondary_rec: Some(vec![T(15), D(18)]),
+        },
+        82 => FinishRecValue {
+            primary_rec: Some(vec![T(14), D(20)]),
+            secondary_rec: Some(vec![S(50), D(16)]),
+        },
+        83 => FinishRecValue {
+            primary_rec: Some(vec![T(17), D(16)]),
+            secondary_rec: Some(vec![S(50), S(18), D(20)]),
+        },
+        84 => FinishRecValue {
+            primary_rec: Some(vec![T(20), D(12)]),
+            secondary_rec: Some(vec![T(16), D(18)]),
+        },
+        85 => FinishRecValue {
+            primary_rec: Some(vec![T(15), D(20)]),
+            secondary_rec: Some(vec![T(19), D(14)]),
+        },
+        86 => FinishRecValue {
+            primary_rec: Some(vec![T(18), D(16)]),
+            secondary_rec: None,
+        },
+        87 => FinishRecValue {
+            primary_rec: Some(vec![T(17), D(18)]),
+            secondary_rec: None,
+        },
+        88 => FinishRecValue {
+            primary_rec: Some(vec![T(20), D(14)]),
+            secondary_rec: None,
+        },
+        89 => FinishRecValue {
+            primary_rec: Some(vec![T(19), D(16)]),
+            secondary_rec: None,
+        },
+        90 => FinishRecValue {
+            primary_rec: Some(vec![T(20), D(15)]),
+            secondary_rec: Some(vec![S(50), D(20)]),
+        },
+        91 => FinishRecValue {
+            primary_rec: Some(vec![T(17), D(20)]),
+            secondary_rec: Some(vec![S(50), T(16), D(9)]),
+        },
+        92 => FinishRecValue {
+            primary_rec: Some(vec![T(20), D(16)]),
+            secondary_rec: Some(vec![S(50), T(17), D(8)]),
+        },
+        93 => FinishRecValue {
+            primary_rec: Some(vec![T(19), D(18)]),
+            secondary_rec: Some(vec![S(50), T(18), D(7)]),
+        },
+        _ => panic!("Todo: Unreachable state {remaining_val}"),
     }
 }
 
 fn under_40_two_dart_finish(remaining_val: u16) -> ((u16, u16), Option<(u16, u16)>) {
-    match  remaining_val {
+    match remaining_val {
         3 => ((1, 1), None),
-        39|37|35|33 => ((remaining_val - 32, 16), Some((remaining_val - 20, 10))),
+        39 | 37 | 35 | 33 => ((remaining_val - 32, 16), Some((remaining_val - 20, 10))),
         remaining_val if remaining_val > 4 && remaining_val < 8 => ((remaining_val - 4, 2), None),
         remaining_val if remaining_val > 8 && remaining_val < 12 => ((remaining_val - 8, 4), None),
-        remaining_val if remaining_val > 12 && remaining_val < 16 => ((remaining_val - 8, 4), Some((remaining_val - 10, 5))),
-        remaining_val if remaining_val > 16 && remaining_val < 22 => ((remaining_val - 16, 8), Some((remaining_val - 10, 5))),
-        remaining_val if remaining_val > 22 && remaining_val < 32 => ((remaining_val - 16, 8), Some((remaining_val - 10, 5))),
-        _ => panic!("Todo: Unreachable state {remaining_val}")
+        remaining_val if remaining_val > 12 && remaining_val < 16 => {
+            ((remaining_val - 8, 4), Some((remaining_val - 10, 5)))
+        }
+        remaining_val if remaining_val > 16 && remaining_val < 22 => {
+            ((remaining_val - 16, 8), Some((remaining_val - 10, 5)))
+        }
+        remaining_val if remaining_val > 22 && remaining_val < 32 => {
+            ((remaining_val - 16, 8), Some((remaining_val - 10, 5)))
+        }
+        _ => panic!("Todo: Unreachable state {remaining_val}"),
     }
 }
 
-
 #[cfg(test)]
 mod test {
-    use crate::components::calculation::recommendation_calculation::{determine_rec, RecValue};
+    use std::any::type_name;
+    use crate::components::calculation::recommendation_calculation::{determine_rec, FinishRecValue, RecValue, ScoreType};
 
     #[test]
     fn no_panic_due_unreachable_state() {
-        (0..501).into_iter().for_each(|input_val| {determine_rec(input_val as u16);})
+        (0..501).into_iter().for_each(|input_val| {
+            determine_rec(input_val as u16);
+        })
+    }
+
+    fn sum_parser(input_vector: Vec<ScoreType>) -> u16 {
+        input_vector.into_iter().map(score_parser).sum()
+    }
+
+    fn score_parser(input_score: ScoreType) -> u16 {
+        match input_score {
+            ScoreType::T(val) => 3 * val,
+            ScoreType::D(val) => 2 * val,
+            ScoreType::S(val) => 1 * val,
+        }
     }
 
     #[test]
     fn expect_remaining() {
-        let result: Vec<RecValue> = (0..90).into_iter().map(|input_val| determine_rec(input_val as u16)).collect();
-        for rec_value in result {
+        let result: Vec<(u16, RecValue)> = (0..90)
+            .into_iter()
+            .map(|input_val| (input_val as u16, determine_rec(input_val as u16)))
+            .collect();
+        for (input_val, rec_value) in result {
             match rec_value {
-                RecValue::IsFinish(is_finish) => {
-                    is_finish.primary_rec
+                RecValue::IsFinish(is_finish_value) => {
+                    let primary_rec_maybe = is_finish_value.primary_rec;
+                    match primary_rec_maybe {
+                        Some(primary_rec_val) => {
+                            let sum_val = sum_parser(primary_rec_val);
+                            assert_eq!(
+                                sum_val, input_val,
+                                "Primary Sum Recommendation Fail: Should {input_val}, Is {sum_val}"
+                            )
+                        }
+                        None => {}
+                    }
                 }
+                RecValue::NoFinish(non_finish_value) => {}
             }
         }
-
     }
 
-}
+    #[test]
+    fn finish_ends_with_double() {
+        let result: Vec<(u16, FinishRecValue)> = (0..90)
+            .into_iter()
+            .map(|input_val| (input_val as u16, determine_rec(input_val as u16)))
+            .filter_map(|(input_val, rec)| {
+                match rec {
+                    RecValue::IsFinish(is_finish_value) => Some((input_val, is_finish_value)),
+                    _ => None
+                }
+            })
+            .collect();
+        result.into_iter().for_each(|(input_val, rec_value) | check_finishes_end_with_double(input_val, rec_value));
+    }
 
+    fn check_finishes_end_with_double(input_val: u16, rec_value: FinishRecValue) {
+        let FinishRecValue{primary_rec, secondary_rec} = rec_value;
+        check_finish_ends_with_double(input_val, primary_rec);
+        check_finish_ends_with_double(input_val, secondary_rec);
+    }
+
+    fn check_finish_ends_with_double(input_val: u16, rec_vector: Option<Vec<ScoreType>>) {
+        match rec_vector {
+            Some(primary_rec_val) => {
+                let last_val_maybe = primary_rec_val.last();
+                assert!(last_val_maybe.is_some());
+                let last_val = last_val_maybe.unwrap();
+                match last_val {
+                    ScoreType::D(_) => {
+                        // to be expected
+                    },
+                    ScoreType::S(50) => {
+                        // to be expected
+                    }
+                    _ => panic!("{}", format!("lastval of {input_val} is a finish but has {last_val} instead of a Double"))
+
+                }
+            }
+            None => {}
+        }
+    }
+}
