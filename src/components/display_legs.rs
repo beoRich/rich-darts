@@ -19,7 +19,7 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
         start_score_test_signal.set(result.as_ref().map(|val| *val > 0).is_ok());
         result.map(|val| start_score_signal.set(val))
     });
-    use_resource(move || async move {
+    let _ = use_resource(move || async move {
         let res = backend::api::dart_leg::list_leg_with_last_score(set_signal().id).await;
         match res {
             Ok(val) if !val.is_empty() => legs_signal.set(val),

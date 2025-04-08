@@ -253,6 +253,36 @@ fn determine_finish_rec(remaining_val: u16) -> FinishRecValue {
             primary_rec: Some(vec![T(19), D(18)]),
             secondary_rec: Some(vec![S(50), T(18), D(7)]),
         },
+        94 => FinishRecValue {
+            primary_rec: Some(vec![T(18), D(20)]),
+            secondary_rec: Some(vec![S(25), T(19), D(6)]),
+        },
+        95 => FinishRecValue {
+            primary_rec: Some(vec![T(19), D(19)]),
+            secondary_rec: Some(vec![S(19), D(19), D(19)]),
+        },
+        96 => FinishRecValue {
+            primary_rec: Some(vec![T(20), D(18)]),
+            secondary_rec: None,
+        },
+        97 => FinishRecValue {
+            primary_rec: Some(vec![T(19), D(20)]),
+            secondary_rec: None,
+        },
+        98 => FinishRecValue {
+            primary_rec: Some(vec![T(20), D(19)]),
+            secondary_rec: None,
+        },
+        99 => FinishRecValue {
+            primary_rec: Some(vec![T(19), S(10),  D(16)]),
+            secondary_rec: Some(vec![T(17), S(16),  D(16)]),
+        },
+        100 => FinishRecValue {
+            primary_rec: Some(vec![T(20), D(20)]),
+            secondary_rec: Some(vec![S(20), D(20),  D(20)]),
+        },
+
+
         _ => panic!("Todo: Unreachable state {remaining_val}"),
     }
 }

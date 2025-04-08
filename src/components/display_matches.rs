@@ -8,7 +8,7 @@ use dioxus::prelude::*;
 #[component]
 pub fn DisplayMatches() -> Element {
     let mut matches = use_signal(|| vec![]);
-    use_resource(move || async move {
+    let _ = use_resource(move || async move {
         let res = backend::api::dart_match::list_matches().await;
         match res {
             Ok(val) if !val.is_empty() => matches.set(val),

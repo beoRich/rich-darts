@@ -35,14 +35,14 @@ pub fn MainScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Elem
     use_memo(move || {
         allow_score.set(score_message().allow_score() && error_message().allow_score())
     });
-    use_resource(move || async move {
+    let _ = use_resource(move || async move {
         let init_score_val = backend::api::dart_score::list_score(leg_signal().id).await;
         match init_score_val {
             Ok(val) if !val.is_empty() => scores.set(val),
             _ => error_message.set(CreateNewLeg),
         };
     });
-    use_resource(move || async move {
+    let _ = use_resource(move || async move {
         let res = backend::api::dart_leg::list_leg_with_last_score(set_signal().id).await;
         match res {
             Ok(val) if !val.is_empty() => legs_signal.set(val),
