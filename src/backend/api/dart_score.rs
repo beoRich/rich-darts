@@ -20,7 +20,7 @@ pub async fn list_score(leg_id_input: u16) -> Result<Vec<Score>, ServerFnError> 
     use crate::schema_manual::guard::score::dsl::*;
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
-    let db_score_results = score.filter(leg_id.eq(leg_id_input as i32)).select(DartScore::as_select()).load(conn_ref)?;
+    let db_score_results = score.filter(leg_id.eq(leg_id_input as i32).and(deleted.eq(false))).select(DartScore::as_select()).load(conn_ref)?;
 
     let scores = db_score_results.into_iter().map(dart_score::map_db_to_domain).collect();
     Ok(scores)
