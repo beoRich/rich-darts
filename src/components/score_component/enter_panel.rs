@@ -22,7 +22,6 @@ pub fn NumberFieldError(
     double_attempt_option_signal: Signal<Vec<u16>>
 ) -> Element {
     debug!("score_message {:?}", score_message);
-    static DOUBLE_ATTEMPTS: [u16; 4] = [0,1,2,3];
     rsx! {
         div {
             id: "NumberFieldError",
