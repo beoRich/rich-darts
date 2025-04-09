@@ -1,3 +1,4 @@
+use dioxus::html::a::class;
 use crate::backend;
 use crate::components::calculation::score_calculation;
 use crate::domain::ErrorMessageMode::TechnicalError;
@@ -8,6 +9,8 @@ use crate::domain::{
 };
 use dioxus::prelude::*;
 use tracing::debug;
+use crate::components::calculation;
+
 #[component]
 pub fn NumberFieldError(
     scores: Signal<Vec<Score>>,
@@ -17,8 +20,9 @@ pub fn NumberFieldError(
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
+    new_score_signal: Signal<Option<Score>>
 ) -> Element {
-    debug!("score_messaage {:?}", score_message);
+    debug!("score_message {:?}", score_message);
     rsx! {
         div {
             id: "NumberFieldError",
@@ -53,6 +57,7 @@ pub fn NumberFieldError(
                                         scores,
                                         error_message,
                                         score_message,
+                                        new_score_signal,
                                     )
                                     .await;
                             } else if key == Key::Home {
@@ -73,6 +78,49 @@ pub fn NumberFieldError(
                 }
             }
         }
+
+        dialog {
+            id: "double_modal",
+            class: "modal",
+            div {
+                class: "modal-box",
+                h3 {
+                    class: "text-lg font bold flex justify-center",
+                    "How many throws on double? (Default=0)"
+                },
+                div {
+                    class: "py-8 flex justify-center",
+                    div {
+                        class: "join join-vertical",
+                        width: "80%",
+                        for val in (0..4).collect::<Vec<u16>>().iter() {
+                            button {
+                                class: "btn btn-xl btn-soft btn-primary join-item",
+                                onclick: move |_| async move {
+                                    document::eval(&"double_modal.close()".to_string());
+                                    let new_score = new_score_signal();
+                                    match new_score {
+                                        Some(val) => {
+                                            let _ = handle_new_score( &mut scores, &mut score_message, leg_signal, &val, &set_signal()).await;
+                                        },
+                                        None => {}
+                                    };
+                                },
+                                {val.to_string()}
+                            }
+                        }
+                    }
+                }
+                form {
+                    method:"dialog",
+                    class:"modal-backdrop",
+                    button {
+                        "close"
+                    }
+                }
+            }
+        }
+
     }
 }
 #[component]
@@ -85,6 +133,7 @@ pub fn OkUndoButton(
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
+    new_score_signal: Signal<Option<Score>>
 ) -> Element {
     debug!("scores {:?}", scores());
     rsx! {
@@ -103,6 +152,7 @@ pub fn OkUndoButton(
                                 scores,
                                 error_message,
                                 score_message,
+                                new_score_signal
                             )
                             .await;
                     },
@@ -156,7 +206,6 @@ pub fn NewCancelButton(
                         new_next_leg(
                                 set_signal().id,
                                 leg_signal,
-                                legs_signal,
                                 scores,
                                 error_message,
                                 score_message,
@@ -189,12 +238,13 @@ async fn input_wrapper(
     mut raw_input: Signal<String>,
     set_signal: Signal<Set>,
     leg_signal: Signal<Leg>,
-    score: Signal<Vec<Score>>,
+    scores: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
+    new_score_signal: Signal<Option<Score>>
 ) {
     let (error_message_mode) =
-        input_changed(leg_signal, score, raw_input, score_message, &set_signal()).await;
+        input_changed(leg_signal, scores, raw_input, score_message, &set_signal(), new_score_signal).await;
     if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
         raw_input.set(" ".to_string());
@@ -216,7 +266,6 @@ fn undo_wrapper(
 async fn new_next_leg(
     set_val: u16,
     mut leg_signal: Signal<Leg>,
-    mut legs_signal: Signal<Vec<Leg>>,
     mut score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
@@ -283,21 +332,21 @@ fn undo_last_score(
     }
 }
 async fn input_changed(
-    mut leg_signal: Signal<Leg>,
-    mut score: Signal<Vec<Score>>,
+    leg_signal: Signal<Leg>,
+    mut scores: Signal<Vec<Score>>,
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>,
     current_set: &Set,
+    mut new_score_signal: Signal<Option<Score>>
 ) -> ErrorMessageMode {
     let score_message_mode = score_message();
     let result = input_ref.read().parse();
-    let leg_val = leg_signal();
     match result {
         Ok(val) => {
             if score_calculation::valid_thrown(val) {
                 {
                     if let Ok((last, next_throw_order)) = handle_score_message_mode(
-                        &mut score,
+                        &mut scores,
                         &mut score_message,
                         score_message_mode,
                         leg_signal,
@@ -307,17 +356,23 @@ async fn input_changed(
                     {
                         let new_score =
                             score_calculation::calculate_remaining(last, val, next_throw_order);
-                        match handle_new_score(
-                            &mut score,
-                            &mut score_message,
-                            leg_signal,
-                            &new_score,
-                            current_set,
-                        )
-                        .await
-                        {
-                            Ok(_) => ErrorMessageMode::None,
-                            Err(value) => TechnicalError,
+                        if calculation::common::is_finish(new_score.remaining) {
+                            new_score_signal.set(Some(new_score)) ;
+                            debug!("Open Modal");
+                            document::eval(&"double_modal.showModal()".to_string());
+                            ErrorMessageMode::None
+                        } else {
+                            match handle_new_score(
+                                &mut scores,
+                                &mut score_message,
+                                leg_signal,
+                                &new_score,
+                                current_set,
+                            ).await
+                            {
+                                Ok(_) => ErrorMessageMode::None,
+                                Err(value) => TechnicalError,
+                            }
                         }
                     } else {
                         TechnicalError
@@ -355,9 +410,9 @@ async fn handle_score_message_mode(
             Ok((last, next_throw_order))
         }
         NewShot => {
-            let updatet_leg =
+            let updated_leg =
                 backend::api::dart_leg::update_leg_status(leg_signal().id, Ongoing).await?;
-            leg_signal.set(updatet_leg);
+            leg_signal.set(updated_leg);
             let next_throw_order = last.throw_order + 1;
             Ok((last, next_throw_order))
         }
@@ -365,26 +420,30 @@ async fn handle_score_message_mode(
     }
 }
 async fn handle_new_score(
-    score: &mut Signal<Vec<Score>>,
+    scores: &mut Signal<Vec<Score>>,
     score_message: &mut Signal<ScoreMessageMode>,
     mut leg_signal: Signal<Leg>,
     new_score: &Score,
     current_set: &Set,
 ) -> Result<(), ServerFnError> {
     backend::api::dart_score::save_score(leg_signal().id, new_score.clone()).await?;
+    debug!("Handle new score");
     if (&new_score).remaining == 0 {
-        let updatet_leg =
+        let updated_leg =
             backend::api::dart_leg::update_leg_status(leg_signal().id, LegStatus::Finished).await?;
-        leg_signal.set(updatet_leg);
+        leg_signal.set(updated_leg);
         score_message.set(ScoreMessageMode::LegFinished);
         if leg_signal().leg_order == current_set.leg_amount {
             backend::api::dart_set::update_set_status(current_set.id, SetStatus::Finished).await?;
             score_message.set(ScoreMessageMode::SetFinished);
         }
     }
-    score.write().push(new_score.clone());
+    scores.write().push(new_score.clone());
     Ok(())
 }
+
+
+
 fn get_last(score: &mut Signal<Vec<Score>>) -> Score {
     score.read().last().unwrap().to_owned()
 }

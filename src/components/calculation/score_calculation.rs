@@ -36,7 +36,7 @@ fn possible_values() -> HashSet<u16> {
 pub fn calculate_remaining(last: Score, val: u16, next_throw_order: u16) -> Score {
     let last_remaining = last.remaining;
     let new_remaining: u16;
-    if val <= last_remaining && check_possible_remaining(last_remaining - val, val) {
+    if val <= last_remaining && is_a_finish_value(last_remaining - val, val) {
         new_remaining = last_remaining - val;
     } else {
         new_remaining = last_remaining;
@@ -48,11 +48,11 @@ pub fn calculate_remaining(last: Score, val: u16, next_throw_order: u16) -> Scor
     }
 }
 
-fn check_possible_remaining(possible_remaining: u16, val: u16) -> bool {
+fn is_a_finish_value(possible_remaining: u16, val: u16) -> bool {
     match possible_remaining {
         1 => false,
         0 => {
-            common::is_boogey_nr(val)
+            common::is_finish(val)
         }
         _ => true,
     }
@@ -60,7 +60,7 @@ fn check_possible_remaining(possible_remaining: u16, val: u16) -> bool {
 
 #[cfg(test)]
 mod test {
-    use crate::components::calculation::score_calculation::{calculate_remaining, check_possible_remaining, valid_thrown};
+    use crate::components::calculation::score_calculation::{calculate_remaining, is_a_finish_value, valid_thrown};
     use crate::domain::Score;
 
     #[test]
@@ -147,7 +147,7 @@ mod test {
 
     #[test]
     fn should_not_end_on_0_if_impossible() {
-        assert!(!check_possible_remaining(0, 171));
-        assert!(!check_possible_remaining(0, 163))
+        assert!(!is_a_finish_value(0, 171));
+        assert!(!is_a_finish_value(0, 163))
     }
 }

@@ -27,6 +27,9 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
     let mut score_message = use_signal(|| ScoreMessageMode::NewShot);
     let mut error_message = use_signal(|| ErrorMessageMode::None);
     let mut allow_score = use_signal(|| true);
+    //only used because popup can have transfer of variable since it s called via js showModal()
+    let new_score_signal: Signal<Option<Score>> = use_signal(|| None);
+
     use_memo(move || {
         if set_signal().status == SetStatus::Finished.value() {
             score_message.set(ScoreMessageMode::SetFinished)
@@ -78,6 +81,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
                                 error_message,
                                 score_message,
                                 allow_score,
+                                new_score_signal
                             }
                             OkUndoButton {
                                 scores,
@@ -88,6 +92,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
                                 error_message,
                                 score_message,
                                 allow_score,
+                                new_score_signal
                             }
                         }
                         div {
