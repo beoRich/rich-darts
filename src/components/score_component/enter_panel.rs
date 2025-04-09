@@ -18,7 +18,8 @@ pub fn NumberFieldError(
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
-    new_score_signal: Signal<Option<Score>>
+    new_score_signal: Signal<Option<Score>>,
+    double_attempt_option_signal: Signal<Vec<u16>>
 ) -> Element {
     debug!("score_message {:?}", score_message);
     static DOUBLE_ATTEMPTS: [u16; 4] = [0,1,2,3];
@@ -58,6 +59,7 @@ pub fn NumberFieldError(
                                         error_message,
                                         score_message,
                                         new_score_signal,
+                                        double_attempt_option_signal,
                                     )
                                     .await;
                             } else if key == Key::Home {
@@ -86,14 +88,14 @@ pub fn NumberFieldError(
                 class: "modal-box",
                 h3 {
                     class: "text-lg font bold flex justify-center",
-                    "How many throws on double? (Default=0)"
+                    "How many throws on double?"
                 },
                 div {
                     class: "py-8 flex justify-center",
                     div {
                         class: "join join-vertical",
                         width: "80%",
-                        for double_attempt_val in DOUBLE_ATTEMPTS.iter() {
+                        for &double_attempt_val in double_attempt_option_signal().iter() {
                             button {
                                 class: "btn btn-xl btn-soft btn-primary join-item",
                                 onclick: move |_| async move {
@@ -101,7 +103,7 @@ pub fn NumberFieldError(
                                     let new_score = new_score_signal();
                                     match new_score {
                                         Some(val) => {
-                                            let res = handle_new_score( &mut scores, &mut score_message, leg_signal, &val, &set_signal(), Some(double_attempt_val.clone())).await;
+                                            let res = handle_new_score( &mut scores, &mut score_message, leg_signal, &val, &set_signal(), Some(double_attempt_val)).await;
                                             if res.is_ok(){
                                                 document::eval(&"document.getElementById('numberField').value = ' '".to_string());
                                                 raw_input.set(" ".to_string());
@@ -139,7 +141,8 @@ pub fn OkUndoButton(
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
-    new_score_signal: Signal<Option<Score>>
+    new_score_signal: Signal<Option<Score>>,
+    double_attempt_option_signal: Signal<Vec<u16>>
 ) -> Element {
     debug!("scores {:?}", scores());
     rsx! {
@@ -158,7 +161,8 @@ pub fn OkUndoButton(
                                 scores,
                                 error_message,
                                 score_message,
-                                new_score_signal
+                                new_score_signal,
+                                double_attempt_option_signal,
                             )
                             .await;
                     },
@@ -245,10 +249,11 @@ async fn input_wrapper(
     scores: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
-    new_score_signal: Signal<Option<Score>>
+    new_score_signal: Signal<Option<Score>>,
+    double_attempt_option_signal: Signal<Vec<u16>>
 ) {
     let error_message_mode =
-        input_changed(leg_signal, scores, raw_input, score_message, &set_signal(), new_score_signal).await;
+        input_changed(leg_signal, scores, raw_input, score_message, &set_signal(), new_score_signal, double_attempt_option_signal).await;
     if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
         raw_input.set(" ".to_string());
@@ -341,7 +346,8 @@ async fn input_changed(
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>,
     current_set: &Set,
-    mut new_score_signal: Signal<Option<Score>>
+    mut new_score_signal: Signal<Option<Score>>,
+    mut double_attempt_option_signal: Signal<Vec<u16>>
 ) -> ErrorMessageMode {
     let score_message_mode = score_message();
     let result = input_ref.read().parse();
@@ -359,9 +365,21 @@ async fn input_changed(
                     .await
                     {
                         let new_score =
-                            score_calculation::calculate_remaining(last, val, next_throw_order);
-                        if calculation::common::is_finish(new_score.remaining) {
+                            score_calculation::calculate_remaining(last.clone(), val, next_throw_order);
+                        if calculation::common::is_finish(last.remaining) {
+                            let mut double_attempt_vector = vec![0,1,2,3];
+                            if new_score.remaining == 0 {
+                                double_attempt_vector.retain(|&x| x != 0)
+                            }
+                            let last_remaining = last.clone().remaining;
+                            if last_remaining > 110  {
+                                double_attempt_vector.retain(|&x| x != 2 && x != 3)
+                            }
+                            if last_remaining % 2 == 1  || (last_remaining > 40  && last_remaining != 50)  {
+                                double_attempt_vector.retain(|&x| x != 3)
+                            }
                             new_score_signal.set(Some(new_score)) ;
+                            double_attempt_option_signal.set(double_attempt_vector);
                             document::eval(&"double_modal.showModal()".to_string());
                             ErrorMessageMode::None
                         } else {
