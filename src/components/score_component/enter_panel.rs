@@ -1,5 +1,5 @@
 use dioxus::html::a::class;
-use crate::backend;
+use crate::{backend, Route};
 use crate::components::calculation::score_calculation;
 use crate::domain::ErrorMessageMode::TechnicalError;
 use crate::domain::LegStatus::Ongoing;
@@ -194,6 +194,7 @@ pub fn OkUndoButton(
 
 #[component]
 pub fn NewCancelButton(
+    match_id: u16,
     scores: Signal<Vec<Score>>,
     mut raw_input: Signal<String>,
     set_signal: Signal<Set>,
@@ -204,6 +205,7 @@ pub fn NewCancelButton(
     allow_score: Signal<bool>,
 ) -> Element {
     debug!("scores {:?}", scores());
+    let nav = navigator();
     rsx! {
         div {
             id: "ButtonsDiv",
@@ -212,7 +214,9 @@ pub fn NewCancelButton(
                 button {
                     id: "nextLegButton",
                     onclick: move |_| async move {
-                        new_next_leg(
+                        //todo crappy approach that fakes the loading of a new page by setting the states and changing the url
+                        // should be fixed cleanly, reason for that is that nav.push() does not load the page if only dynamic parts of the url changes
+                        let option = new_next_leg(
                                 set_signal().id,
                                 leg_signal,
                                 scores,
@@ -220,6 +224,11 @@ pub fn NewCancelButton(
                                 score_message,
                             )
                             .await;
+                            match option {
+                            Some(leg) => {nav.push(Route::WrapDisplayScore {matchval: match_id , set_id:set_signal().id, leg_id:leg.id});},
+                            None => {}
+
+                        };
                     },
                     title: "Cancel current leg (if unfinished) and start/switch to a new one",
                     class: "btn btn-soft btn-primary",
@@ -278,7 +287,7 @@ async fn new_next_leg(
     mut score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
-) {
+) -> Option<Leg>{
     error_message.set(ErrorMessageMode::None);
     score_message.set(NewShot);
     score.write().clear();
@@ -297,12 +306,13 @@ async fn new_next_leg(
     match new_leg_res {
         Ok(new_leg) => {
             let new_leg_id = new_leg.id;
-            leg_signal.set(new_leg);
+            leg_signal.set(new_leg.clone());
             score.set(vec![get_init_score(501, new_leg_id)]);
             document::eval(&"document.getElementById('numberField').value = ' '".to_string());
             document::eval(&"document.getElementById('numberField').select()".to_string());
+            Some(new_leg)
         }
-        _ => error_message.set(TechnicalError),
+        _ => {error_message.set(TechnicalError); None}
     }
 }
 async fn cancel_leg(

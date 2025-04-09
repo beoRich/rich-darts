@@ -106,6 +106,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
                             id: "CancelUndoButton",
                             class: "col-span-1 grid bg-base-100 border-y-4 shadow-md rounded px-8 py-4",
                             NewCancelButton {
+                                match_id,
                                 scores,
                                 raw_input,
                                 set_signal,

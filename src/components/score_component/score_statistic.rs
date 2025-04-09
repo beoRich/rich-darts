@@ -116,7 +116,7 @@ pub fn ScoreStatistic(
                 }
                 div {
                     class: "stat-value text-primary",
-                    {format!("{}|100|20", {hundred_plus_signal().display()})}
+                    {format!("{}|5|20", {hundred_plus_signal().display()})}
                 }
                 div {
                     class: "stat-desc",
