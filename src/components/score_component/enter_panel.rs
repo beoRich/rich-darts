@@ -137,7 +137,6 @@ pub fn OkUndoButton(
     mut raw_input: Signal<String>,
     set_signal: Signal<Set>,
     leg_signal: Signal<Leg>,
-    legs_signal: Signal<Vec<Leg>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Signal<bool>,
@@ -196,13 +195,10 @@ pub fn OkUndoButton(
 pub fn NewCancelButton(
     match_id: u16,
     scores: Signal<Vec<Score>>,
-    mut raw_input: Signal<String>,
     set_signal: Signal<Set>,
     leg_signal: Signal<Leg>,
-    legs_signal: Signal<Vec<Leg>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
-    allow_score: Signal<bool>,
 ) -> Element {
     debug!("scores {:?}", scores());
     let nav = navigator();

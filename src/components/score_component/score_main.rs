@@ -89,7 +89,6 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
                                 raw_input,
                                 set_signal,
                                 leg_signal,
-                                legs_signal,
                                 error_message,
                                 score_message,
                                 allow_score,
@@ -108,13 +107,10 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
                             NewCancelButton {
                                 match_id,
                                 scores,
-                                raw_input,
                                 set_signal,
                                 leg_signal,
-                                legs_signal,
                                 error_message,
                                 score_message,
-                                allow_score,
                             }
                         }
 
