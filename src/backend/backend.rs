@@ -26,7 +26,7 @@ pub static DB2: Lazy<Mutex<SqliteConnection>> = Lazy::new(|| {
     match url_maybe {
         Ok(conn_val) => {
             database_url = conn_val;
-            log::debug!("Connecting via env to Rusqlite  at {}", database_url);
+            log::debug!("Connecting via env to {}", database_url);
         }
         _ => {
             panic!("Could not read DB connection")
@@ -67,23 +67,3 @@ pub async fn run_migrations() -> Result<(), ServerFnError> {
     Ok(())
 }
 
-#[cfg(feature = "server")]
-thread_local! {
-    pub static DB: rusqlite::Connection = {
-        dotenv().ok();
-        let url_maybe = env::var("DATABASE_URL");
-        let conn: String;
-        match url_maybe {
-            Ok(conn_val) => {
-                conn = conn_val;
-                log::debug!("Connecting via env to Rusqlite  at {}", conn);
-            }
-            _ => {
-                panic!("Could not read DB connection")
-            }
-        }
-
-        let conn = rusqlite:: Connection::open(conn).expect("Failed to open Database");
-        conn
-    };
-}

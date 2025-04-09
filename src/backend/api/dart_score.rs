@@ -5,7 +5,6 @@ use tracing::debug;
 
 #[cfg(feature = "server")]
 mod server_deps {
-    pub use crate::backend::backend::DB;
     pub use crate::backend::backend::DB2;
     pub use crate::backend::model::*;
     pub use diesel::prelude::*;
@@ -50,12 +49,14 @@ pub fn new_score_with_connection(
 
 
 #[server]
-pub async fn delete_score_by_order(leg_id: u16, throw_order: u16) -> Result<(), ServerFnError> {
-    DB.with(|f| {
-        f.execute(
-            "UPDATE score SET deleted = 1 where throw_order = ?1 and leg_id = ?2",
-            &[&throw_order, &leg_id],
-        )
-    })?;
+pub async fn delete_score_by_order(leg_id_input: u16, throw_order_input: u16) -> Result<(), ServerFnError> {
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+    use crate::schema_manual::guard::score::dsl::*;
+
+    let _ = diesel::update(score).filter(throw_order.eq(throw_order_input as i32).and(leg_id.eq(leg_id_input as i32)))
+        .set(deleted.eq(true))
+        .returning(DartScore::as_returning())
+        .get_result(conn_ref)?;
     Ok(())
 }
