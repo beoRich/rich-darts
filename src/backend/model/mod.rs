@@ -1,6 +1,6 @@
 pub(crate) mod dart_leg;
 mod dart_match;
-mod dart_score;
+pub mod dart_score;
 pub mod dart_set;
 
 pub use dart_leg::DartLeg;

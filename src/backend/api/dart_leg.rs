@@ -1,4 +1,4 @@
-use crate::domain::{IdOrder, IdOrderParent, Leg, LegStatus, Score, Set, INIT_SCORE};
+use crate::domain::{get_init_score, IdOrder, IdOrderParent, Leg, LegStatus, Score, Set};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 use tracing::debug;
@@ -29,7 +29,7 @@ pub async fn list_leg_with_last_score(set_id_input: u16) -> Result<Vec<Leg>, Ser
 
     let legs = db_leg_results
         .into_iter()
-        .map(|db| dart_leg::map_db_to_domain(db))
+        .map(dart_leg::map_db_to_domain)
         .collect();
     Ok(legs)
 }
@@ -156,18 +156,12 @@ fn new_legs_with_init_score_func(
 
     let db_leg_results = db_leg_results_maybe?;
 
-    let init_score_struct: Score = Score {
-        remaining: start_score_input,
-        thrown: 0,
-        throw_order: 0,
-    };
     let res_score: Result<Vec<_>, _> = db_leg_results
         .iter()
         .map(|db_leg_result| {
             crate::backend::api::dart_score::new_score_with_connection(
                 conn_ref,
-                db_leg_result.id,
-                init_score_struct.clone(),
+                get_init_score(start_score_input,  db_leg_result.id as u16)
             )
         })
         .collect();

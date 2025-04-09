@@ -4,9 +4,7 @@ use crate::components::calculation::score_calculation;
 use crate::domain::ErrorMessageMode::TechnicalError;
 use crate::domain::LegStatus::Ongoing;
 use crate::domain::ScoreMessageMode::{NewShot, UndoLastShot};
-use crate::domain::{
-    ErrorMessageMode, IdOrder, Leg, LegStatus, Score, ScoreMessageMode, Set, SetStatus, INIT_SCORE,
-};
+use crate::domain::{get_init_score, ErrorMessageMode, IdOrder, Leg, LegStatus, Score, ScoreMessageMode, Set, SetStatus};
 use dioxus::prelude::*;
 use tracing::debug;
 use crate::components::calculation;
@@ -272,7 +270,6 @@ async fn new_next_leg(
 ) {
     error_message.set(ErrorMessageMode::None);
     score_message.set(NewShot);
-    let last_score_val = score().last().map(|score| score.remaining);
     score.write().clear();
     let start_score = leg_signal().start_score;
     let next_order_val = if leg_signal().status == LegStatus::Cancelled.display() {
@@ -288,8 +285,9 @@ async fn new_next_leg(
     .await;
     match new_leg_res {
         Ok(new_leg) => {
+            let new_leg_id = new_leg.id;
             leg_signal.set(new_leg);
-            score.set(vec![INIT_SCORE]);
+            score.set(vec![get_init_score(501, new_leg_id)]);
             document::eval(&"document.getElementById('numberField').value = ' '".to_string());
             document::eval(&"document.getElementById('numberField').select()".to_string());
         }
@@ -426,7 +424,7 @@ async fn handle_new_score(
     new_score: &Score,
     current_set: &Set,
 ) -> Result<(), ServerFnError> {
-    backend::api::dart_score::save_score(leg_signal().id, new_score.clone()).await?;
+    backend::api::dart_score::new_score(new_score.clone()).await?;
     debug!("Handle new score");
     if (&new_score).remaining == 0 {
         let updated_leg =

@@ -3,11 +3,15 @@ use dioxus::prelude::server_fn::serde::Deserialize;
 use dioxus::prelude::*;
 use serde::Serialize;
 
-pub const INIT_SCORE: Score = Score {
-    remaining: 501,
-    thrown: 0,
-    throw_order: 0,
-};
+pub fn get_init_score(start_score_input: u16, leg_id: u16) -> Score{
+     Score {
+         leg_id,
+         remaining: start_score_input,
+         thrown: 0,
+         throw_order: 0,
+         double_attempt: None
+    }
+}
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize, Copy)]
 pub struct IdOrder {
@@ -24,9 +28,11 @@ pub struct IdOrderParent {
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Score {
+    pub leg_id: u16,
     pub remaining: u16,
     pub thrown: u16,
     pub throw_order: u16,
+    pub double_attempt: Option<u16>
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]

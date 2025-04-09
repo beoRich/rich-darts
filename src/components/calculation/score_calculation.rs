@@ -44,7 +44,8 @@ pub fn calculate_remaining(last: Score, val: u16, next_throw_order: u16) -> Scor
     Score {
         remaining: new_remaining,
         thrown: val,
-        throw_order: next_throw_order
+        throw_order: next_throw_order,
+            ..last
     }
 }
 

@@ -1,6 +1,7 @@
 #[cfg(feature = "server")]
 use diesel::prelude::*;
 use serde::Serialize;
+use crate::domain::Score;
 
 #[cfg_attr(feature = "server", derive(Queryable, Selectable, Serialize))]
 #[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::score))]
@@ -11,6 +12,7 @@ pub struct DartScore {
     pub throw_order: i32,
     pub thrown: i32,
     pub remaining: i32,
+    pub double_attempt: Option<i32>,
     pub deleted: bool
 }
 
@@ -21,11 +23,31 @@ pub struct NewDartScore {
     pub throw_order: i32,
     pub thrown: i32,
     pub remaining: i32,
-    pub deleted: bool
+    pub double_attempt: Option<i32>,
+    pub deleted: bool,
 }
 
 impl NewDartScore {
     pub(crate) fn new (leg_id: i32, throw_order:i32, thrown: i32, remaining: i32) -> NewDartScore {
-        NewDartScore {leg_id, throw_order, thrown, remaining, deleted: false}
+        NewDartScore {leg_id, throw_order, thrown, remaining, deleted: false, double_attempt: None}
     }
+}
+
+pub fn map_db_to_domain(db: DartScore) -> Score {
+    Score {
+        leg_id: db.leg_id as u16,
+        remaining: db.remaining as u16,
+        thrown: db.thrown as u16,
+        throw_order: db.throw_order as u16,
+        double_attempt: db.double_attempt.map(|val| val as u16)
+    }
+}
+
+pub fn map_domain_to_db(domain: Score) -> NewDartScore {
+    NewDartScore::new(
+        domain.leg_id as i32,
+        domain.throw_order as i32,
+        domain.thrown as i32,
+        domain.remaining as i32,
+    )
 }

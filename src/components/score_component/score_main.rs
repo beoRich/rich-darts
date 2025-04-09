@@ -5,7 +5,6 @@ use crate::domain::ErrorMessageMode::{CreateNewLeg, TechnicalError};
 use crate::domain::ScoreMessageMode::{LegCancelled, LegFinished, UndoLastShot};
 use crate::domain::{
     parse_score_message, ErrorMessageMode, IdOrder, Leg, Score, ScoreMessageMode, Set, SetStatus,
-    INIT_SCORE,
 };
 use crate::{backend, Route};
 use dioxus::prelude::*;

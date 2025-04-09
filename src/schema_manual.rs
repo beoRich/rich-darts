@@ -37,6 +37,7 @@ pub mod guard {
         throw_order -> Integer,
         thrown -> Integer,
         remaining -> Integer,
+        double_attempt -> Nullable<Integer>,
         deleted -> Bool,
     }
 }
