@@ -64,6 +64,10 @@ mod test {
     use crate::components::calculation::score_calculation::{calculate_remaining, is_a_finish_value, valid_thrown};
     use crate::domain::Score;
 
+    fn helper(remaining: u16, thrown: u16, throw_order: u16) -> Score {
+        Score{leg_id: 1, remaining, thrown, throw_order, double_attempt: None}
+    }
+
     #[test]
     fn invalid_throw_bigger_then_180() {
         assert!(!valid_thrown(181));
@@ -93,56 +97,56 @@ mod test {
 
     #[test]
     fn should_not_end_on_1() {
-        let last = Score {
-            remaining: 141,
-            thrown: 180,
-            throw_order: 0};
+        let last = helper (
+             141,
+             180,
+             0);
         let thrown = 140;
         let result = calculate_remaining(last, thrown, 0);
         assert_eq!(
             result,
-            Score {
-                remaining: 141,
-                throw_order: 0,
+            helper (
+                141,
+                0,
                 thrown
-            }
+            )
         )
     }
 
     #[test]
     fn should_not_end_on_negative() {
-        let last = Score {
-                remaining: 141,
-                thrown: 180,
-                throw_order: 0};
+        let last = helper (
+                 141,
+                 180,
+                 0);
         let thrown = 150;
         let result = calculate_remaining(last, thrown, 0);
         assert_eq!(
             result,
-            Score {
-                remaining: 141,
-                throw_order: 0,
+            helper (
+                 141,
+                 0,
                 thrown
-            }
+            )
         )
     }
 
     #[test]
     fn should_end_on_0() {
         let thrown = 141;
-        let last = Score {
-                remaining: 141,
-                thrown: 180,
-                throw_order: 0,
-            };
+        let last = helper (
+                 141,
+                180,
+                 0,
+        );
         let result = calculate_remaining(last, thrown, 0);
         assert_eq!(
             result,
-            Score {
-                remaining: 0,
-                throw_order: 0,
+            helper (
+                 0,
+                 0,
                 thrown
-            }
+            )
         )
     }
 

@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 use serde::{Deserialize, Serialize};
+use web_sys::js_sys::Math;
 use crate::components::calculation::statistic_calculation::AverageValue::{HasValue, NoValue};
 use crate::domain::Score;
 
@@ -42,8 +43,79 @@ pub fn live_average(scores: Vec<Score>) -> AverageValue {
                 NoValue
             }
             }
-
         None => NoValue
     }
-
 }
+
+pub fn first_three_average(scores: Vec<Score>) -> AverageValue {
+    let split_check =  scores.split_at_checked(1);
+    match split_check {
+        Some((_, tail)) => {
+            let split_val = std::cmp::min(3, tail.len());
+            let shortend = tail.split_at_checked(split_val);
+            match shortend {
+                Some((first3,_)) =>  {
+                    let sum = first3.into_iter().map(|s| s.thrown).sum::<u16>();
+                    if first3.len() > 0 {
+                        HasValue(sum/first3.len() as u16)
+                    } else {
+                        NoValue
+                    }
+                }
+                None => NoValue
+            }
+        }
+        None => NoValue
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::components::calculation::statistic_calculation::{first_three_average, live_average, AverageValue};
+    use crate::domain::Score;
+
+    fn helper(thrown: u16, throw_order: u16) -> Score {
+        Score{leg_id: 1, remaining: 501, thrown, throw_order, double_attempt: None}
+    }
+
+    #[test]
+    fn live_average_ignores_only_init() {
+        let input =  vec![helper(0, 0)];
+        let res = live_average(input);
+        assert_eq!(res, AverageValue::NoValue);
+    }
+
+    #[test]
+    fn live_average_ignores_init() {
+        let input =  vec![helper(0, 0), helper(20, 1), helper(30, 2)];
+        let res = live_average(input);
+        assert_eq!(res, AverageValue::HasValue(25));
+    }
+
+    #[test]
+    fn first_three_average_ignores_only_init() {
+        let input =  vec![helper(0, 0)];
+        let res = first_three_average(input);
+        assert_eq!(res, AverageValue::NoValue);
+    }
+
+    #[test]
+    fn first_three_average_ignores_init() {
+        let input =  vec![helper(0, 0), helper(20, 1), helper(30, 2)];
+        let res = first_three_average(input);
+        assert_eq!(res, AverageValue::HasValue(25));
+    }
+
+    #[test]
+    fn first_three_average_ignores_following_inputs() {
+        let input =  vec![helper(0, 0),
+                          helper(20, 1),
+                          helper(30, 2),
+                          helper(40, 2),
+                          helper(10000, 2)
+        ];
+        let res = first_three_average(input);
+        assert_eq!(res, AverageValue::HasValue(30));
+    }
+}
+

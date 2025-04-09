@@ -27,12 +27,6 @@ pub struct NewDartScore {
     pub deleted: bool,
 }
 
-impl NewDartScore {
-    pub(crate) fn new (leg_id: i32, throw_order:i32, thrown: i32, remaining: i32) -> NewDartScore {
-        NewDartScore {leg_id, throw_order, thrown, remaining, deleted: false, double_attempt: None}
-    }
-}
-
 pub fn map_db_to_domain(db: DartScore) -> Score {
     Score {
         leg_id: db.leg_id as u16,
@@ -43,11 +37,13 @@ pub fn map_db_to_domain(db: DartScore) -> Score {
     }
 }
 
-pub fn map_domain_to_db(domain: Score) -> NewDartScore {
-    NewDartScore::new(
-        domain.leg_id as i32,
-        domain.throw_order as i32,
-        domain.thrown as i32,
-        domain.remaining as i32,
-    )
+pub fn map_domain_to_undeleted_db(domain: Score) -> NewDartScore {
+    NewDartScore {
+        leg_id: domain.leg_id as i32,
+        throw_order: domain.throw_order as i32,
+        thrown: domain.thrown as i32,
+        remaining: domain.remaining as i32,
+        double_attempt: domain.double_attempt.map(|val| val as i32),
+        deleted: false
+    }
 }

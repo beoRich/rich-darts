@@ -68,7 +68,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
 
                     div {
                         id: "TopBar",
-                        class: "grid grid-cols-5 gap-1",
+                        class: "grid grid-cols-6 gap-1",
                         div {
                             id: "EnterPanel",
                             class: "col-span-1 grid bg-base-100 border-y-4 shadow-md rounded px-8 py-4",
@@ -96,7 +96,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
                         }
                         div {
                             id: "LegStatistic",
-                            class: "col-span-3 grid bg-base-100 border-y-4 shadow-md rounded px-8",
+                            class: "col-span-4 grid bg-base-100 border-y-4 shadow-md rounded px-8",
                             ScoreStatistic {scores}
                         }
                         div {

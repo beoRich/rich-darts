@@ -9,11 +9,11 @@ mod server_deps {
     pub use crate::backend::backend::DB2;
     pub use crate::backend::model::*;
     pub use diesel::prelude::*;
+    pub use crate::backend::model::dart_score::map_domain_to_undeleted_db;
 }
 
 #[cfg(feature = "server")]
 use server_deps::*;
-use crate::backend::model::dart_score::map_domain_to_db;
 
 #[server]
 pub async fn list_score(leg_id_input: u16) -> Result<Vec<Score>, ServerFnError> {
@@ -42,7 +42,7 @@ pub fn new_score_with_connection(
 ) -> Result<(), ServerFnError> {
     use crate::schema_manual::guard::score;
     let _ = diesel::insert_into(score::table)
-        .values(map_domain_to_db(score_input))
+        .values(map_domain_to_undeleted_db(score_input))
         .returning(DartScore::as_returning())
         .get_result(conn_ref)?;
     Ok(())

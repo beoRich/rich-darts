@@ -5,7 +5,6 @@ use crate::components::calculation::recommendation_calculation::{display_score_t
 
 #[component]
 pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
-
     rsx! {
         div {
             id: "BottomHalf",
@@ -15,7 +14,7 @@ pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
                 class: "table-container",
                 table {
                     class: "text-xl bg-neutral-content rounded",
-                    style: "width: 50%; border: 1px solid black;",
+                    style: "width: 70%; border: 1px solid black;",
                     thead {
                         class: "uppercase",
                         tr {
@@ -29,7 +28,7 @@ pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
                             th {
                                 scope: "col",
                                 style: "white-space: pre; text-align: center;",
-                                style: "width: 50%; border-right: 1px solid black; border-radius: 10px;",
+                                style: "width: 40%; border-right: 1px solid black; border-radius: 10px;",
                                 class: "text-secondary px-6 py-3",
                                 "Recommendation"
                             }
@@ -39,6 +38,13 @@ pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
                                 class: "text-info px-6 py-3",
                                 style: "border-right: 1px solid black; border-radius: 10px;",
                                 "Thrown"
+                            }
+                            th {
+                                scope: "col",
+                                style: "white-space: pre; text-align: center;",
+                                class: "text-info px-6 py-3",
+                                style: "border-right: 1px solid black; border-radius: 10px;",
+                                "On Doubles"
                             }
                         }
                     }
@@ -61,7 +67,7 @@ pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
                                     class: if i == 0 { "text-3xl bg-accent text-accent-content" },
                                     class: if i % 2 == 0 { "bg-base-200 text-base-content" },
                                     class: if i % 2 == 1 { "bg-base-300 text-base-content" },
-                                    style: "width: 50%; white-space: pre; text-align: center;",
+                                    style: "width: 40%; white-space: pre; text-align: center;",
                                     style: "border-right: 1px solid black; border-radius: 10px;",
                                     RecommendationRow {rec_value: recommendation_calculation::determine_rec(a.remaining), row_nr: i as u16}
 
@@ -74,6 +80,16 @@ pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
                                     style: "white-space: pre; text-align: center;",
                                     style: "border-right: 1px solid black; border-radius: 10px;",
                                     {format!("{:>3}", a.thrown.to_string())}
+                                }
+
+                                td {
+                                    class: "px-6 py-4",
+                                    class: if i == 0 { "text-4xl bg-accent text-accent-content" },
+                                    class: if i % 2 == 0 { "bg-base-200 text-base-content" },
+                                    class: if i % 2 == 1 { "bg-base-300 text-base-content" },
+                                    style: "white-space: pre; text-align: center;",
+                                    style: "border-right: 1px solid black; border-radius: 10px;",
+                                    {format!("{:>3}", a.double_attempt.map(|val| val.to_string()).unwrap_or("-".to_string()))}
                                 }
                             }
                         }

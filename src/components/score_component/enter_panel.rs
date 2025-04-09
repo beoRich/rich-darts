@@ -21,6 +21,7 @@ pub fn NumberFieldError(
     new_score_signal: Signal<Option<Score>>
 ) -> Element {
     debug!("score_message {:?}", score_message);
+    static DOUBLE_ATTEMPTS: [u16; 4] = [0,1,2,3];
     rsx! {
         div {
             id: "NumberFieldError",
@@ -35,6 +36,7 @@ pub fn NumberFieldError(
                     }
                     input {
                         id: "numberField",
+                        type: "number",
                         class: "input input-md text-xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
                         class: if allow_score() { "input input-primary" },
                         class: if !allow_score() { "input input-secondary" },
@@ -91,7 +93,7 @@ pub fn NumberFieldError(
                     div {
                         class: "join join-vertical",
                         width: "80%",
-                        for val in (0..4).collect::<Vec<u16>>().iter() {
+                        for double_attempt_val in DOUBLE_ATTEMPTS.iter() {
                             button {
                                 class: "btn btn-xl btn-soft btn-primary join-item",
                                 onclick: move |_| async move {
@@ -99,12 +101,18 @@ pub fn NumberFieldError(
                                     let new_score = new_score_signal();
                                     match new_score {
                                         Some(val) => {
-                                            let _ = handle_new_score( &mut scores, &mut score_message, leg_signal, &val, &set_signal()).await;
+                                            let res = handle_new_score( &mut scores, &mut score_message, leg_signal, &val, &set_signal(), Some(double_attempt_val.clone())).await;
+                                            if res.is_ok(){
+                                                document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+                                                raw_input.set(" ".to_string());
+                                                error_message.set(ErrorMessageMode::None);
+                                                document::eval(&"document.getElementById('numberField').select()".to_string());
+                                            }
                                         },
                                         None => {}
                                     };
                                 },
-                                {val.to_string()}
+                                {double_attempt_val.to_string()}
                             }
                         }
                     }
@@ -195,9 +203,8 @@ pub fn NewCancelButton(
     rsx! {
         div {
             id: "ButtonsDiv",
-            class: "grid grid-cols-8 gap-4",
+            class: "grid grid-flow-col grid-rows-2 gap-4",
             div {
-                class: "col-span-1 col-start-11 grid grid-cols-subgrid gap-4",
                 button {
                     id: "nextLegButton",
                     onclick: move |_| async move {
@@ -217,7 +224,6 @@ pub fn NewCancelButton(
                 }
             }
             div {
-                class: "col-span-1 col-start-12 grid grid-cols-subgrid gap-4",
                 button {
                     id: "cancelLegButton",
                     onclick: move |_| async move {
@@ -241,7 +247,7 @@ async fn input_wrapper(
     score_message: Signal<ScoreMessageMode>,
     new_score_signal: Signal<Option<Score>>
 ) {
-    let (error_message_mode) =
+    let error_message_mode =
         input_changed(leg_signal, scores, raw_input, score_message, &set_signal(), new_score_signal).await;
     if error_message_mode == ErrorMessageMode::None {
         document::eval(&"document.getElementById('numberField').value = ' '".to_string());
@@ -356,7 +362,6 @@ async fn input_changed(
                             score_calculation::calculate_remaining(last, val, next_throw_order);
                         if calculation::common::is_finish(new_score.remaining) {
                             new_score_signal.set(Some(new_score)) ;
-                            debug!("Open Modal");
                             document::eval(&"double_modal.showModal()".to_string());
                             ErrorMessageMode::None
                         } else {
@@ -366,6 +371,7 @@ async fn input_changed(
                                 leg_signal,
                                 &new_score,
                                 current_set,
+                                None
                             ).await
                             {
                                 Ok(_) => ErrorMessageMode::None,
@@ -423,9 +429,12 @@ async fn handle_new_score(
     mut leg_signal: Signal<Leg>,
     new_score: &Score,
     current_set: &Set,
+    double_attempt_val: Option<u16>
 ) -> Result<(), ServerFnError> {
-    backend::api::dart_score::new_score(new_score.clone()).await?;
-    debug!("Handle new score");
+    let mut new_score_double_enhanced = new_score.clone();
+    debug!("Handle new score {:?}", double_attempt_val);
+    new_score_double_enhanced.double_attempt = double_attempt_val;
+    backend::api::dart_score::new_score(new_score_double_enhanced.clone()).await?;
     if (&new_score).remaining == 0 {
         let updated_leg =
             backend::api::dart_leg::update_leg_status(leg_signal().id, LegStatus::Finished).await?;
@@ -436,7 +445,7 @@ async fn handle_new_score(
             score_message.set(ScoreMessageMode::SetFinished);
         }
     }
-    scores.write().push(new_score.clone());
+    scores.write().push(new_score_double_enhanced);
     Ok(())
 }
 
