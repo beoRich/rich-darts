@@ -17,11 +17,11 @@ fn possible_values() -> HashSet<u16> {
     let mut singles: Vec<u16> = (0..21).collect();
     singles.push(25);
     singles.push(50);
-    let double: Vec<u16> = (0..21).map(|val| val * 2).collect();
+    let doubles: Vec<u16> = (0..21).map(|val| val * 2).collect();
     let triples: Vec<u16> = (0..21).map(|val| val * 3).collect();
 
     let all: Vec<u16> = <HashSet<u16> as IntoIterator>::into_iter(HashSet::from_iter(
-        vec![singles, double, triples].concat(),
+        vec![singles, doubles, triples].concat(),
     ))
     .into_iter()
     .collect();
