@@ -72,7 +72,7 @@ pub fn display_score_types(input_vec: &Option<Vec<ScoreType>>) -> String {
 
 pub fn determine_rec(remaining_val: u16) -> RecValue {
     match remaining_val {
-        remaining_val if remaining_val <= 100 => {
+        remaining_val if remaining_val <= 110 => {
             RecValue::IsFinish(determine_finish_rec(remaining_val))
         }
 
@@ -289,6 +289,46 @@ fn determine_finish_rec(remaining_val: u16) -> FinishRecValue {
         100 => FinishRecValue {
             primary_rec: Some(vec![T(20), D(20)]),
             secondary_rec: Some(vec![S(20), D(20),  D(20)]),
+        },
+        101 => FinishRecValue {
+            primary_rec: Some(vec![T(20), S(9), D(16)]),
+            secondary_rec: Some(vec![T(20), S(1),  D(20)]),
+        },
+        102 => FinishRecValue {
+            primary_rec: Some(vec![T(16), S(14), D(20)]),
+            secondary_rec: Some(vec![T(20), S(10),  D(16)]),
+        },
+        103 => FinishRecValue {
+            primary_rec: Some(vec![T(19), S(6), D(20)]),
+            secondary_rec: Some(vec![T(19), S(10),  D(18)]),
+        },
+        104 => FinishRecValue {
+            primary_rec: Some(vec![T(16), S(16), D(20)]),
+            secondary_rec: Some(vec![T(19), S(15),  D(16)]),
+        },
+        105 => FinishRecValue {
+            primary_rec: Some(vec![T(19), S(8), D(20)]),
+            secondary_rec: Some(vec![T(19), S(16),  D(16)]),
+        },
+        106 => FinishRecValue {
+            primary_rec: Some(vec![T(20), S(6), D(20)]),
+            secondary_rec: Some(vec![T(20), S(10),  D(18)]),
+        },
+        107 => FinishRecValue {
+            primary_rec: Some(vec![T(19), S(50)]),
+            secondary_rec: Some(vec![T(19), S(10), D(20)]),
+        },
+        108 => FinishRecValue {
+            primary_rec: Some(vec![T(20), S(8), D(20)]),
+            secondary_rec: Some(vec![T(20), S(16),  D(16)]),
+        },
+        109 => FinishRecValue {
+            primary_rec: Some(vec![T(20), S(9), D(20)]),
+            secondary_rec: Some(vec![T(20), S(17),  D(16)]),
+        },
+        110 => FinishRecValue {
+            primary_rec: Some(vec![T(20), S(50)]),
+            secondary_rec: Some(vec![T(20), S(10),  D(20)]),
         },
 
 
