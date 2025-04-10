@@ -15,41 +15,36 @@ pub fn ScoreDisplay(scores: Signal<Vec<Score>>) -> Element {
                 table {
                     class: "text-xl bg-neutral-content rounded",
                     style: "width: 70%; border: 1px solid black;",
-                    thead {
-                        class: "uppercase",
+                    tbody {
+                        id: "numbers-body",
+
                         tr {
-                            th {
-                                scope: "col",
+                            class: "uppercase",
+                            td {
                                 style: "width: 30%; white-space: pre; text-align: center;",
                                 class: "text-primary px-6 py-3",
                                 style: "border-right: 1px solid black; border-radius: 10px;",
                                 "Remaining"
                             }
-                            th {
-                                scope: "col",
+                            td {
                                 style: "white-space: pre; text-align: center;",
                                 style: "width: 40%; border-right: 1px solid black; border-radius: 10px;",
                                 class: "text-secondary px-6 py-3",
                                 "Recommendation"
                             }
-                            th {
-                                scope: "col",
+                            td {
                                 style: "white-space: pre; text-align: center;",
                                 class: "text-info px-6 py-3",
                                 style: "border-right: 1px solid black; border-radius: 10px;",
                                 "Thrown"
                             }
-                            th {
-                                scope: "col",
+                            td {
                                 style: "white-space: pre; text-align: center;",
                                 class: "text-info px-6 py-3",
                                 style: "border-right: 1px solid black; border-radius: 10px;",
                                 "On Doubles"
                             }
                         }
-                    }
-                    tbody {
-                        id: "numbers-body",
                         for (i , a) in scores().into_iter().rev().enumerate() {
                             tr {
                                 td {
