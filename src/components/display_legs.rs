@@ -79,28 +79,33 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
                         disabled: if !start_score_test_signal() || new_legs_missing_signal() == 0 { "true" },
                         "New Leg"
                     }
-                    input {
-                        id: "numberField",
-                        autofocus: true,
-                        value: "501",
-                        placeholder: "start score",
-                        class: "text-1xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline\
-                        col-span-1 grid",
-                        r#type: "number",
-                        oninput: move |e| start_score_raw_signal.set((*e.value()).parse().unwrap()),
-                        onfocusin: move |_| {
-                            document::eval(&"document.getElementById('numberField').select()".to_string());
-                        },
-                        onkeypress: move |e| async move {
-                            let key = e.key();
-                            if key == Key::Enter && start_score_test_signal() {
-                                let _ = new_legs(set_signal().id, legs_signal, start_score_signal(), 1)
-                                    .await;
-                            }
-                        },
-                    
+                    label {
+                        class: "floating-label",
+                        span {
+                            "start score"
+                        }
+                        input {
+                            id: "numberField",
+                            autofocus: true,
+                            value: "501",
+                            placeholder: "start score",
+                            class: "input input-primary text-xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
+                            r#type: "number",
+                            oninput: move |e| start_score_raw_signal.set((*e.value()).parse().unwrap()),
+                            onfocusin: move |_| {
+                                document::eval(&"document.getElementById('numberField').select()".to_string());
+                            },
+                            onkeypress: move |e| async move {
+                                let key = e.key();
+                                if key == Key::Enter && start_score_test_signal() {
+                                    let _ = new_legs(set_signal().id, legs_signal, start_score_signal(), 1)
+                                        .await;
+                                }
+                            },
+
+                        }
                     }
-                
+
                 }
                 div {
                     LegTable {
@@ -186,7 +191,8 @@ pub fn LegTable(
                                                 set_id: set_signal().id,
                                                 leg_id: leg.id,
                                             },
-                                            {leg.leg_order.to_string()}
+                                            class: "link",
+                                            {format!("Set {}", {leg.leg_order.to_string()})}
                                         }
                                     }
                                 

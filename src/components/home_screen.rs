@@ -82,9 +82,20 @@ pub fn HomeScreen() -> Element {
             
             }
             div {
-                "About:"
+                class: "px-8 py-8",
+                h1 {
+                    "About:"
+                }
                 p {
                     "A work in progress page for creating dart matches and tracking dart scores"
+                }
+
+                div {
+                   a {
+                        class: "link",
+                        href: "https://github.com/beoRich/rich-darts",
+                        "Sourcecode"
+                    }
                 }
             
             }

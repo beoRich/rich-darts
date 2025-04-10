@@ -48,25 +48,30 @@ pub fn DisplaySets(match_id: u16) -> Element {
                         "New Set"
                     
                     }
-                    input {
-                        id: "numberField",
-                        autofocus: true,
-                        value: leg_amount_raw_signal(),
-                        placeholder: "#winlegs",
-                        class: "input text-1xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline\
-                             col-span-1 grid",
-                        r#type: "number",
-                        oninput: move |e| leg_amount_raw_signal.set((*e.value()).parse().unwrap()),
-                        onfocusin: move |_| {
-                            document::eval(&"document.getElementById('numberField').select()".to_string());
-                        },
-                        onkeypress: move |e| async move {
-                            let key = e.key();
-                            if key == Key::Enter && leg_amount_test_signal() {
-                                let _ = new_set(match_signal(), sets_signal, leg_amount_signal()).await;
-                            }
-                        },
-                    
+                    label {
+                        class: "floating-label",
+                        span {
+                            "#winlegs"
+                        }
+                        input {
+                            id: "numberField",
+                            autofocus: true,
+                            value: leg_amount_raw_signal(),
+                            placeholder: "3",
+                            class: "input input-primary text-xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
+                            type: "number",
+                            oninput: move |e| leg_amount_raw_signal.set((*e.value()).parse().unwrap()),
+                            onfocusin: move |_| {
+                                document::eval(&"document.getElementById('numberField').select()".to_string());
+                            },
+                            onkeypress: move |e| async move {
+                                let key = e.key();
+                                if key == Key::Enter && leg_amount_test_signal() {
+                                    let _ = new_set(match_signal(), sets_signal, leg_amount_signal()).await;
+                                }
+                            },
+
+                        }
                     }
                 }
                 div {
@@ -146,7 +151,8 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
                                                 matchval: match_signal(),
                                                 set_id: a.id,
                                             },
-                                            {a.set_order.to_string()}
+                                            class: "link",
+                                            {format!("Set {}", {a.set_order.to_string()})}
                                         }
                                     }
                                 
