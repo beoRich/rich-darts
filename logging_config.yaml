@@ -3,7 +3,19 @@ appenders:
     kind: console
     encoder:
       pattern: "{h({d(%Y-%m-%d %H:%M:%S)(utc)} - {l}: {m}{n})}"
+  my_file_logger:
+    kind: rolling_file
+    path: "server.log"
+    encoder:
+      pattern: "{h({d(%Y-%m-%d %H:%M:%S)(utc)} - {l}: {m}{n})}"
+    policy:
+      roller:
+        kind: delete
+      trigger: 
+        kind: size
+        limit: 50kb
 root:
   level: debug
   appenders:
     - my_stdout
+    - my_file_logger

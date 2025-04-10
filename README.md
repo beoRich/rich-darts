@@ -36,18 +36,21 @@ npx tailwindcss -i ./input.css -o ./assets/tailwind.css --watch
 Locally
 1. docker build . -t registry.digitalocean.com/rich-registry/rich-darts  
 2. docker run -t <tag> 
- docker run -d --name rich-container -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' registry.digitalocean.com/rich-registry/rich-darts
+3. docker run -d -p 80:8080 ...rest  see shell script
+
 3. docker container ls  
-3. docker inspect <containerId>
-4. 
-search for  NetworkSettings.Networks
-or 
-docker inspect \
-        -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <containerId>
+4. docker inspect <containerId> earch for  NetworkSettings.Networks
+or docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <containerId>
 for local IP
 5. webbrowser <localIp>:8080 
 6. stop container: docker container stop test
 7. remove container: docker container rm test
+
+
+## Logs in Docker 
+
+docker exec -it test bash
+tail -f /home/server.log
 
 TODO: Docker build . only works currently locally where tailwind already installed
 
@@ -64,16 +67,35 @@ Server -> Deployment 7-9
 6. setup docker inside the droplet
 7. docker login into container registry
 8. pull image from container registry
-9. docker run -d -p 80:8080 -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' registry.digitalocean.com/rich-registry/rich-darts
+9. docker run 
 
-All cmds in order:
-docker pull registry.digitalocean.com/rich-registry/rich-darts
-docker run -d -p 80:8080 -v sqlite:/home/ -e SQLITE_URL='/home/richDarts.db' registry.digitalocean.com/rich-registry/rich-darts
-docker container prune 
+All build cmds in order:
+see shell script docker-build.sh
 
 
 10. access ip4 address of that droplet
 
+
+
+# Diesel
+
+## Remark
+The choice of diesel was not a good decision since it lacks natural async and the dioxus documentation recommends using
+something else.
+There is diesel-async but it does not support sqlite.
+
+## Setup
+ORM requires CLI on developing system
+`cargo binstall diesel`
+
+## Migrations manually (development)
+1. CREATE: diesel migration generate <migrationName>
+2. RUN without schemaFile : diesel migration run --no-generate-schema (since diesel is locked to backend we can't use the default schema generation of diesel)
+or 
+3.  RUN with schemaFile: diesel migration run -> copy entries to from schema.rs -> schema_manual.rs
+3. TEST: diesel migration redo
+
+## Migrations 
 
 
 

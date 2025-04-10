@@ -1,6 +1,7 @@
 use crate::domain::Score;
-use itertools::{iproduct};
+use itertools::iproduct;
 use std::collections::HashSet;
+use crate::components::calculation::common;
 
 pub fn valid_thrown(val: u16) -> bool {
     let all_possible_values: HashSet<u16> = possible_values();
@@ -16,11 +17,11 @@ fn possible_values() -> HashSet<u16> {
     let mut singles: Vec<u16> = (0..21).collect();
     singles.push(25);
     singles.push(50);
-    let double: Vec<u16> = (0..21).map(|val| val * 2).collect();
+    let doubles: Vec<u16> = (0..21).map(|val| val * 2).collect();
     let triples: Vec<u16> = (0..21).map(|val| val * 3).collect();
 
     let all: Vec<u16> = <HashSet<u16> as IntoIterator>::into_iter(HashSet::from_iter(
-        vec![singles, double, triples].concat(),
+        vec![singles, doubles, triples].concat(),
     ))
     .into_iter()
     .collect();
@@ -35,7 +36,7 @@ fn possible_values() -> HashSet<u16> {
 pub fn calculate_remaining(last: Score, val: u16, next_throw_order: u16) -> Score {
     let last_remaining = last.remaining;
     let new_remaining: u16;
-    if val <= last_remaining && check_possible_remaining(last_remaining - val, val) {
+    if val <= last_remaining && is_a_finish_value(last_remaining - val, val) {
         new_remaining = last_remaining - val;
     } else {
         new_remaining = last_remaining;
@@ -43,20 +44,16 @@ pub fn calculate_remaining(last: Score, val: u16, next_throw_order: u16) -> Scor
     Score {
         remaining: new_remaining,
         thrown: val,
-        throw_order: next_throw_order
+        throw_order: next_throw_order,
+            ..last
     }
 }
 
-fn check_possible_remaining(possible_remaining: u16, val: u16) -> bool {
+fn is_a_finish_value(possible_remaining: u16, val: u16) -> bool {
     match possible_remaining {
         1 => false,
         0 => {
-            let boogey_nr: Vec<u16> = vec![169, 168, 166, 165, 163, 162, 159];
-            match val {
-                val if boogey_nr.contains(&val) => false,
-                0..170 => true,
-                _ => false,
-            }
+            common::is_finish(val)
         }
         _ => true,
     }
@@ -64,10 +61,12 @@ fn check_possible_remaining(possible_remaining: u16, val: u16) -> bool {
 
 #[cfg(test)]
 mod test {
-    use crate::components::calculations::{
-        calculate_remaining, check_possible_remaining, valid_thrown,
-    };
+    use crate::components::calculation::score_calculation::{calculate_remaining, is_a_finish_value, valid_thrown};
     use crate::domain::Score;
+
+    fn helper(remaining: u16, thrown: u16, throw_order: u16) -> Score {
+        Score{leg_id: 1, remaining, thrown, throw_order, double_attempt: None}
+    }
 
     #[test]
     fn invalid_throw_bigger_then_180() {
@@ -98,62 +97,62 @@ mod test {
 
     #[test]
     fn should_not_end_on_1() {
-        let last = Score {
-            remaining: 141,
-            thrown: 180,
-            throw_order: 0};
+        let last = helper (
+             141,
+             180,
+             0);
         let thrown = 140;
         let result = calculate_remaining(last, thrown, 0);
         assert_eq!(
             result,
-            Score {
-                remaining: 141,
-                throw_order: 0,
+            helper (
+                141,
+                0,
                 thrown
-            }
+            )
         )
     }
 
     #[test]
     fn should_not_end_on_negative() {
-        let last = Score {
-                remaining: 141,
-                thrown: 180,
-                throw_order: 0};
+        let last = helper (
+                 141,
+                 180,
+                 0);
         let thrown = 150;
         let result = calculate_remaining(last, thrown, 0);
         assert_eq!(
             result,
-            Score {
-                remaining: 141,
-                throw_order: 0,
+            helper (
+                 141,
+                 0,
                 thrown
-            }
+            )
         )
     }
 
     #[test]
     fn should_end_on_0() {
         let thrown = 141;
-        let last = Score {
-                remaining: 141,
-                thrown: 180,
-                throw_order: 0,
-            };
+        let last = helper (
+                 141,
+                180,
+                 0,
+        );
         let result = calculate_remaining(last, thrown, 0);
         assert_eq!(
             result,
-            Score {
-                remaining: 0,
-                throw_order: 0,
+            helper (
+                 0,
+                 0,
                 thrown
-            }
+            )
         )
     }
 
     #[test]
     fn should_not_end_on_0_if_impossible() {
-        assert!(!check_possible_remaining(0, 171));
-        assert!(!check_possible_remaining(0, 163))
+        assert!(!is_a_finish_value(0, 171));
+        assert!(!is_a_finish_value(0, 163))
     }
 }

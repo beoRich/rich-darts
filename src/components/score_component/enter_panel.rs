@@ -1,0 +1,484 @@
+use crate::{backend, Route};
+use crate::components::calculation::score_calculation;
+use crate::domain::ErrorMessageMode::TechnicalError;
+use crate::domain::LegStatus::Ongoing;
+use crate::domain::ScoreMessageMode::{NewShot, UndoLastShot};
+use crate::domain::{get_init_score, ErrorMessageMode, Leg, LegStatus, Score, ScoreMessageMode, Set, SetStatus};
+use dioxus::prelude::*;
+use tracing::debug;
+use crate::components::calculation;
+use crate::components::calculation::double_throws_calculation::HowManyOnDouble;
+
+#[component]
+pub fn NumberFieldError(
+    scores: Signal<Vec<Score>>,
+    mut raw_input: Signal<String>,
+    set_signal: Signal<Set>,
+    leg_signal: Signal<Leg>,
+    mut error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+    allow_score: Signal<bool>,
+    new_score_signal: Signal<Option<Score>>,
+    double_attempt_option_signal: Signal<Vec<u16>>
+) -> Element {
+    debug!("score_message {:?}", score_message);
+    rsx! {
+        div {
+            id: "NumberFieldError",
+            class: "mb-4 join-vertical",
+            div {
+                class: "grid grid-cols-2 gap-4 join-item",
+                margin: "auto",
+                label {
+                    class: "floating-label",
+                    span {
+                        {score_message.read().display()}
+                    }
+                    input {
+                        id: "numberField",
+                        type: "number",
+                        class: "input input-md text-xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
+                        class: if allow_score() { "input input-primary" },
+                        class: if !allow_score() { "input input-secondary" },
+                        class: if score_message() == UndoLastShot { "input input-warning" },
+                        class: if error_message() != ErrorMessageMode::None { "input input-error" },
+                        placeholder: "180",
+                        oninput: move |e| raw_input.set(e.value()),
+                        onfocusin: move |_| {
+                            document::eval(&"document.getElementById('numberField').select()".to_string());
+                        },
+                        onkeypress: move |e| async move {
+                            let key = e.key();
+                            if key == Key::Enter && allow_score() {
+                                input_wrapper(
+                                        raw_input,
+                                        set_signal,
+                                        leg_signal,
+                                        scores,
+                                        error_message,
+                                        score_message,
+                                        new_score_signal,
+                                        double_attempt_option_signal,
+                                    )
+                                    .await;
+                            } else if key == Key::Home {
+                                undo_wrapper(scores, error_message, score_message);
+                            }
+                        },
+                    }
+                }
+                div {
+                    id: "displayError",
+                    class: "join-item",
+                    if error_message.read().value().is_some() {
+                        p {
+                            class: "text-l text-error",
+                            {error_message.read().value()}
+                        }
+                    }
+                }
+            }
+        }
+
+        dialog {
+            id: "double_modal",
+            class: "modal",
+            div {
+                class: "modal-box",
+                h3 {
+                    class: "text-lg font bold flex justify-center",
+                    "How many throws on double?"
+                },
+                div {
+                    class: "py-8 flex justify-center",
+                    div {
+                        class: "join join-vertical",
+                        width: "80%",
+                        for &double_attempt_val in double_attempt_option_signal().iter() {
+                            button {
+                                class: "btn btn-xl btn-soft btn-primary join-item",
+                                onclick: move |_| async move {
+                                    document::eval(&"double_modal.close()".to_string());
+                                    let new_score = new_score_signal();
+                                    match new_score {
+                                        Some(val) => {
+                                            let res = handle_new_score( &mut scores, &mut score_message, leg_signal, &val, &set_signal(), Some(double_attempt_val)).await;
+                                            if res.is_ok(){
+                                                document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+                                                raw_input.set(" ".to_string());
+                                                error_message.set(ErrorMessageMode::None);
+                                                document::eval(&"document.getElementById('numberField').select()".to_string());
+                                            }
+                                        },
+                                        None => {}
+                                    };
+                                },
+                                {double_attempt_val.to_string()}
+                            }
+                        }
+                    }
+                }
+                form {
+                    method:"dialog",
+                    class:"modal-backdrop",
+                    button {
+                        "close"
+                    }
+                }
+            }
+        }
+
+    }
+}
+#[component]
+pub fn OkUndoButton(
+    scores: Signal<Vec<Score>>,
+    mut raw_input: Signal<String>,
+    set_signal: Signal<Set>,
+    leg_signal: Signal<Leg>,
+    mut error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+    allow_score: Signal<bool>,
+    new_score_signal: Signal<Option<Score>>,
+    double_attempt_option_signal: Signal<Vec<u16>>
+) -> Element {
+    debug!("scores {:?}", scores());
+    rsx! {
+        div {
+            id: "ButtonsDiv",
+            class: "grid grid-cols-4 gap-2",
+            div {
+                class: "col-span-1 grid ",
+                button {
+                    id: "confirmButton",
+                    onclick: move |_| async move {
+                        input_wrapper(
+                                raw_input,
+                                set_signal,
+                                leg_signal,
+                                scores,
+                                error_message,
+                                score_message,
+                                new_score_signal,
+                                double_attempt_option_signal,
+                            )
+                            .await;
+                    },
+                    disabled: if !allow_score() { true },
+                    class: "btn btn-soft btn-primary",
+                    "Ok"
+                }
+            }
+            div {
+                class: "col-span-1 grid ",
+                button {
+                    id: "undoButton",
+                    onclick: move |_| {
+                        undo_wrapper(scores, error_message, score_message);
+                    },
+                    disabled: if scores.read().len() < 2 { true },
+                    class: "btn btn-soft btn-warning",
+                    if scores.read().len() >= 2 {
+                        {format!("Undo ({}) ", scores().last().unwrap().thrown.to_string())}
+                    }
+                    if scores.read().len() < 2 {
+                        "Undo"
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[component]
+pub fn NewCancelButton(
+    match_id: u16,
+    scores: Signal<Vec<Score>>,
+    set_signal: Signal<Set>,
+    leg_signal: Signal<Leg>,
+    mut error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+) -> Element {
+    debug!("scores {:?}", scores());
+    let nav = navigator();
+    rsx! {
+        div {
+            id: "ButtonsDiv",
+            class: "grid grid-flow-col grid-rows-2 gap-4",
+            div {
+                button {
+                    id: "nextLegButton",
+                    onclick: move |_| async move {
+                        //todo crappy approach that fakes the loading of a new page by setting the states and changing the url
+                        // should be fixed cleanly, reason for that is that nav.push() does not load the page if only dynamic parts of the url changes
+                        let option = new_next_leg(
+                                set_signal().id,
+                                leg_signal,
+                                scores,
+                                error_message,
+                                score_message,
+                            )
+                            .await;
+                            match option {
+                            Some(leg) => {nav.push(Route::WrapDisplayScore {matchval: match_id , set_id:set_signal().id, leg_id:leg.id});},
+                            None => {}
+
+                        };
+                    },
+                    title: "Cancel current leg (if unfinished) and start/switch to a new one",
+                    class: "btn btn-soft btn-primary",
+                    disabled: if !score_message().allow_new_leg() { true },
+                    "Next"
+                }
+            }
+            div {
+                button {
+                    id: "cancelLegButton",
+                    onclick: move |_| async move {
+                        cancel_leg(leg_signal, error_message, score_message).await;
+                    },
+                    title: "Cancel current leg",
+                    class: "btn btn-soft btn-secondary",
+                    disabled: if score_message() == ScoreMessageMode::LegCancelled { true },
+                    "Cancel"
+                }
+            }
+        }
+    }
+}
+async fn input_wrapper(
+    mut raw_input: Signal<String>,
+    set_signal: Signal<Set>,
+    leg_signal: Signal<Leg>,
+    scores: Signal<Vec<Score>>,
+    mut error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+    new_score_signal: Signal<Option<Score>>,
+    double_attempt_option_signal: Signal<Vec<u16>>
+) {
+    let error_message_mode =
+        input_changed(leg_signal, scores, raw_input, score_message, &set_signal(), new_score_signal, double_attempt_option_signal).await;
+    if error_message_mode == ErrorMessageMode::None {
+        document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+        raw_input.set(" ".to_string());
+    }
+    error_message.set(error_message_mode);
+    document::eval(&"document.getElementById('numberField').select()".to_string());
+}
+fn undo_wrapper(
+    score: Signal<Vec<Score>>,
+    error_message: Signal<ErrorMessageMode>,
+    score_message: Signal<ScoreMessageMode>,
+) {
+    let last_score = undo_last_score(score, error_message, score_message);
+    document::eval(&format!(
+        "document.getElementById('numberField').value = '{last_score}'"
+    ));
+    document::eval(&"document.getElementById('numberField').select()".to_string());
+}
+async fn new_next_leg(
+    set_val: u16,
+    mut leg_signal: Signal<Leg>,
+    mut score: Signal<Vec<Score>>,
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
+) -> Option<Leg>{
+    error_message.set(ErrorMessageMode::None);
+    score_message.set(NewShot);
+    score.write().clear();
+    let start_score = leg_signal().start_score;
+    let next_order_val = if leg_signal().status == LegStatus::Cancelled.display() {
+        leg_signal().leg_order
+    } else {
+        leg_signal().leg_order + 1
+    };
+    let new_leg_res = backend::api::dart_leg::new_leg_with_init_score_if_not_exists(
+        set_val,
+        start_score,
+        next_order_val,
+    )
+    .await;
+    match new_leg_res {
+        Ok(new_leg) => {
+            let new_leg_id = new_leg.id;
+            leg_signal.set(new_leg.clone());
+            score.set(vec![get_init_score(501, new_leg_id)]);
+            document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+            document::eval(&"document.getElementById('numberField').select()".to_string());
+            Some(new_leg)
+        }
+        _ => {error_message.set(TechnicalError); None}
+    }
+}
+async fn cancel_leg(
+    mut leg_signal: Signal<Leg>,
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
+) {
+    let cancel_leg_res =
+        backend::api::dart_leg::update_leg_status(leg_signal().id, LegStatus::Cancelled).await;
+    match cancel_leg_res {
+        Ok(cancelled_leg) => {
+            leg_signal.set(cancelled_leg);
+            error_message.set(ErrorMessageMode::None);
+            score_message.set(ScoreMessageMode::LegCancelled);
+            document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+            document::eval(&"document.getElementById('numberField').select()".to_string());
+        }
+        _ => error_message.set(TechnicalError),
+    }
+}
+fn undo_last_score(
+    mut score: Signal<Vec<Score>>,
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
+) -> u16 {
+    error_message.set(ErrorMessageMode::None);
+    let generational_ref = score.read();
+    let last_score = generational_ref.last();
+    match last_score {
+        Some(val) => {
+            let last_thrown = val.thrown;
+            score_message.set(UndoLastShot);
+            last_thrown
+        }
+        None => 0,
+    }
+}
+async fn input_changed(
+    leg_signal: Signal<Leg>,
+    mut scores: Signal<Vec<Score>>,
+    input_ref: Signal<String>,
+    mut score_message: Signal<ScoreMessageMode>,
+    current_set: &Set,
+    mut new_score_signal: Signal<Option<Score>>,
+    mut double_attempt_option_signal: Signal<Vec<u16>>
+) -> ErrorMessageMode {
+    let score_message_mode = score_message();
+    let result = input_ref.read().parse();
+    match result {
+        Ok(val) => {
+            if score_calculation::valid_thrown(val) {
+                {
+                    if let Ok((last, next_throw_order)) = handle_score_message_mode(
+                        &mut scores,
+                        &mut score_message,
+                        score_message_mode,
+                        leg_signal,
+                        &current_set,
+                    )
+                    .await
+                    {
+                        let new_score =
+                            score_calculation::calculate_remaining(last.clone(), val, next_throw_order);
+                        let ask_result = calculation::double_throws_calculation::ask_for_double_entry(&last, &new_score);
+                        let double_attempt_val: Option<u16>;
+                        match ask_result {
+                            HowManyOnDouble::NotRelevant => {
+                                double_attempt_val = None;
+                            }
+                            HowManyOnDouble::OnlyOne => {
+                                double_attempt_val = Some(1);
+                            }
+                            HowManyOnDouble::NeedEntry(double_attempt_vector) => {
+                                new_score_signal.set(Some(new_score)) ;
+                                double_attempt_option_signal.set(double_attempt_vector);
+                                document::eval(&"double_modal.showModal()".to_string());
+                                return ErrorMessageMode::None;
+                            }
+                        }
+                        match handle_new_score(
+                            &mut scores,
+                            &mut score_message,
+                            leg_signal,
+                            &new_score,
+                            current_set,
+                            double_attempt_val
+                        ).await
+                        {
+                            Ok(_) => ErrorMessageMode::None,
+                            Err(_) => TechnicalError,
+                        }
+                    } else {
+                        TechnicalError
+                    }
+                }
+            } else {
+                ErrorMessageMode::NotADartsNumber
+            }
+        }
+        Err(_) => ErrorMessageMode::NotANumber,
+    }
+}
+async fn handle_score_message_mode(
+    mut score: &mut Signal<Vec<Score>>,
+    score_message: &mut Signal<ScoreMessageMode>,
+    score_message_mode: ScoreMessageMode,
+    mut leg_signal: Signal<Leg>,
+    current_set: &Set,
+) -> Result<(Score, u16), ServerFnError> {
+    let last = get_last(&mut score);
+    match score_message_mode {
+        UndoLastShot => {
+            score.write().pop();
+            score_message.set(NewShot);
+            let next_throw_order = last.throw_order;
+            let _ =
+                backend::api::dart_score::delete_score_by_order(leg_signal().id, next_throw_order)
+                    .await?;
+            let _ = backend::api::dart_set::update_set_status(current_set.id, SetStatus::Ongoing)
+                .await?;
+            let updatet_leg =
+                backend::api::dart_leg::update_leg_status(leg_signal().id, Ongoing).await?;
+            leg_signal.set(updatet_leg);
+            let last = get_snd_last(&mut score);
+            Ok((last, next_throw_order))
+        }
+        NewShot => {
+            let updated_leg =
+                backend::api::dart_leg::update_leg_status(leg_signal().id, Ongoing).await?;
+            leg_signal.set(updated_leg);
+            let next_throw_order = last.throw_order + 1;
+            Ok((last, next_throw_order))
+        }
+        _ => Err(ServerFnError::new("help")),
+    }
+}
+async fn handle_new_score(
+    scores: &mut Signal<Vec<Score>>,
+    score_message: &mut Signal<ScoreMessageMode>,
+    mut leg_signal: Signal<Leg>,
+    new_score: &Score,
+    current_set: &Set,
+    double_attempt_val: Option<u16>
+) -> Result<(), ServerFnError> {
+    let mut new_score_double_enhanced = new_score.clone();
+    debug!("Handle new score {:?}", double_attempt_val);
+    new_score_double_enhanced.double_attempt = double_attempt_val;
+    backend::api::dart_score::new_score(new_score_double_enhanced.clone()).await?;
+    if (&new_score).remaining == 0 {
+        let updated_leg =
+            backend::api::dart_leg::update_leg_status(leg_signal().id, LegStatus::Finished).await?;
+        leg_signal.set(updated_leg);
+        score_message.set(ScoreMessageMode::LegFinished);
+        if leg_signal().leg_order == current_set.leg_amount {
+            backend::api::dart_set::update_set_status(current_set.id, SetStatus::Finished).await?;
+            score_message.set(ScoreMessageMode::SetFinished);
+        }
+    }
+    scores.write().push(new_score_double_enhanced);
+    Ok(())
+}
+
+
+
+fn get_last(score: &mut Signal<Vec<Score>>) -> Score {
+    score.read().last().unwrap().to_owned()
+}
+fn get_snd_last(score: &mut Signal<Vec<Score>>) -> Score {
+    let generational_ref = score.read();
+    generational_ref
+        .get(generational_ref.len() - 1)
+        .unwrap()
+        .to_owned()
+}
