@@ -1,13 +1,13 @@
-use dioxus::html::a::class;
 use crate::{backend, Route};
 use crate::components::calculation::score_calculation;
 use crate::domain::ErrorMessageMode::TechnicalError;
 use crate::domain::LegStatus::Ongoing;
 use crate::domain::ScoreMessageMode::{NewShot, UndoLastShot};
-use crate::domain::{get_init_score, ErrorMessageMode, IdOrder, Leg, LegStatus, Score, ScoreMessageMode, Set, SetStatus};
+use crate::domain::{get_init_score, ErrorMessageMode, Leg, LegStatus, Score, ScoreMessageMode, Set, SetStatus};
 use dioxus::prelude::*;
 use tracing::debug;
 use crate::components::calculation;
+use crate::components::calculation::double_throws_calculation::HowManyOnDouble;
 
 #[component]
 pub fn NumberFieldError(
@@ -371,35 +371,33 @@ async fn input_changed(
                     {
                         let new_score =
                             score_calculation::calculate_remaining(last.clone(), val, next_throw_order);
-                        if calculation::common::is_finish(last.remaining) {
-                            let mut double_attempt_vector = vec![0,1,2,3];
-                            if new_score.remaining == 0 {
-                                double_attempt_vector.retain(|&x| x != 0)
+                        let ask_result = calculation::double_throws_calculation::ask_for_double_entry(&last, &new_score);
+                        let double_attempt_val: Option<u16>;
+                        match ask_result {
+                            HowManyOnDouble::NotRelevant => {
+                                double_attempt_val = None;
                             }
-                            let last_remaining = last.clone().remaining;
-                            if last_remaining > 110  {
-                                double_attempt_vector.retain(|&x| x != 2 && x != 3)
+                            HowManyOnDouble::OnlyOne => {
+                                double_attempt_val = Some(1);
                             }
-                            if last_remaining % 2 == 1  || (last_remaining > 40  && last_remaining != 50)  {
-                                double_attempt_vector.retain(|&x| x != 3)
+                            HowManyOnDouble::NeedEntry(double_attempt_vector) => {
+                                new_score_signal.set(Some(new_score)) ;
+                                double_attempt_option_signal.set(double_attempt_vector);
+                                document::eval(&"double_modal.showModal()".to_string());
+                                return ErrorMessageMode::None;
                             }
-                            new_score_signal.set(Some(new_score)) ;
-                            double_attempt_option_signal.set(double_attempt_vector);
-                            document::eval(&"double_modal.showModal()".to_string());
-                            ErrorMessageMode::None
-                        } else {
-                            match handle_new_score(
-                                &mut scores,
-                                &mut score_message,
-                                leg_signal,
-                                &new_score,
-                                current_set,
-                                None
-                            ).await
-                            {
-                                Ok(_) => ErrorMessageMode::None,
-                                Err(value) => TechnicalError,
-                            }
+                        }
+                        match handle_new_score(
+                            &mut scores,
+                            &mut score_message,
+                            leg_signal,
+                            &new_score,
+                            current_set,
+                            double_attempt_val
+                        ).await
+                        {
+                            Ok(_) => ErrorMessageMode::None,
+                            Err(_) => TechnicalError,
                         }
                     } else {
                         TechnicalError

@@ -53,7 +53,7 @@ pub async fn new_match() -> Result<Match, ServerFnError> {
 }
 
 #[server]
-pub async fn get_latest_match() -> Result<(u16), ServerFnError> {
+pub async fn get_latest_match() -> Result<u16, ServerFnError> {
     use crate::schema_manual::guard::dartmatch::dsl::*;
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;

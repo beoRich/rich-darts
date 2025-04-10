@@ -4,15 +4,13 @@ use crate::components::score_component::score_display::ScoreDisplay;
 use crate::domain::ErrorMessageMode::{CreateNewLeg, TechnicalError};
 use crate::domain::ScoreMessageMode::{LegCancelled, LegFinished, UndoLastShot};
 use crate::domain::{
-    parse_score_message, ErrorMessageMode, IdOrder, Leg, Score, ScoreMessageMode, Set, SetStatus,
+    parse_score_message, ErrorMessageMode, Leg, Score, ScoreMessageMode, Set, SetStatus,
 };
 use crate::{backend, Route};
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_logger::tracing::error;
 use tracing::debug;
-use web_sys::js_sys::JSON::parse;
-use web_sys::window;
 use crate::components::score_component::score_statistic::ScoreStatistic;
 
 #[component]

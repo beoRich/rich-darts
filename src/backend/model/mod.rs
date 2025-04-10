@@ -8,6 +8,5 @@ pub use dart_leg::NewDartLeg;
 pub use dart_match::DartMatch;
 pub use dart_match::NewDartMatch;
 pub use dart_score::DartScore;
-pub use dart_score::NewDartScore;
 pub use dart_set::DartSet;
 pub use dart_set::NewDartSet;

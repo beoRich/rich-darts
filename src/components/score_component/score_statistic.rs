@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 use crate::components::calculation::statistic_calculation::{first_three_average, live_average, AverageValue};
-use crate::domain::{Leg, Score, Set};
+use crate::domain::{Score};
 
 #[component]
 pub fn ScoreStatistic(

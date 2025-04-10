@@ -1,4 +1,4 @@
-use crate::domain::{IdOrder, Leg, Set, SetStatus};
+use crate::domain::{Leg, Set, SetStatus};
 use crate::{backend, Route};
 use dioxus::prelude::*;
 use tracing::debug;

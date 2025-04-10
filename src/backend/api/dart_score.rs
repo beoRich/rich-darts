@@ -1,7 +1,6 @@
-use crate::domain::{IdOrder, Leg, Score};
+use crate::domain::{Score};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
-use tracing::debug;
 
 #[cfg(feature = "server")]
 mod server_deps {

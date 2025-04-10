@@ -1,4 +1,4 @@
-use crate::domain::{IdOrder, Leg, LegStatus, Set, SetStatus};
+use crate::domain::{Set, SetStatus};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 

@@ -142,7 +142,7 @@ fn LatestMatch() -> Element {
     let latest_match_id: ReadOnlySignal<Option<Result<u16, ServerFnError>>> =
         use_server_future(move || backend::api::dart_match::get_latest_match())?.value();
     match &*latest_match_id.read_unchecked() {
-        Some(Ok((match_id_ref))) => {
+        Some(Ok(match_id_ref)) => {
             rsx! {
                 DisplaySets {
                     match_id: *match_id_ref,

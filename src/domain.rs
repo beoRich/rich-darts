@@ -13,19 +13,6 @@ pub fn get_init_score(start_score_input: u16, leg_id: u16) -> Score{
     }
 }
 
-#[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize, Copy)]
-pub struct IdOrder {
-    pub id: u16,
-    pub order: u16,
-}
-
-#[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize, Copy)]
-pub struct IdOrderParent {
-    pub id: u16,
-    pub order: u16,
-    pub parent_id: u16,
-}
-
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Score {
     pub leg_id: u16,

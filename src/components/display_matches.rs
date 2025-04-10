@@ -1,6 +1,5 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::domain::ErrorMessageMode::CreateNewLeg;
-use crate::domain::{Leg, Match, Set};
+use crate::domain::{Match};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
@@ -91,7 +90,8 @@ pub fn MatchTable(matches: Signal<Vec<Match>>) -> Element {
                                             to: Route::WrapDisplaySets {
                                                 matchval: a.id,
                                             },
-                                            {a.id.to_string()}
+                                            class: "link",
+                                            {format!("Match {}", {a.id.to_string()})}
                                         }
                                     }
                                 

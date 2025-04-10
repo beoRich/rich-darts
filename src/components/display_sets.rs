@@ -1,6 +1,5 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::domain::ErrorMessageMode::CreateNewLeg;
-use crate::domain::{Leg, Set};
+use crate::domain::{Set};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;

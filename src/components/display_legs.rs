@@ -1,5 +1,5 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::domain::{parse_leg_status, IdOrder, Leg, Set};
+use crate::domain::{parse_leg_status, Leg, Set};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;

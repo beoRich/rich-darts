@@ -317,7 +317,6 @@ fn under_40_two_dart_finish(remaining_val: u16) -> ((u16, u16), Option<(u16, u16
 
 #[cfg(test)]
 mod test {
-    use std::any::type_name;
     use crate::components::calculation::recommendation_calculation::{determine_rec, FinishRecValue, RecValue, ScoreType};
 
     #[test]
