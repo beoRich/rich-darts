@@ -2,6 +2,7 @@ use crate::components::calculation;
 use crate::components::calculation::double_throws_calculation::HowManyOnDouble::{
     NeedEntry, NotRelevant, OnlyOne,
 };
+use crate::components::calculation::recommendation_calculation::{FinishRecValue, RecValue};
 use crate::domain::Score;
 
 pub enum HowManyOnDouble {
@@ -20,6 +21,21 @@ pub fn ask_for_double_entry(last_score: &Score, new_score: &Score) -> HowManyOnD
         if last_remaining > 110 {
             double_attempt_vector.retain(|&x| x != 2 && x != 3)
         }
+
+        if last_remaining >=99 && last_remaining < 110 {
+            let value = calculation::recommendation_calculation::determine_rec(last_remaining);
+            match value {
+                RecValue::IsFinish(FinishRecValue{ primary_rec, secondary_rec:_ }) => {
+                    match primary_rec {
+                        Some(val) => {if val.len() == 3  {double_attempt_vector.retain(|&x| x!=3)}}
+                        None => {panic!("Must have a primary recommendation")}
+                    }
+                }
+                _=> {panic!("Missing recommendation")}
+            }
+        }
+
+
         if last_remaining % 2 == 1 || (last_remaining > 40 && last_remaining != 50) {
             double_attempt_vector.retain(|&x| x != 3);
         }
