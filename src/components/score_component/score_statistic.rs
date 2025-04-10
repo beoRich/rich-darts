@@ -42,7 +42,7 @@ pub fn ScoreStatistic(
             id: "ScoreStatisticsRow1",
             class: "join",
             StatisticPanelDifferentiated{title_input: "#Average ", leg_stat_signal: leg_avg_signal, desc_input: "Tendency: downwards"}
-            StatisticPanelBase{title_element: double_title_element, value_element: double_value_element, desc_input: "Improving"}
+            StatisticPanelBase{title_element: double_title_element, value_element:double_value_element , desc_input: "Improving"}
             StatisticPanelDifferentiated{title_input: "#Throws ", leg_stat_signal: leg_throws_signal, desc_input: "+10 compared to average"}
             StatisticPanelDifferentiated{title_input: "First 9 ", leg_stat_signal: first_nine_avg_signal, desc_input: "+10 compared to average"}
             StatisticPanelDifferentiated{title_input: "100+ ", leg_stat_signal: hundred_plus_signal, desc_input: "3 more than in the previous set"}
@@ -94,20 +94,29 @@ pub fn StatisticPanelBase(title_element: Element, value_element: Element, desc_i
 #[component]
 fn LegSetMatchDisplay(leg_val: String, set_val: String, match_val: String ) -> Element {
     rsx! {
-                    text{
+                    span{
                     class: "text-primary",
                     "{leg_val}"
                     }
                     "|"
-                    text {
+                    span {
                     class: "text-secondary",
                     "{set_val}"
                     }
                     "|"
-                    text {
+                    span {
                     class: "text-info",
                     "{match_val}"
                     }
                     ""
+    }
+}
+#[component]
+fn LegSetMatchDisplay2(leg_val: String, set_val: String, match_val: String ) -> Element {
+    rsx! {
+                    p{
+                    class: "text-primary",
+                    "{leg_val}|{set_val}|{match_val}"
+                    }
     }
 }
