@@ -72,17 +72,15 @@ pub fn StatisticPanelDifferentiated(title_input: String, leg_stat_signal: Signal
 
 #[component]
 pub fn StatisticPanelBase(title_element: Element, value_element: Element, desc_input: String) -> Element {
+    use_effect(|| {});
     rsx! {
             div {
                 class: "stat join-item",
                 div {
                     class: "stat-figure text-primary",
                 }
-                div {
-                    class: "stat-title",
-                    {title_element}
-                }
-                    {value_element}
+                {title_element}
+                {value_element}
                 div {
                     class: "stat-desc",
                     {desc_input}
@@ -94,7 +92,7 @@ pub fn StatisticPanelBase(title_element: Element, value_element: Element, desc_i
 }
 
 #[component]
-pub fn LegSetMatchDisplay(leg_val: String, set_val: String, match_val: String ) -> Element {
+fn LegSetMatchDisplay(leg_val: String, set_val: String, match_val: String ) -> Element {
     rsx! {
                     text{
                     class: "text-primary",
