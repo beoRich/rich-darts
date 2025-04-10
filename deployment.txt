@@ -1,3 +1,5 @@
+On the VPS after ssh login:
+
 docker container stop test
 docker container rm test
 docker volume rm sqlite (if necessary)
