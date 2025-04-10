@@ -1,0 +1,5 @@
+docker container stop test
+docker container rm test
+docker volume rm sqlite (if necessary)
+docker pull registry.digitalocean.com/rich-registry/rich-darts
+docker run -d -p 80:8080 --name test -v sqlite:/home/ -e DATABASE_URL='/home/richDarts.db' -e LOG_URL='/home/server.log' registry.digitalocean.com/rich-registry/rich-darts
