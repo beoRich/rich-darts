@@ -23,106 +23,93 @@ pub fn ScoreStatistic(
              }
          }
     );
-    rsx! {
-        div {
-            id: "ScoreStatisticsRow1",
-            class: "join",
-            div {
-                class: "stat join-item",
-                div {
-                    class: "stat-figure text-primary",
-                }
-                div {
-                    class: "stat-title",
-                    "Average (l|s|m)"
-                }
-                div {
-                    class: "stat-value text-primary",
-                    {format!("{}|30|35", {leg_avg_signal().display()})}
 
-
-                }
-                div {
-                    class: "stat-desc",
-                    "Tendency: downwards"
-                }
-            }
-
-            div {
-                class: "stat join-item",
-                div {
-                    class: "stat-figure text-primary",
-                }
+    let double_title_element = rsx!(
                 div {
                     class: "stat-title",
                     "Double Quote (m)"
                 }
-                div {
-                    class: "stat-value text-primary",
+    );
+    let double_value_element = rsx!(
+    div {
+        class: "stat-value text-primary",
                     "4/10 (40%)"
-                }
-                div {
-                    class: "stat-desc",
-                    "Improving"
-                }
-            }
 
-            div {
-                class: "stat join-item",
-                div {
-                    class: "stat-figure text-primary",
-                }
-                div {
-                    class: "stat-title",
-                    "#Throws (l|s|m)"
-                }
-                div {
-                    class: "stat-value text-primary",
-                    {format!("{}|12|15", {leg_throws_signal().display()})}
-                }
-                div {
-                    class: "stat-desc",
-                    "+10 compared to average"
-                }
-            }
+    });
 
-            div {
-                class: "stat join-item",
-                div {
-                    class: "stat-figure text-primary",
-                }
-                div {
-                    class: "stat-title",
-                    "First 9 (l|s|m)"
-                }
-                div {
-                    class: "stat-value text-primary",
-                    {format!("{}|100|120", {first_nine_avg_signal().display()})}
-                }
-                div {
-                    class: "stat-desc",
-                    "+10 compared to average"
-                }
-            }
-
-            div {
-                class: "stat join-item",
-                div {
-                    class: "stat-figure text-primary",
-                }
-                div {
-                    class: "stat-title",
-                    "100+ (l|s|m)"
-                }
-                div {
-                    class: "stat-value text-primary",
-                    {format!("{}|5|20", {hundred_plus_signal().display()})}
-                }
-                div {
-                    class: "stat-desc",
-                    "3 more than in the previous set"
-                }
-            }
+    rsx! {
+        div {
+            id: "ScoreStatisticsRow1",
+            class: "join",
+            StatisticPanelDifferentiated{title_input: "#Average ", leg_stat_signal: leg_avg_signal, desc_input: "Tendency: downwards"}
+            StatisticPanelBase{title_element: double_title_element, value_element: double_value_element, desc_input: "Improving"}
+            StatisticPanelDifferentiated{title_input: "#Throws ", leg_stat_signal: leg_throws_signal, desc_input: "+10 compared to average"}
+            StatisticPanelDifferentiated{title_input: "First 9 ", leg_stat_signal: first_nine_avg_signal, desc_input: "+10 compared to average"}
+            StatisticPanelDifferentiated{title_input: "100+ ", leg_stat_signal: hundred_plus_signal, desc_input: "3 more than in the previous set"}
         }
+    }
+}
+
+#[component]
+pub fn StatisticPanelDifferentiated(title_input: String, leg_stat_signal: Signal<AverageValue>, desc_input: String) -> Element {
+    let title_element = rsx! {
+        div {
+            class: "stat-title",
+            {title_input} "(" LegSetMatchDisplay{leg_val: "l", set_val: "s", match_val: "m"}")"
+        }
+
+    };
+
+    let value_element = rsx!(
+    div {
+        class: "stat-value text-primary",
+            LegSetMatchDisplay{leg_val:{leg_stat_signal().display()}, set_val: "5", match_val: "10"}
+    });
+    rsx! {
+        StatisticPanelBase{title_element, value_element, desc_input}
+    }
+}
+
+#[component]
+pub fn StatisticPanelBase(title_element: Element, value_element: Element, desc_input: String) -> Element {
+    rsx! {
+            div {
+                class: "stat join-item",
+                div {
+                    class: "stat-figure text-primary",
+                }
+                div {
+                    class: "stat-title",
+                    {title_element}
+                }
+                    {value_element}
+                div {
+                    class: "stat-desc",
+                    {desc_input}
+                }
+            }
+
+    }
+
+}
+
+#[component]
+pub fn LegSetMatchDisplay(leg_val: String, set_val: String, match_val: String ) -> Element {
+    rsx! {
+                    text{
+                    class: "text-primary",
+                    "{leg_val}"
+                    }
+                    "|"
+                    text {
+                    class: "text-secondary",
+                    "{set_val}"
+                    }
+                    "|"
+                    text {
+                    class: "text-info",
+                    "{match_val}"
+                    }
+                    ""
     }
 }
