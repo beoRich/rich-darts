@@ -36,7 +36,7 @@ pub fn DisplaySets(match_id: u16) -> Element {
                     match_id,
                 }
                 div {
-                    class: "bg-base-100 border-y-4 border-color-red-500 shadow-md rounded px-8 pt-6 pb-8 grid grid-cols-12 gap-4",
+                    class: "bg-base-100 border-y-4 shadow-md rounded px-8 pt-6 pb-8 grid grid-cols-12 gap-4",
                     button {
                         id: "newLegButton",
                         onclick: move |_| async move {

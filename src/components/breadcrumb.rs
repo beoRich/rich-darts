@@ -47,7 +47,7 @@ pub fn BreadCrumbComponent(
                 if set_signal.is_none() {
                     li {
                         class: "text-xl",
-                        "List of sets"
+                        "List of matches"
                     }
                 }
                 if set_signal.is_some() {

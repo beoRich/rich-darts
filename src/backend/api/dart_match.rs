@@ -1,6 +1,8 @@
+use dioxus::html::completions::CompleteWithBraces::map;
 use crate::domain::{Match, Set};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
+use tracing::debug;
 
 #[cfg(feature = "server")]
 mod server_deps {
@@ -14,6 +16,7 @@ mod server_deps {
 
 #[cfg(feature = "server")]
 use server_deps::*;
+use crate::backend::model::dart_match::map_db_to_domain;
 
 #[server]
 pub async fn list_matches() -> Result<Vec<Match>, ServerFnError> {
@@ -26,17 +29,15 @@ pub async fn list_matches() -> Result<Vec<Match>, ServerFnError> {
 
     let matches = match_db
         .into_iter()
-        .map(|db| Match {
-            id: db.id as u16,
-            status: db.status,
-        })
+        .map(map_db_to_domain)
         .collect();
     Ok(matches)
 }
 
 #[server]
-pub async fn new_match() -> Result<Match, ServerFnError> {
+pub async fn new_match(title_maybe: Option<String>) -> Result<Match, ServerFnError> {
     use crate::schema_manual::guard::dartmatch;
+    use crate::schema_manual::guard::dartmatch::dsl::*;
 
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
@@ -46,10 +47,12 @@ pub async fn new_match() -> Result<Match, ServerFnError> {
         .values(insert_match)
         .returning(DartMatch::as_returning())
         .get_result(conn_ref)?;
-    Ok((Match {
-        id: match_result.id as u16,
-        status: match_result.status,
-    }))
+    debug!("NewMatchTest");
+
+    let title_input = title_maybe.unwrap_or(format!("Match {}", match_result.id));
+    let match_result_with_title = diesel::update(dartmatch).filter(id.eq(match_result.id)).set(title.eq(title_input))
+        .returning(DartMatch::as_returning()).get_result(conn_ref)?;
+    Ok(map_db_to_domain(match_result_with_title))
 }
 
 #[server]

@@ -44,6 +44,7 @@ pub struct Set {
 pub struct Match {
     pub id: u16,
     pub status: String,
+    pub title: String
 }
 
 #[derive(Props, PartialEq, Clone)]

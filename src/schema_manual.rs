@@ -17,6 +17,7 @@ pub mod guard {
     dartmatch (id) {
         id -> Integer,
         status -> Text,
+        title -> Nullable<Text>,
     }
 }
 
