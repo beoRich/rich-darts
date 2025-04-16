@@ -46,7 +46,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
         };
     });
     let _ = use_resource(move || async move {
-        let res = backend::api::dart_leg::list_leg_with_last_score(set_signal().id).await;
+        let res = backend::api::dart_leg::list_leg(set_signal().id).await;
         match res {
             Ok(val) if !val.is_empty() => legs_signal.set(val),
             _ => {}
@@ -97,7 +97,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
                         div {
                             id: "LegStatistic",
                             class: "col-span-4 grid bg-base-100 border-y-4 shadow-md rounded px-8",
-                            ScoreStatistic {scores}
+                            ScoreStatistic {set_signal, scores}
                         }
                         div {
                             id: "CancelUndoButton",

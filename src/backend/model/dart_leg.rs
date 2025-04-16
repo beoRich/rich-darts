@@ -11,9 +11,10 @@ struct LegWithScores {
     scores: Vec<DartScore>,
 }
 
-#[cfg_attr(feature = "server", derive(Queryable, Selectable, Serialize))]
+#[cfg_attr(feature = "server", derive(Identifiable,Queryable, Selectable, Serialize))]
 #[cfg_attr(feature = "server", diesel(table_name = crate::schema_manual::guard::dartleg))]
 #[cfg_attr(feature = "server", diesel(check_for_backend(diesel::sqlite::Sqlite)))]
+#[cfg_attr(feature = "server", diesel(belongs_to(DartSet)))]
 #[derive(Debug)]
 pub struct DartLeg {
     pub id: i32,
@@ -45,15 +46,6 @@ impl NewDartLeg {
 }
 
 pub fn map_db_to_domain(db: DartLeg) -> Leg {
-    Leg {
-        id: db.id as u16,
-        status: db.status,
-        leg_order: db.leg_order as u16,
-        start_score: db.start_score as u16,
-        last_score: None,
-    }
-}
-pub fn map_db_to_domain_with_last_score(db: DartLeg) -> Leg {
     Leg {
         id: db.id as u16,
         status: db.status,

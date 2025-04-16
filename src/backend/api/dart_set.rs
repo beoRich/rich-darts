@@ -1,4 +1,4 @@
-use crate::domain::{Set, SetStatus};
+use crate::domain::{Metric, Set, SetStatus};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 
@@ -9,10 +9,13 @@ mod server_deps {
     pub use crate::schema_manual::guard::dartset::dsl::dartset;
     pub use crate::schema_manual::guard::dartset::match_id;
     pub use diesel::prelude::*;
+    pub use crate::schema_manual::guard::dartleg::set_id;
+    pub use crate::schema_manual::guard::dartleg::dsl::dartleg;
 }
 
 #[cfg(feature = "server")]
 use server_deps::*;
+use crate::backend::api::dart_score::new_score;
 
 #[server]
 pub async fn list_set(match_id_input: i32) -> Result<Vec<Set>, ServerFnError> {
@@ -34,15 +37,16 @@ pub async fn list_set(match_id_input: i32) -> Result<Vec<Set>, ServerFnError> {
 }
 
 #[server]
-pub async fn get_set_by_id(id_input: i32) -> Result<Set, ServerFnError> {
+pub async fn get_set_by_id(id_input: u16) -> Result<Set, ServerFnError> {
     use crate::schema_manual::guard::dartset::dsl::*;
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
 
-    let set_db_result = dartset.find(id_input).first::<DartSet>(conn_ref)?;
+    let set_db_result = dartset.find(id_input as i32).first::<DartSet>(conn_ref)?;
     let set = dart_set::map_db_to_domain(set_db_result);
     Ok(set)
 }
+
 
 #[server]
 pub async fn new_set(match_id_input: u16, leg_amount_input: u16) -> Result<Set, ServerFnError> {
@@ -98,4 +102,38 @@ pub async fn update_set_status(
         .returning(DartSet::as_returning())
         .get_result(conn_ref)?;
     Ok(dart_set::map_db_to_domain(db_set_result))
+}
+
+#[server]
+pub async fn get_cascaded_metrics_by_id(set_id_input: u16) -> Result<Metric, ServerFnError> {
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+    // see https://diesel.rs/guides/relations.html for the following approach (avoiding n+1 problem)
+
+    let db_legs_for_set = dartleg
+        .filter(set_id.eq(set_id_input as i32))
+        .select(DartLeg::as_select())
+        .load(conn_ref)?;
+
+    let all_scores = DartScore::belonging_to(&db_legs_for_set).select(DartScore::as_select()).load(conn_ref)?;
+
+    //group scores per leg
+    let scores_per_leg = all_scores.grouped_by(&db_legs_for_set).into_iter().zip(db_legs_for_set)
+        .map(|(scores, leg)| (leg, scores))
+        .map(|(leg, mut scores) | {
+            let new_scores = scores.split_off(1);
+            (leg, new_scores)
+        })
+        .collect::<Vec<(DartLeg, Vec<DartScore>)>>();
+
+    let only_scores: Vec<DartScore> = scores_per_leg.into_iter().flat_map(|(_,scores)|  scores).collect();
+    if only_scores.is_empty() {
+        Ok(Metric { sum: 0, score_amount: 0 })
+    } else {
+        let test = Metric { sum: only_scores.iter().map(|dart_score| dart_score.thrown as u16).sum(), score_amount: only_scores.iter().count() as u16 };
+        Ok(test)
+    }
+
+
+
 }

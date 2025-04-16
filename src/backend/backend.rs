@@ -9,7 +9,7 @@ mod server_deps {
     pub use diesel::query_dsl::methods::OrderDsl;
     pub use diesel::sqlite::SqliteConnection;
     pub use diesel_migrations::FileBasedMigrations;
-    pub use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+    pub use diesel_migrations::{MigrationHarness};
     pub use dotenv::dotenv;
     pub use once_cell::sync::Lazy;
     pub use std::sync::Mutex;

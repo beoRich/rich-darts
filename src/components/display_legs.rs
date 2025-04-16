@@ -20,7 +20,7 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
         result.map(|val| start_score_signal.set(val))
     });
     let _ = use_resource(move || async move {
-        let res = backend::api::dart_leg::list_leg_with_last_score(set_signal().id).await;
+        let res = backend::api::dart_leg::list_leg(set_signal().id).await;
         match res {
             Ok(val) if !val.is_empty() => legs_signal.set(val),
             _ => {}
@@ -192,7 +192,7 @@ pub fn LegTable(
                                                 leg_id: leg.id,
                                             },
                                             class: "link",
-                                            {format!("Set {}", {leg.leg_order.to_string()})}
+                                            {format!("Leg {}", {leg.leg_order.to_string()})}
                                         }
                                     }
                                 

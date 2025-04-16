@@ -62,7 +62,7 @@ fn WrapDisplayScore(matchval: u16, set_id: u16, leg_id: u16) -> Element {
     let mut leg_read_only_signal: ReadOnlySignal<Option<Result<Leg, ServerFnError>>> =
         use_server_future(move || backend::api::dart_leg::get_leg_by_id(leg_id as i32))?.value();
     let mut set_signal: ReadOnlySignal<Option<Result<Set, ServerFnError>>> =
-        use_server_future(move || backend::api::dart_set::get_set_by_id(set_id as i32))?.value();
+        use_server_future(move || backend::api::dart_set::get_set_by_id(set_id))?.value();
     match (
         &*leg_read_only_signal.read_unchecked(),
         &*set_signal.read_unchecked(),
@@ -82,7 +82,7 @@ fn WrapDisplayScore(matchval: u16, set_id: u16, leg_id: u16) -> Element {
 #[component]
 fn WrapDisplayLegs(matchval: u16, set_id: u16) -> Element {
     let mut set: ReadOnlySignal<Option<Result<Set, ServerFnError>>> =
-        use_server_future(move || backend::api::dart_set::get_set_by_id(set_id as i32))?.value();
+        use_server_future(move || backend::api::dart_set::get_set_by_id(set_id))?.value();
     let mut match_signal = use_signal(|| matchval);
     match &*set.read_unchecked() {
         Some(Ok(set_val)) => {

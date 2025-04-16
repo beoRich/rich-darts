@@ -182,3 +182,19 @@ impl ErrorMessageMode {
         }
     }
 }
+
+#[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
+pub struct Metric {
+    pub sum: u16,
+    pub(crate) score_amount: u16, // aufnahmen
+    //throws: u16,  // anzahl der wuerfe
+    //first_nine_per_leg_sum: u16,
+    //hundred_plus_amount_per_leg_sum: u16,
+    //amount_of_legs: u16
+}
+
+#[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
+pub struct MatchCascadeMetric {
+    match_metric: Metric,
+    set_metric: Metric
+}
