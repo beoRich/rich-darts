@@ -187,10 +187,11 @@ impl ErrorMessageMode {
 pub struct Metric {
     pub sum: u16,
     pub(crate) score_amount: u16, // aufnahmen
-    //throws: u16,  // anzahl der wuerfe
-    //first_nine_per_leg_sum: u16,
-    //hundred_plus_amount_per_leg_sum: u16,
-    //amount_of_legs: u16
+    pub throws: u16,  // anzahl der wuerfe
+    pub(crate) first_nine_per_leg_sum: u16,
+    pub(crate) hundred_plus_amount: u16,
+    pub amount_of_legs: u16,
+    pub double_attempts: u16
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
