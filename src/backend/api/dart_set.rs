@@ -1,6 +1,7 @@
-use crate::domain::{Metric, Set, SetStatus};
+use crate::domain::{LegStatus, Metric, Set, SetStatus};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
+use tracing::debug;
 
 #[cfg(feature = "server")]
 mod server_deps {
@@ -10,12 +11,14 @@ mod server_deps {
     pub use crate::schema_manual::guard::dartset::match_id;
     pub use diesel::prelude::*;
     pub use crate::schema_manual::guard::dartleg::set_id;
+    pub use crate::schema_manual::guard::dartleg::status;
+    pub use crate::schema_manual::guard::dartleg::id;
     pub use crate::schema_manual::guard::dartleg::dsl::dartleg;
+    pub use crate::schema_manual::guard::score::deleted;
 }
 
 #[cfg(feature = "server")]
 use server_deps::*;
-use crate::backend::api::dart_score::new_score;
 
 #[server]
 pub async fn list_set(match_id_input: i32) -> Result<Vec<Set>, ServerFnError> {
@@ -105,17 +108,20 @@ pub async fn update_set_status(
 }
 
 #[server]
-pub async fn get_cascaded_metrics_by_id(set_id_input: u16) -> Result<Metric, ServerFnError> {
+pub async fn get_metrics_of_other_legs_by_set_id(set_id_input: u16, exclude_leg_id: u16) -> Result<Metric, ServerFnError> {
+    debug!("get_metrics_of_other_legs_by_set_id");
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
     // see https://diesel.rs/guides/relations.html for the following approach (avoiding n+1 problem)
 
     let db_legs_for_set = dartleg
-        .filter(set_id.eq(set_id_input as i32))
+        .filter(set_id.eq(set_id_input as i32).and(status.ne(LegStatus::Cancelled.display()))
+            .and(id.ne(exclude_leg_id as i32)))
         .select(DartLeg::as_select())
         .load(conn_ref)?;
 
-    let all_scores = DartScore::belonging_to(&db_legs_for_set).select(DartScore::as_select()).load(conn_ref)?;
+    let all_scores = DartScore::belonging_to(&db_legs_for_set).filter(deleted.eq(false))
+        .select(DartScore::as_select()).load(conn_ref)?;
 
     //group scores per leg
     let scores_per_leg = all_scores.grouped_by(&db_legs_for_set).into_iter().zip(db_legs_for_set)

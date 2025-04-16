@@ -21,7 +21,7 @@ pub fn NumberFieldError(
     new_score_signal: Signal<Option<Score>>,
     double_attempt_option_signal: Signal<Vec<u16>>
 ) -> Element {
-    debug!("score_message {:?}", score_message);
+    //debug!("score_message {:?}", score_message);
     rsx! {
         div {
             id: "NumberFieldError",
@@ -142,7 +142,7 @@ pub fn OkUndoButton(
     new_score_signal: Signal<Option<Score>>,
     double_attempt_option_signal: Signal<Vec<u16>>
 ) -> Element {
-    debug!("scores {:?}", scores());
+    //debug!("scores {:?}", scores());
     rsx! {
         div {
             id: "ButtonsDiv",
@@ -199,7 +199,7 @@ pub fn NewCancelButton(
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) -> Element {
-    debug!("scores {:?}", scores());
+    //debug!("scores {:?}", scores());
     let nav = navigator();
     rsx! {
         div {
@@ -212,7 +212,7 @@ pub fn NewCancelButton(
                         //todo crappy approach that fakes the loading of a new page by setting the states and changing the url
                         // should be fixed cleanly, reason for that is that nav.push() does not load the page if only dynamic parts of the url changes
                         let option = new_next_leg(
-                                set_signal().id,
+                                set_signal,
                                 leg_signal,
                                 scores,
                                 error_message,
@@ -277,7 +277,7 @@ fn undo_wrapper(
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
 async fn new_next_leg(
-    set_val: u16,
+    mut set_signal: Signal<Set>,
     mut leg_signal: Signal<Leg>,
     mut score: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
@@ -293,7 +293,7 @@ async fn new_next_leg(
         leg_signal().leg_order + 1
     };
     let new_leg_res = backend::api::dart_leg::new_leg_with_init_score_if_not_exists(
-        set_val,
+        set_signal().id,
         start_score,
         next_order_val,
     )
@@ -301,6 +301,7 @@ async fn new_next_leg(
     match new_leg_res {
         Ok(new_leg) => {
             let new_leg_id = new_leg.id;
+            set_signal.set(set_signal());
             leg_signal.set(new_leg.clone());
             score.set(vec![get_init_score(501, new_leg_id)]);
             document::eval(&"document.getElementById('numberField').value = ' '".to_string());
@@ -453,7 +454,7 @@ async fn handle_new_score(
     double_attempt_val: Option<u16>
 ) -> Result<(), ServerFnError> {
     let mut new_score_double_enhanced = new_score.clone();
-    debug!("Handle new score {:?}", double_attempt_val);
+    //debug!("Handle new score {:?}", double_attempt_val);
     new_score_double_enhanced.double_attempt = double_attempt_val;
     backend::api::dart_score::new_score(new_score_double_enhanced.clone()).await?;
     if (&new_score).remaining == 0 {

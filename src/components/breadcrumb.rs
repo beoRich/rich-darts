@@ -9,10 +9,7 @@ pub fn BreadCrumbComponent(
     set_signal: Option<Signal<Set>>,
     leg_signal: Option<Signal<Leg>>,
 ) -> Element {
-    debug!(
-        "Breadcrum set_signal {:?}, leg_signal {:?}",
-        set_signal, leg_signal
-    );
+    //debug!( "Breadcrum set_signal {:?}, leg_signal {:?}", set_signal, leg_signal );
     rsx! {
         div {
             class: "breadcrumbs text-sm px-8 border-2 bg-base-100",

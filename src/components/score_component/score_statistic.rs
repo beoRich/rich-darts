@@ -1,45 +1,35 @@
-use crate::components::calculation::statistic_calculation::{
-    first_three_average, live_average, AverageValue,
-};
-use crate::domain::{Metric, Score, Set};
+use crate::components::calculation::statistic_calculation::{first_three_average, leg_live_average, enhance_set_average, AverageValue};
+use crate::domain::{Leg, Metric, Score, Set};
 use dioxus::prelude::*;
+use tracing::debug;
 use crate::backend;
 use crate::components::calculation::statistic_calculation::AverageValue::HasValue;
 use crate::domain::ErrorMessageMode::CreateNewLeg;
 
 #[component]
-pub fn ScoreStatistic(set_signal: Signal<Set>, scores: Signal<Vec<Score>>) -> Element {
+pub fn ScoreStatistic(set_signal: Signal<Set>, init_set_metric_signal: Signal<Option<Metric>>, leg_signal: Signal<Leg>, scores: Signal<Vec<Score>>) -> Element {
     let mut leg_avg_signal = use_signal(move || AverageValue::NoValue);
     let mut set_avg_signal = use_signal(move || AverageValue::NoValue);
     let mut leg_throws_signal = use_signal(move || AverageValue::NoValue);
     let mut leg_first_nine_avg_signal = use_signal(move || AverageValue::NoValue);
     let mut leg_hundred_plus_signal = use_signal(move || AverageValue::NoValue);
-    let mut init_set_metric = use_signal(move || None);
-
-    let _ = use_resource(move || async move {
-        let init_set_metric_value = backend::api::dart_set::get_cascaded_metrics_by_id(set_signal().id).await;
-        match init_set_metric_value.clone() {
-           Ok(Metric{sum, score_amount}) => {
-               if score_amount != 0 {
-                   set_avg_signal.set(HasValue(sum/ score_amount));
-               }
-
-           },
-            _ => {}
-        }
-        init_set_metric.set(init_set_metric_value.ok())
-
-    });
 
     use_memo(move || {
-        let avg_value = live_average(scores());
-        leg_avg_signal.set(avg_value);
+        let leg_avg_value = leg_live_average(scores());
+        leg_avg_signal.set(leg_avg_value);
+        match init_set_metric_signal() {
+            Some(metric) =>  {
+                let set_avg_value = enhance_set_average(scores(), metric);
+                set_avg_signal.set(set_avg_value);
+            }
+            _ => {}
+        }
         let first_nine_avg_value = first_three_average(scores());
         leg_first_nine_avg_signal.set(first_nine_avg_value);
         if scores().len() > 1 {
-            leg_throws_signal.set(AverageValue::HasValue(((scores.len() - 1) * 3) as u16));
+            leg_throws_signal.set(HasValue(((scores.len() - 1) * 3) as u16));
             let hundred_amount = scores().iter().filter(|val| val.thrown >= 100).count() as u16;
-            leg_hundred_plus_signal.set(AverageValue::HasValue(hundred_amount))
+            leg_hundred_plus_signal.set(HasValue(hundred_amount))
         }
     });
     let double_title_element = rsx!(

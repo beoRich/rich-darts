@@ -67,12 +67,12 @@ fn WrapDisplayScore(matchval: u16, set_id: u16, leg_id: u16) -> Element {
         &*leg_read_only_signal.read_unchecked(),
         &*set_signal.read_unchecked(),
     ) {
-        (Some(Ok(leg_val)), Some(Ok(set_val))) => {
+        (Some(Ok(leg_ref)), Some(Ok(set_val))) => {
             rsx! {
                 ScoreComponent {
                     match_id: matchval,
                     set_input: set_val.clone(),
-                    leg_input: leg_val.clone(),
+                    leg_signal: use_signal(|| leg_ref.clone()),
                 }
             }
         }
@@ -114,7 +114,7 @@ fn LatestLeg() -> Element {
                 ScoreComponent {
                     match_id: *match_id_ref,
                     set_input: set_ref.clone(),
-                    leg_input: leg_ref.clone(),
+                    leg_signal: use_signal(|| leg_ref.clone()),
                 }
             }
         }

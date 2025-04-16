@@ -14,10 +14,9 @@ use tracing::debug;
 use crate::components::score_component::score_statistic::ScoreStatistic;
 
 #[component]
-pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element {
-    debug!("ScoreComponent leg {:?}", leg_input);
+pub fn ScoreComponent(match_id: u16, set_input: Set, leg_signal: Signal<Leg>) -> Element {
+    debug!("ScoreComponent leg {:?}", leg_signal());
     let set_signal = use_signal(|| set_input.clone());
-    let leg_signal = use_signal(|| leg_input.clone());
     let mut legs_signal = use_signal(|| vec![]);
     let mut raw_input = use_signal(|| "".to_string());
     let mut scores = use_signal(|| vec![]);
@@ -27,6 +26,28 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
     //only used because popup can have transfer of variable since it s called via js showModal()
     let new_score_signal: Signal<Option<Score>> = use_signal(|| None);
     let mut double_attempt_option_signal: Signal<Vec<u16>> = use_signal(|| vec![0,1,2,3]);
+
+    let mut leg_signal_id = use_signal(|| 0);
+    //hack to avoid big warning and for setting the leg_signal_id only if the value changes
+    //needed for use_resources that only load initally
+    let mut leg_signal_id2 = use_signal(|| 0);
+
+    let mut init_set_metric_signal = use_signal(move || None);
+
+    use_memo(move || {
+        leg_signal_id2.set(leg_signal_id())
+    });
+    use_memo(move || {
+        if leg_signal_id2() != leg_signal().id {
+            leg_signal_id.set(leg_signal().id)
+        }
+    });
+
+    let _ = use_resource(move || async move {
+        let init_set_metric_value = backend::api::dart_set::get_metrics_of_other_legs_by_set_id(set_signal().id, leg_signal_id()).await;
+        init_set_metric_signal.set(init_set_metric_value.ok());
+
+    });
 
     use_memo(move || {
         if set_signal().status == SetStatus::Finished.value() {
@@ -39,7 +60,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
         allow_score.set(score_message().allow_score() && error_message().allow_score())
     });
     let _ = use_resource(move || async move {
-        let init_score_val = backend::api::dart_score::list_score(leg_signal().id).await;
+        let init_score_val = backend::api::dart_score::list_score(leg_signal_id()).await;
         match init_score_val {
             Ok(val) if !val.is_empty() => scores.set(val),
             _ => error_message.set(CreateNewLeg),
@@ -97,7 +118,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_input: Leg) -> Element 
                         div {
                             id: "LegStatistic",
                             class: "col-span-4 grid bg-base-100 border-y-4 shadow-md rounded px-8",
-                            ScoreStatistic {set_signal, scores}
+                            ScoreStatistic {set_signal, init_set_metric_signal, leg_signal, scores}
                         }
                         div {
                             id: "CancelUndoButton",
