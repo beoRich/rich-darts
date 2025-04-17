@@ -117,6 +117,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_signal: Signal<Leg>) ->
                                 set_signal,
                                 init_set_metric_signal,
                                 leg_signal,
+                                legs_signal,
                                 scores,
                             }
                         }
