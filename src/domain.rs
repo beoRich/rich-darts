@@ -3,13 +3,13 @@ use dioxus::prelude::server_fn::serde::Deserialize;
 use dioxus::prelude::*;
 use serde::Serialize;
 
-pub fn get_init_score(start_score_input: u16, leg_id: u16) -> Score{
-     Score {
-         leg_id,
-         remaining: start_score_input,
-         thrown: 0,
-         throw_order: 0,
-         double_attempt: None
+pub fn get_init_score(start_score_input: u16, leg_id: u16) -> Score {
+    Score {
+        leg_id,
+        remaining: start_score_input,
+        thrown: 0,
+        throw_order: 0,
+        double_attempt: None,
     }
 }
 
@@ -19,7 +19,7 @@ pub struct Score {
     pub remaining: u16,
     pub thrown: u16,
     pub throw_order: u16,
-    pub double_attempt: Option<u16>
+    pub double_attempt: Option<u16>,
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
@@ -44,7 +44,7 @@ pub struct Set {
 pub struct Match {
     pub id: u16,
     pub status: String,
-    pub title: String
+    pub title: String,
 }
 
 #[derive(Props, PartialEq, Clone)]
@@ -187,15 +187,15 @@ impl ErrorMessageMode {
 pub struct Metric {
     pub sum: u16,
     pub(crate) score_amount: u16, // aufnahmen
-    pub throws: u16,  // anzahl der wuerfe
-    pub(crate) first_nine_per_leg_sum: u16,
+    pub throws: u16,              // anzahl der wuerfe
+    pub(crate) first_nine_sum_amount_pair: (u16, u16),
     pub(crate) hundred_plus_amount: u16,
     pub amount_of_legs: u16,
-    pub double_attempts: u16
+    pub double_attempts: u16,
 }
 
 #[derive(Props, PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct MatchCascadeMetric {
     match_metric: Metric,
-    set_metric: Metric
+    set_metric: Metric,
 }

@@ -1,0 +1,15 @@
+services:
+  rich-darts:
+    image: registry.digitalocean.com/rich-registry/rich-darts
+    container_name: prod
+    ports:  
+      - "80:8080"
+    environment:
+      DATABASE_URL: "/home/richDarts.db"
+      LOG_URL: "/home/server.log"
+    volumes:
+      - sqlite:/home/
+volumes:
+  sqlite:
+
+

@@ -26,6 +26,10 @@ pub fn ScoreStatistic(
     let throws_trend_signal =
         use_memo(move || calculate_compare_value(&leg_throws_signal(), &set_throws_signal()));
     let mut leg_first_nine_avg_signal = use_signal(move || StatAbsolutValue::NoValue);
+    let mut set_first_nine_avg_signal = use_signal(move || StatAbsolutValue::NoValue);
+    let first_nine_trend_signal = use_memo(move || {
+        calculate_compare_value(&leg_first_nine_avg_signal(), &set_first_nine_avg_signal())
+    });
     let mut leg_hundred_plus_signal = use_signal(move || StatAbsolutValue::NoValue);
     let mut set_hundred_plus_signal = use_signal(move || StatAbsolutValue::NoValue);
     let hundred_plus_trend_signal = use_memo(move || {
@@ -50,6 +54,12 @@ pub fn ScoreStatistic(
             .filter(|leg| leg.status == LegStatus::Finished.display())
             .count() as u16;
         let mut double_attempt_value = 0;
+        let first_nine_avg_value_pair = first_three_average(scores());
+        let first_nine_avg_value = match first_nine_avg_value_pair {
+            Some((sum, amount)) => HasValue(sum / amount),
+            _ => StatAbsolutValue::NoValue,
+        };
+        let mut set_first_nine_avg_value = first_nine_avg_value.clone();
         if scores().len() > 1 {
             leg_throws_value = HasValue(((scores.len() - 1) * 3) as u16);
             leg_hundred_amount_value =
@@ -69,10 +79,26 @@ pub fn ScoreStatistic(
                     hundred_plus_amount,
                     amount_of_legs,
                     double_attempts: set_double_attempts,
+                    first_nine_sum_amount_pair,
+                    score_amount,
                     ..
                 } = metric;
                 double_attempt_value += set_double_attempts;
                 set_avg_signal.set(enhance_set_average(scores(), &metric));
+                let (first_nine_per_leg_sum, first_nine_per_leg_amount) =
+                    first_nine_sum_amount_pair;
+                set_first_nine_avg_value = match first_nine_avg_value_pair {
+                    Some((sum, amount)) => HasValue(
+                        (first_nine_per_leg_sum + sum) / (amount + first_nine_per_leg_amount),
+                    ),
+                    _ => {
+                        if amount_of_legs > 0 {
+                            HasValue(first_nine_per_leg_sum / first_nine_per_leg_amount)
+                        } else {
+                            StatAbsolutValue::NoValue
+                        }
+                    }
+                };
                 let (set_throw_value, set_hundred_amount_value) =
                     if leg_signal().status == LegStatus::Finished.display() {
                         (
@@ -98,8 +124,8 @@ pub fn ScoreStatistic(
         double_attempts_signal.set(parse_stat_absolut_value(double_attempt_value));
         leg_hundred_plus_signal.set(leg_hundred_amount_value);
         leg_throws_signal.set(leg_throws_value);
-        let first_nine_avg_value = first_three_average(scores());
         leg_first_nine_avg_signal.set(first_nine_avg_value);
+        set_first_nine_avg_signal.set(set_first_nine_avg_value);
     });
     use_effect(move || {});
     let double_title_element = rsx!(
@@ -112,7 +138,6 @@ pub fn ScoreStatistic(
         div {
             class: "stat-value text-primary",
             "{double_succ_signal().display()}/{double_attempts_signal()} ({double_percentage_signal().display()}%)"
-        
         }
     );
     rsx! {
@@ -140,10 +165,10 @@ pub fn ScoreStatistic(
             }
             StatisticPanelDifferentiated {
                 title_input: "First 9 ",
-                hover_text: "Score average of first 9 per Leg(L)/Set(S)/Match(M, not yet implemented)",
+                hover_text: "Score average of first 9 per Leg(L)/Set(S not yet implemented)/Match(M, not yet implemented)",
                 leg_stat_signal: leg_first_nine_avg_signal,
-                set_stat_signal: set_avg_signal,
-                desc_input: "+10 compared to average",
+                set_stat_signal: set_first_nine_avg_signal,
+                desc_input: first_nine_trend_signal().display(),
             }
             StatisticPanelDifferentiated {
                 title_input: "100+ ",
@@ -232,7 +257,7 @@ fn LegSetMatchDisplay(leg_val: String, set_val: String, match_val: String) -> El
         "|"
         span {
             class: "text-info",
-            "{match_val}"
+            "-"
         }
         ""
     }

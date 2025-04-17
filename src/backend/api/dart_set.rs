@@ -50,7 +50,6 @@ pub async fn get_set_by_id(id_input: u16) -> Result<Set, ServerFnError> {
     Ok(set)
 }
 
-
 #[server]
 pub async fn new_set(match_id_input: u16, leg_amount_input: u16) -> Result<Set, ServerFnError> {
     use crate::schema_manual::guard::dartset;
@@ -71,7 +70,11 @@ pub async fn new_set(match_id_input: u16, leg_amount_input: u16) -> Result<Set, 
         None => set_order_val = 1,
     }
 
-    let insert_set = NewDartSet::new(match_id_input as i32, set_order_val as i32, leg_amount_input as i32);
+    let insert_set = NewDartSet::new(
+        match_id_input as i32,
+        set_order_val as i32,
+        leg_amount_input as i32,
+    );
     let set_result = diesel::insert_into(dartset::table)
         .values(insert_set)
         .returning(DartSet::as_returning())
@@ -108,49 +111,89 @@ pub async fn update_set_status(
 }
 
 #[server]
-pub async fn get_metrics_of_other_legs_by_set_id(set_id_input: u16, exclude_leg_id: u16) -> Result<Metric, ServerFnError> {
+pub async fn get_metrics_of_other_legs_by_set_id(
+    set_id_input: u16,
+    exclude_leg_id: u16,
+) -> Result<Metric, ServerFnError> {
     debug!("get_metrics_of_other_legs_by_set_id");
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
     // see https://diesel.rs/guides/relations.html for the following approach (avoiding n+1 problem)
 
     let db_legs_for_set = dartleg
-        .filter(set_id.eq(set_id_input as i32).and(
-            status.eq(LegStatus::Ongoing.display())
-            .or(status.eq(LegStatus::Finished.display())
-            ))
-            .and(id.ne(exclude_leg_id as i32)))
+        .filter(
+            set_id
+                .eq(set_id_input as i32)
+                .and(
+                    status
+                        .eq(LegStatus::Ongoing.display())
+                        .or(status.eq(LegStatus::Finished.display())),
+                )
+                .and(id.ne(exclude_leg_id as i32)),
+        )
         .select(DartLeg::as_select())
         .load(conn_ref)?;
 
-    let all_scores = DartScore::belonging_to(&db_legs_for_set).filter(deleted.eq(false))
-        .select(DartScore::as_select()).load(conn_ref)?;
+    let all_scores = DartScore::belonging_to(&db_legs_for_set)
+        .filter(deleted.eq(false))
+        .select(DartScore::as_select())
+        .load(conn_ref)?;
 
     //group scores per leg
-    let scores_per_leg = all_scores.grouped_by(&db_legs_for_set).into_iter().zip(&db_legs_for_set)
+    let scores_per_leg = all_scores
+        .grouped_by(&db_legs_for_set)
+        .into_iter()
+        .zip(&db_legs_for_set)
         .map(|(scores, leg)| (leg, scores))
-        .map(|(leg, mut scores) | {
+        .map(|(leg, mut scores)| {
             let new_scores = scores.split_off(1);
             (leg, new_scores)
         })
         .collect::<Vec<(&DartLeg, Vec<DartScore>)>>();
 
-    let only_scores: Vec<&DartScore> = scores_per_leg.iter().flat_map(|(_,scores)|  scores).collect();
+    let only_scores: Vec<&DartScore> = scores_per_leg
+        .iter()
+        .flat_map(|(_, scores)| scores)
+        .collect();
     if only_scores.is_empty() {
-        Ok(Metric{sum: 0, score_amount: 0, throws: 0, amount_of_legs: 0,
-            first_nine_per_leg_sum: 0, hundred_plus_amount: 0, double_attempts: 0})
+        Ok(Metric {
+            sum: 0,
+            score_amount: 0,
+            throws: 0,
+            amount_of_legs: 0,
+            first_nine_sum_amount_pair: (0, 0),
+            hundred_plus_amount: 0,
+            double_attempts: 0,
+        })
     } else {
-        let metric = Metric { sum: only_scores.iter().map(|dart_score| dart_score.thrown as u16).sum(),
+        let first_nine_per_leg_vec: Vec<u16> = scores_per_leg
+            .iter()
+            .map(|(_, scores)| scores)
+            .flat_map(|scores| scores.iter().take(3))
+            .map(|val| val.thrown as u16)
+            .collect();
+        let first_nine_sum_amount_pair = (
+            first_nine_per_leg_vec.iter().sum::<u16>(),
+            first_nine_per_leg_vec.iter().count() as u16,
+        );
+        let metric = Metric {
+            sum: only_scores
+                .iter()
+                .map(|dart_score| dart_score.thrown as u16)
+                .sum(),
             score_amount: only_scores.iter().count() as u16,
             throws: (only_scores.iter().count() * 3) as u16,
             amount_of_legs: db_legs_for_set.iter().count() as u16,
-            hundred_plus_amount: only_scores.iter().filter(| score | score.thrown >= 100).count() as u16,
-            first_nine_per_leg_sum: 100,//todo
-            double_attempts:  only_scores.iter().map(|score| score.double_attempt.unwrap_or(0) as u16).sum()
+            hundred_plus_amount: only_scores
+                .iter()
+                .filter(|score| score.thrown >= 100)
+                .count() as u16,
+            first_nine_sum_amount_pair,
+            double_attempts: only_scores
+                .iter()
+                .map(|score| score.double_attempt.unwrap_or(0) as u16)
+                .sum(),
         };
         Ok(metric)
     }
-
-
-
 }

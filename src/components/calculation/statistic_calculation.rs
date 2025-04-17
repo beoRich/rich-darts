@@ -133,7 +133,7 @@ pub fn enhance_average_value(
     }
 }
 
-pub fn first_three_average(scores: Vec<Score>) -> StatAbsolutValue {
+pub fn first_three_average(scores: Vec<Score>) -> Option<(u16, u16)> {
     let split_check = scores.split_at_checked(1);
     match split_check {
         Some((_, tail)) => {
@@ -143,15 +143,15 @@ pub fn first_three_average(scores: Vec<Score>) -> StatAbsolutValue {
                 Some((first3, _)) => {
                     let sum = first3.into_iter().map(|s| s.thrown).sum::<u16>();
                     if first3.len() > 0 {
-                        HasValue(sum / first3.len() as u16)
+                        Some((sum, first3.len() as u16))
                     } else {
-                        NoValue
+                        None
                     }
                 }
-                None => NoValue,
+                None => None,
             }
         }
-        None => NoValue,
+        None => None,
     }
 }
 
