@@ -40,7 +40,12 @@ pub fn ScoreStatistic(
         leg_avg_signal.set(leg_avg_value);
         let mut leg_throws_value = StatAbsolutValue::NoValue;
         let mut leg_hundred_amount_value = StatAbsolutValue::NoValue;
-        let mut double_succ_value: u16 = legs_signal()
+        let mut unique_legs: Vec<Leg> = legs_signal()
+            .into_iter()
+            .filter(|leg| leg.id != leg_signal().id)
+            .collect();
+        unique_legs.push(leg_signal());
+        let mut double_succ_value: u16 = unique_legs
             .into_iter()
             .filter(|leg| leg.status == LegStatus::Finished.display())
             .count() as u16;
