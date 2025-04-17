@@ -107,8 +107,8 @@ mod test {
             result,
             helper (
                 141,
-                0,
-                thrown
+                thrown,
+                0
             )
         )
     }
@@ -125,8 +125,8 @@ mod test {
             result,
             helper (
                  141,
-                 0,
-                thrown
+                 thrown,
+                0
             )
         )
     }
@@ -144,8 +144,8 @@ mod test {
             result,
             helper (
                  0,
-                 0,
-                thrown
+                 thrown,
+                0
             )
         )
     }

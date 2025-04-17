@@ -17,6 +17,7 @@ pub mod guard {
     dartmatch (id) {
         id -> Integer,
         status -> Text,
+        title -> Nullable<Text>,
     }
 }
 
@@ -33,7 +34,7 @@ pub mod guard {
     diesel::table! {
     score (id) {
         id -> Integer,
-        leg_id -> Integer,
+        dart_leg_id -> Integer,
         throw_order -> Integer,
         thrown -> Integer,
         remaining -> Integer,
@@ -51,7 +52,7 @@ pub mod guard {
 
     diesel::joinable!(dartleg -> dartset (set_id));
     diesel::joinable!(dartset -> dartmatch (match_id));
-    diesel::joinable!(score -> dartleg (leg_id));
+    diesel::joinable!(score -> dartleg (dart_leg_id));
 
     diesel::allow_tables_to_appear_in_same_query!(
     dartleg,

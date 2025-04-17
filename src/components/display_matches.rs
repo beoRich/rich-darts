@@ -1,9 +1,10 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::domain::{Match};
+use crate::domain::Match;
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
+use tracing::debug;
 #[component]
 pub fn DisplayMatches() -> Element {
     let mut matches = use_signal(|| vec![]);
@@ -14,6 +15,17 @@ pub fn DisplayMatches() -> Element {
             _ => {}
         };
     });
+    let mut match_name_raw_signal: Signal<String> = use_signal(|| "".to_string());
+    let mut match_name_signal: Signal<Option<String>> = use_signal(|| Some("".to_string()));
+    use_effect(move || {
+        let binding = match_name_raw_signal();
+        let title = binding.trim();
+        if title.is_empty() {
+            match_name_signal.set(None)
+        } else {
+            match_name_signal.set(Some(title.to_string()))
+        }
+    });
     rsx! {
         div {
             id: "DisplayMatches",
@@ -23,14 +35,36 @@ pub fn DisplayMatches() -> Element {
                     only_home: false,
                 }
                 div {
-                    class: "bg-base-100 border-y-4 shadow-md rounded px-8 pt-6 pb-8",
+                    class: "bg-base-100 border-y-4 shadow-md rounded px-8 pt-6 pb-8 grid grid-cols-12 gap-4",
                     button {
                         id: "newLegButton",
                         onclick: move |_| async move {
-                            let _ = new_match(matches).await;
+                            let _ = new_match(matches, match_name_signal).await;
                         },
                         class: "btn btn-soft btn-primary",
                         "New Match"
+                    }
+                    label {
+                        class: "floating-label col-span-2 grid",
+                        span {
+                            "Match Title"
+                        }
+                        input {
+                            id: "textField",
+                            autofocus: true,
+                            value: "",
+                            placeholder: "Optional Title",
+                            class: "input input-primary text-xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
+                            r#type: "text",
+                            oninput: move |e| match_name_raw_signal.set((*e.value()).parse().unwrap()),
+                            onkeypress: move |e| async move {
+                                let key = e.key();
+                                if key == Key::Enter {
+                                    let _ = new_match(matches, match_name_signal).await;
+                                }
+                            },
+                        
+                        }
                     }
                 }
                 div {
@@ -44,8 +78,12 @@ pub fn DisplayMatches() -> Element {
         }
     }
 }
-async fn new_match(mut matches: Signal<Vec<Match>>) -> Result<(), ServerFnError> {
-    let new_match = backend::api::dart_match::new_match().await?;
+async fn new_match(
+    mut matches: Signal<Vec<Match>>,
+    match_name_signal: Signal<Option<String>>,
+) -> Result<(), ServerFnError> {
+    debug!("new match {:?}", match_name_signal());
+    let new_match = backend::api::dart_match::new_match(match_name_signal()).await?;
     matches.push(new_match.clone());
     Ok(())
 }
@@ -59,14 +97,14 @@ pub fn MatchTable(matches: Signal<Vec<Match>>) -> Element {
                 id: "numbers",
                 class: "table-container",
                 table {
-                    class: "text-xl uppercase bg-neutral-content",
+                    class: "text-xl bg-neutral-content",
                     thead {
                         tr {
                             th {
                                 scope: "col",
                                 style: "white-space: pre; text-align: center;",
                                 class: "text-primary px-6 py-3",
-                                "Nr (click me)"
+                                "Title (click me)"
                             }
                             th {
                                 scope: "col",
@@ -91,7 +129,7 @@ pub fn MatchTable(matches: Signal<Vec<Match>>) -> Element {
                                                 matchval: a.id,
                                             },
                                             class: "link",
-                                            {format!("Match {}", {a.id.to_string()})}
+                                            {a.title}
                                         }
                                     }
                                 

@@ -57,15 +57,23 @@ TODO: Docker build . only works currently locally where tailwind already install
 Server -> Deployment 7-9
 
 
+### Deployment (new)
 
-### Deployment (Currently)
+1. scp compose.yaml deploy@<ip-of-vps>:~ if changed
+2. ssh deploy@<ip-of-vps>
+3. rm if necessary old volume: docker compose down -v
+4. docker compose pull && docker compose up -d
+
+### Deployment (Old)
 1. Login to digital Oceean
 2. Create/Use a container registry
 3. push image to container registry
 4. Create/Use a droplet
 5. ssh login into droplet 
 6. setup docker inside the droplet
-7. docker login into container registry
+7. docker login into container registry via docker login <repo-name> 
+    usename: mail
+    password: digitaloccean root token
 8. pull image from container registry
 9. docker run 
 

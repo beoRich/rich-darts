@@ -1,5 +1,5 @@
 pub(crate) mod dart_leg;
-mod dart_match;
+pub mod dart_match;
 pub mod dart_score;
 pub mod dart_set;
 
