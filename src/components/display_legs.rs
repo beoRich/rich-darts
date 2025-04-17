@@ -14,10 +14,10 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
     let mut start_score_raw_signal: Signal<String> = use_signal(|| "501".to_string());
     let mut start_score_test_signal: Signal<bool> = use_signal(|| true);
     let mut start_score_signal: Signal<u16> = use_signal(|| 501);
-    use_memo(move || {
+    use_effect(move || {
         let result = start_score_raw_signal().parse::<u16>();
         start_score_test_signal.set(result.as_ref().map(|val| *val > 0).is_ok());
-        result.map(|val| start_score_signal.set(val))
+        result.map(|val| start_score_signal.set(val));
     });
     let _ = use_resource(move || async move {
         let res = backend::api::dart_leg::list_leg(set_signal().id).await;
@@ -27,7 +27,7 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
         };
     });
     let leg_amount_set_input = set_input.leg_amount;
-    use_memo(move || {
+    use_effect(move || {
         let count_nr = legs_signal()
             .into_iter()
             .map(|leg| parse_leg_status(leg.status))
@@ -38,9 +38,8 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
         } else {
             0
         };
-        new_legs_missing_signal.set(val)
+        new_legs_missing_signal.set(val);
     });
-    debug!("new_legs_missing {:?}", new_legs_missing_signal());
     rsx! {
         div {
             id: "DisplayLegs",
@@ -102,10 +101,10 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
                                         .await;
                                 }
                             },
-
+                        
                         }
                     }
-
+                
                 }
                 div {
                     LegTable {
@@ -192,7 +191,7 @@ pub fn LegTable(
                                                 leg_id: leg.id,
                                             },
                                             class: "link",
-                                            {format!("Leg {}", {leg.leg_order.to_string()})}
+                                            {format!("Leg {}", { leg.leg_order.to_string() })}
                                         }
                                     }
                                 

@@ -1,5 +1,5 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::domain::{Set};
+use crate::domain::Set;
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
@@ -12,11 +12,11 @@ pub fn DisplaySets(match_id: u16) -> Element {
     let mut leg_amount_raw_signal: Signal<String> = use_signal(|| "3".to_string());
     let mut leg_amount_test_signal: Signal<bool> = use_signal(|| true);
     let mut leg_amount_signal: Signal<u16> = use_signal(|| 5);
-    use_memo(move || {
+    use_effect(move || {
         let raw_val = leg_amount_raw_signal();
         let result = raw_val.parse::<u16>();
         leg_amount_test_signal.set(result.is_ok() && result.clone().unwrap() > 0);
-        result.map(|val| leg_amount_signal.set(val))
+        result.map(|val| leg_amount_signal.set(val));
     });
     let _ = use_resource(move || async move {
         let match_val = match_signal();
@@ -58,7 +58,7 @@ pub fn DisplaySets(match_id: u16) -> Element {
                             value: leg_amount_raw_signal(),
                             placeholder: "3",
                             class: "input input-primary text-xl shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline",
-                            type: "number",
+                            r#type: "number",
                             oninput: move |e| leg_amount_raw_signal.set((*e.value()).parse().unwrap()),
                             onfocusin: move |_| {
                                 document::eval(&"document.getElementById('numberField').select()".to_string());
@@ -69,7 +69,7 @@ pub fn DisplaySets(match_id: u16) -> Element {
                                     let _ = new_set(match_signal(), sets_signal, leg_amount_signal()).await;
                                 }
                             },
-
+                        
                         }
                     }
                 }
@@ -151,7 +151,7 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
                                                 set_id: a.id,
                                             },
                                             class: "link",
-                                            {format!("Set {}", {a.set_order.to_string()})}
+                                            {format!("Set {}", { a.set_order.to_string() })}
                                         }
                                     }
                                 
