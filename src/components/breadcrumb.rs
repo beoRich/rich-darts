@@ -1,11 +1,11 @@
-use crate::domain::{Leg, Set, SetStatus};
+use crate::domain::{Leg, Match, Set, SetStatus};
 use crate::{backend, Route};
 use dioxus::prelude::*;
 use tracing::debug;
 #[component]
 pub fn BreadCrumbComponent(
     only_home: bool,
-    match_id: Option<u16>,
+    match_signal: Option<Signal<Match>>,
     set_signal: Option<Signal<Set>>,
     leg_signal: Option<Signal<Leg>>,
 ) -> Element {
@@ -30,14 +30,14 @@ pub fn BreadCrumbComponent(
                         }
                     }
                 }
-                if match_id.is_some() {
+                if match_signal.is_some() {
                     li {
                         Link {
                             to: Route::WrapDisplaySets {
-                                matchval: match_id.unwrap(),
+                                matchval: match_signal.as_ref().unwrap()().id,
                             },
                             class: "text-xl",
-                            {{ format!("Match {}", match_id.unwrap().to_string()) }}
+                            {{ format!("Match {}", match_signal.as_ref().unwrap()().title) }}
                         }
                     }
                 }
@@ -51,7 +51,7 @@ pub fn BreadCrumbComponent(
                     li {
                         Link {
                             to: Route::WrapDisplayLegs {
-                                matchval: match_id.unwrap(),
+                                matchval: match_signal.as_ref().unwrap()().id,
                                 set_id: set_signal.as_ref().unwrap()().id,
                             },
                             class: "text-xl",
@@ -89,7 +89,7 @@ pub fn BreadCrumbComponent(
                     li {
                         Link {
                             to: Route::WrapDisplayScore {
-                                matchval: match_id.unwrap(),
+                                matchval: match_signal.as_ref().unwrap()().id,
                                 set_id: set_signal.as_ref().unwrap()().id,
                                 leg_id: leg_signal.as_ref().unwrap()().id,
                             },

@@ -107,7 +107,7 @@ fn WrapDisplaySets(matchval: u16) -> Element {
 #[component]
 fn LatestLeg() -> Element {
     let latest_leg_with_set_order: ReadOnlySignal<Option<Result<(u16, Set, Leg), ServerFnError>>> =
-        use_server_future(move || backend::api::dart_leg::get_latest_leg())?.value();
+        use_server_future(move || backend::api::dart_leg::get_latest_ongoing_leg())?.value();
     match &*latest_leg_with_set_order.read_unchecked() {
         Some(Ok((match_id_ref, set_ref, leg_ref))) => {
             rsx! {

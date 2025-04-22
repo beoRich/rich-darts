@@ -35,14 +35,14 @@ pub async fn list_leg(set_id_input: u16) -> Result<Vec<Leg>, ServerFnError> {
 }
 
 #[server]
-pub async fn get_latest_leg() -> Result<(u16, Set, Leg), ServerFnError> {
+pub async fn get_latest_ongoing_leg() -> Result<(u16, Set, Leg), ServerFnError> {
     use crate::schema_manual::guard::dartleg::dsl::id;
     use crate::schema_manual::guard::dartleg::dsl::*;
-    use crate::schema_manual::guard::dartset::dsl::*;
+    use crate::schema_manual::guard::dartset::dsl::dartset;
     let mut conn = DB2.lock()?;
     let conn_ref = &mut *conn;
 
-    let db_leg_result = QueryDsl::order(dartleg, id.desc()).first::<DartLeg>(conn_ref)?;
+    let db_leg_result = QueryDsl::order(dartleg, id.desc()).filter(status.eq(LegStatus::Ongoing.display())).first::<DartLeg>(conn_ref)?;
     let set_result = dartset
         .find(db_leg_result.set_id)
         .first::<DartSet>(conn_ref)?;
