@@ -1,4 +1,4 @@
-use crate::domain::{LegStatus, Metric, Set, SetStatus};
+use crate::domain::{LegStatus, Match, Metric, Set, SetStatus};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
 use tracing::debug;
@@ -14,6 +14,7 @@ mod server_deps {
     pub use crate::schema_manual::guard::dartset::dsl::dartset;
     pub use crate::schema_manual::guard::dartset::match_id;
     pub use crate::schema_manual::guard::score::deleted;
+    pub use crate::schema_manual::guard::dartmatch::dsl::dartmatch;
     pub use diesel::prelude::*;
 }
 
@@ -83,15 +84,16 @@ pub async fn new_set(match_id_input: u16, leg_amount_input: u16) -> Result<Set, 
 }
 
 #[server]
-pub async fn get_latest_set() -> Result<(u16, Set), ServerFnError> {
+pub async fn get_latest_set() -> Result<(Match, Set), ServerFnError> {
     use crate::schema_manual::guard::dartset::dsl::*;
+    use crate::schema_manual::guard::dartmatch;
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
 
-    let set_db_result = QueryDsl::order(dartset, id.desc()).first::<DartSet>(conn_ref)?;
-    let parent_id = set_db_result.match_id as u16;
+    let (set_db_result, match_db_result) = QueryDsl::order(dartset, id.desc()).inner_join(dartmatch::table).first::<(DartSet, DartMatch)>(conn_ref)?;
     let set = dart_set::map_db_to_domain(set_db_result);
-    Ok((parent_id, set))
+    let dart_match = dart_match::map_db_to_domain(match_db_result);
+    Ok((dart_match, set))
 }
 
 #[server]

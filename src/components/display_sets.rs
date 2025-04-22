@@ -1,13 +1,12 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::domain::Set;
+use crate::domain::{Match, Set};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
 use tracing::debug;
 #[component]
-pub fn DisplaySets(match_id: u16) -> Element {
-    let mut match_signal = use_signal(|| match_id);
+pub fn DisplaySets(match_signal: Signal<Match>) -> Element {
     let mut sets_signal = use_signal(|| vec![]);
     let mut leg_amount_raw_signal: Signal<String> = use_signal(|| "3".to_string());
     let mut leg_amount_test_signal: Signal<bool> = use_signal(|| true);
@@ -33,7 +32,7 @@ pub fn DisplaySets(match_id: u16) -> Element {
             div {
                 BreadCrumbComponent {
                     only_home: false,
-                    match_id,
+                    match_signal,
                 }
                 div {
                     class: "bg-base-100 border-y-4 shadow-md rounded px-8 pt-6 pb-8 grid grid-cols-12 gap-4",
@@ -75,7 +74,7 @@ pub fn DisplaySets(match_id: u16) -> Element {
                 }
                 div {
                     SetTable {
-                        match_signal,
+                        match_signal().id,
                         sets_signal,
                     }
                 }
@@ -147,7 +146,7 @@ pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>
                                     li {
                                         Link {
                                             to: Route::WrapDisplayLegs {
-                                                matchval: match_signal(),
+                                                match_id: match_signal().id,
                                                 set_id: a.id,
                                             },
                                             class: "link",

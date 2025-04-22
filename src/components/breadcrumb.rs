@@ -51,7 +51,7 @@ pub fn BreadCrumbComponent(
                     li {
                         Link {
                             to: Route::WrapDisplayLegs {
-                                matchval: match_signal.as_ref().unwrap()().id,
+                                match_id: match_signal.as_ref().unwrap()().id,
                                 set_id: set_signal.as_ref().unwrap()().id,
                             },
                             class: "text-xl",
