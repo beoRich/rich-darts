@@ -15,6 +15,7 @@ pub fn NumberFieldError(
     mut raw_input: Signal<String>,
     set_signal: Signal<Set>,
     leg_signal: Signal<Leg>,
+    legs_signal: Signal<Vec<Leg>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Memo<bool>,
@@ -54,6 +55,7 @@ pub fn NumberFieldError(
                                         raw_input,
                                         set_signal,
                                         leg_signal,
+                                        legs_signal,
                                         scores,
                                         error_message,
                                         score_message,
@@ -105,6 +107,7 @@ pub fn NumberFieldError(
                                                     &mut scores,
                                                     &mut score_message,
                                                     leg_signal,
+                                                    legs_signal,
                                                     &val,
                                                     &set_signal(),
                                                     Some(double_attempt_val),
@@ -146,6 +149,7 @@ pub fn OkUndoButton(
     mut raw_input: Signal<String>,
     set_signal: Signal<Set>,
     leg_signal: Signal<Leg>,
+    legs_signal: Signal<Vec<Leg>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
     allow_score: Memo<bool>,
@@ -166,6 +170,7 @@ pub fn OkUndoButton(
                                 raw_input,
                                 set_signal,
                                 leg_signal,
+                                legs_signal,
                                 scores,
                                 error_message,
                                 score_message,
@@ -272,6 +277,7 @@ async fn input_wrapper(
     mut raw_input: Signal<String>,
     set_signal: Signal<Set>,
     leg_signal: Signal<Leg>,
+    mut legs_signal: Signal<Vec<Leg>>,
     scores: Signal<Vec<Score>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
@@ -280,6 +286,7 @@ async fn input_wrapper(
 ) {
     let error_message_mode = input_changed(
         leg_signal,
+        legs_signal,
         scores,
         raw_input,
         score_message,
@@ -400,6 +407,7 @@ fn undo_last_score(
 }
 async fn input_changed(
     leg_signal: Signal<Leg>,
+    mut legs_signal: Signal<Vec<Leg>>,
     mut scores: Signal<Vec<Score>>,
     input_ref: Signal<String>,
     mut score_message: Signal<ScoreMessageMode>,
@@ -450,6 +458,7 @@ async fn input_changed(
                             &mut scores,
                             &mut score_message,
                             leg_signal,
+                            legs_signal,
                             &new_score,
                             current_set,
                             double_attempt_val,
@@ -508,6 +517,7 @@ async fn handle_new_score(
     scores: &mut Signal<Vec<Score>>,
     score_message: &mut Signal<ScoreMessageMode>,
     mut leg_signal: Signal<Leg>,
+    mut legs_signal: Signal<Vec<Leg>>,
     new_score: &Score,
     current_set: &Set,
     double_attempt_val: Option<u16>,
@@ -519,7 +529,13 @@ async fn handle_new_score(
     if (&new_score).remaining == 0 {
         let updated_leg =
             backend::api::dart_leg::update_leg_status(leg_signal().id, LegStatus::Finished).await?;
-        leg_signal.set(updated_leg);
+        let updated_leg_order = updated_leg.leg_order;
+        leg_signal.set(updated_leg.clone());
+        let mut legs = legs_signal();
+        if let Some(ref_el) = legs.iter_mut().find(|e| e.leg_order == updated_leg_order) {
+            *ref_el = updated_leg;
+        }
+        legs_signal.set(legs);
         score_message.set(ScoreMessageMode::LegFinished);
         if leg_signal().leg_order == current_set.leg_amount {
             backend::api::dart_set::update_set_status(current_set.id, SetStatus::Finished).await?;
