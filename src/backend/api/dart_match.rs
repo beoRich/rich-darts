@@ -56,13 +56,13 @@ pub async fn new_match(title_maybe: Option<String>) -> Result<Match, ServerFnErr
 }
 
 #[server]
-pub async fn get_latest_match() -> Result<u16, ServerFnError> {
+pub async fn get_latest_match() -> Result<Match, ServerFnError> {
     use crate::schema_manual::guard::dartmatch::dsl::*;
     let mut conn = DB2.lock()?; // Lock to get mutable access
     let conn_ref = &mut *conn;
 
-    let set_db_result = QueryDsl::order(dartmatch, id.desc()).first::<DartMatch>(conn_ref)?;
-    Ok(set_db_result.id as u16)
+    let match_db_result = QueryDsl::order(dartmatch, id.desc()).first::<DartMatch>(conn_ref)?;
+    Ok(map_db_to_domain(match_db_result))
 }
 
 #[server]

@@ -230,7 +230,7 @@ pub fn NewCancelButton(
                         match option {
                             Some(leg) => {
                                 nav.push(Route::WrapDisplayScore {
-                                    matchval: match_id,
+                                    match_id: match_id,
                                     set_id: set_signal().id,
                                     leg_id: leg.id,
                                 });

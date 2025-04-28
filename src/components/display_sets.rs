@@ -19,7 +19,7 @@ pub fn DisplaySets(match_signal: Signal<Match>) -> Element {
     });
     let _ = use_resource(move || async move {
         let match_val = match_signal();
-        let res = backend::api::dart_set::list_set(match_val as i32).await;
+        let res = backend::api::dart_set::list_set(match_val.id as i32).await;
         match res {
             Ok(val) if !val.is_empty() => sets_signal.set(val),
             _ => {}
@@ -39,7 +39,7 @@ pub fn DisplaySets(match_signal: Signal<Match>) -> Element {
                     button {
                         id: "newLegButton",
                         onclick: move |_| async move {
-                            let _ = new_set(match_signal(), sets_signal, leg_amount_signal()).await;
+                            let _ = new_set(match_signal().id, sets_signal, leg_amount_signal()).await;
                         },
                         class: "btn btn-soft btn-primary",
                         disabled: if !leg_amount_test_signal() { "true" },
@@ -65,7 +65,7 @@ pub fn DisplaySets(match_signal: Signal<Match>) -> Element {
                             onkeypress: move |e| async move {
                                 let key = e.key();
                                 if key == Key::Enter && leg_amount_test_signal() {
-                                    let _ = new_set(match_signal(), sets_signal, leg_amount_signal()).await;
+                                    let _ = new_set(match_signal().id, sets_signal, leg_amount_signal()).await;
                                 }
                             },
                         
@@ -74,7 +74,7 @@ pub fn DisplaySets(match_signal: Signal<Match>) -> Element {
                 }
                 div {
                     SetTable {
-                        match_signal().id,
+                        match_signal,
                         sets_signal,
                     }
                 }
@@ -94,7 +94,7 @@ async fn new_set(
     Ok(())
 }
 #[component]
-pub fn SetTable(mut match_signal: Signal<u16>, mut sets_signal: Signal<Vec<Set>>) -> Element {
+pub fn SetTable(mut match_signal: Signal<Match>, mut sets_signal: Signal<Vec<Set>>) -> Element {
     debug!("{:?}", sets_signal());
     rsx! {
         div {

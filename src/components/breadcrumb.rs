@@ -34,17 +34,17 @@ pub fn BreadCrumbComponent(
                     li {
                         Link {
                             to: Route::WrapDisplaySets {
-                                matchval: match_signal.as_ref().unwrap()().id,
+                                match_id: match_signal.as_ref().unwrap()().id,
                             },
                             class: "text-xl",
                             {{ format!("Match {}", match_signal.as_ref().unwrap()().title) }}
                         }
                     }
-                }
-                if set_signal.is_none() {
-                    li {
-                        class: "text-xl",
-                        "List of matches"
+                    if set_signal.is_none() {
+                        li {
+                            class: "text-xl",
+                            "List of Sets"
+                        }
                     }
                 }
                 if set_signal.is_some() {
@@ -89,7 +89,7 @@ pub fn BreadCrumbComponent(
                     li {
                         Link {
                             to: Route::WrapDisplayScore {
-                                matchval: match_signal.as_ref().unwrap()().id,
+                                match_id: match_signal.as_ref().unwrap()().id,
                                 set_id: set_signal.as_ref().unwrap()().id,
                                 leg_id: leg_signal.as_ref().unwrap()().id,
                             },

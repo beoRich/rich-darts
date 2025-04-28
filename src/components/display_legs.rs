@@ -186,7 +186,7 @@ pub fn LegTable(
                                     li {
                                         Link {
                                             to: Route::WrapDisplayScore {
-                                                matchval: match_signal().id,
+                                                match_id: match_signal().id,
                                                 set_id: set_signal().id,
                                                 leg_id: leg.id,
                                             },

@@ -126,7 +126,7 @@ pub fn MatchTable(matches: Signal<Vec<Match>>) -> Element {
                                     li {
                                         Link {
                                             to: Route::WrapDisplaySets {
-                                                matchval: a.id,
+                                                match_id: a.id,
                                             },
                                             class: "link",
                                             {a.title}

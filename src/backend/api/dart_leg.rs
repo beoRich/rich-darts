@@ -39,17 +39,16 @@ pub async fn get_latest_ongoing_leg() -> Result<(Match, Set, Leg), ServerFnError
     use crate::schema_manual::guard::dartleg::dsl::id;
     use crate::schema_manual::guard::dartleg::dsl::*;
     use crate::schema_manual::guard::dartmatch;
-    use crate::schema_manual::guard::dartset::dsl::dartset;
+    use crate::schema_manual::guard::dartset;
     let mut conn = DB2.lock()?;
     let conn_ref = &mut *conn;
 
     let db_leg_result = QueryDsl::order(dartleg, id.desc()).filter(status.eq(LegStatus::Ongoing.display())).first::<DartLeg>(conn_ref)?;
-    let (set_result, match_result) = dartset
+    let (set_result, match_result) = dartset::dsl::dartset
         .inner_join(dartmatch::table)
-        .find(db_leg_result.set_id)
+        .filter(dartset::dsl::id.eq(db_leg_result.set_id))
         .first::<(DartSet, DartMatch)>(conn_ref)?;
     let leg = dart_leg::map_db_to_domain(db_leg_result);
-    let match_id_val = set_result.match_id as u16;
     let set = dart_set::map_db_to_domain(set_result);
     Ok((dart_match::map_db_to_domain(match_result), set, leg))
 }

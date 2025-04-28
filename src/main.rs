@@ -33,18 +33,18 @@ fn App() -> Element {
 }
 #[derive(Routable, Clone, PartialEq)]
 enum Route {
-    #[route("/match/:matchval/:set_id/:leg_id")]
+    #[route("/match/:match_id/:set_id/:leg_id")]
     WrapDisplayScore {
-        matchval: u16,
+        match_id: u16,
         set_id: u16,
         leg_id: u16,
     },
-    #[route("/match/:matchval/:set_id")]
+    #[route("/match/:match_id/:set_id")]
     WrapDisplayLegs { match_id: u16, set_id: u16 },
     #[route("/match")]
     DisplayMatches,
-    #[route("/match/:matchval")]
-    WrapDisplaySets { matchval: u16 },
+    #[route("/match/:match_id")]
+    WrapDisplaySets { match_id: u16 },
     //todo someday resolve this via redirect
     #[route("/")]
     HomeScreen,
@@ -104,11 +104,20 @@ fn WrapDisplayLegs(match_id: u16, set_id: u16) -> Element {
     }
 }
 #[component]
-fn WrapDisplaySets(matchval: u16) -> Element {
-    rsx! {
-        DisplaySets {
-            match_signal: use_signal(|| matchval.clone()),
+fn WrapDisplaySets(match_id: u16) -> Element {
+    let mut match_read_only_signal: ReadOnlySignal<Option<Result<Match, ServerFnError>>> =
+        use_server_future(move || backend::api::dart_match::get_match_by_id(match_id))?.value();
+
+    match &*match_read_only_signal.read_unchecked()
+     {
+        Some(Ok(match_ref)) => {
+            rsx! {
+                DisplaySets {
+                    match_signal: use_signal(|| match_ref.clone()),
+                }
+            }
         }
+        _ => rsx! { "Error or loading" },
     }
 }
 #[component]
