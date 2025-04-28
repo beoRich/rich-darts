@@ -4,12 +4,11 @@ use crate::components::calculation::score_calculation;
 use crate::domain::ErrorMessageMode::TechnicalError;
 use crate::domain::LegStatus::Ongoing;
 use crate::domain::ScoreMessageMode::{NewShot, UndoLastShot};
-use crate::domain::{
-    get_init_score, ErrorMessageMode, Leg, LegStatus, Score, ScoreMessageMode, Set, SetStatus,
-};
+use crate::domain::{get_init_score, parse_score_message, ErrorMessageMode, Leg, LegStatus, Score, ScoreMessageMode, Set, SetStatus};
 use crate::{backend, Route};
 use dioxus::prelude::*;
 use tracing::debug;
+
 #[component]
 pub fn NumberFieldError(
     scores: Signal<Vec<Score>>,
@@ -201,11 +200,12 @@ pub fn OkUndoButton(
     }
 }
 #[component]
-pub fn NewCancelButton(
+pub fn LegSelectButtons(
     match_id: u16,
     scores: Signal<Vec<Score>>,
     set_signal: Signal<Set>,
     leg_signal: Signal<Leg>,
+    legs_signal: Signal<Vec<Leg>>,
     mut error_message: Signal<ErrorMessageMode>,
     score_message: Signal<ScoreMessageMode>,
 ) -> Element {
@@ -227,21 +227,30 @@ pub fn NewCancelButton(
                                 score_message,
                             )
                             .await;
-                        match option {
-                            Some(leg) => {
-                                nav.push(Route::WrapDisplayScore {
-                                    match_id: match_id,
-                                    set_id: set_signal().id,
-                                    leg_id: leg.id,
-                                });
-                            }
-                            None => {}
-                        };
                     },
-                    title: "Cancel current leg (if unfinished) and start/switch to a new one",
+                    title: "Next Leg (create if not exists)",
                     class: "btn btn-soft btn-primary",
                     disabled: if !score_message().allow_new_leg() { true },
                     "Next"
+                }
+            }
+            div {
+                button {
+                    id: "prevLegButton",
+                    onclick: move |_| async move {
+                        let option = switch_prev_leg(
+                                leg_signal,
+                                legs_signal,
+                                scores,
+                                error_message,
+                                score_message,
+                            )
+                            .await;
+                    },
+                    title: "Previous Leg",
+                    class: "btn btn-soft btn-primary",
+                    disabled: { leg_signal().leg_order == 1 },
+                    "Prev"
                 }
             }
             div {
@@ -297,6 +306,23 @@ fn undo_wrapper(
     ));
     document::eval(&"document.getElementById('numberField').select()".to_string());
 }
+
+async fn switch_prev_leg(
+    mut leg_signal: Signal<Leg>,
+    mut legs_signal: Signal<Vec<Leg>>,
+    mut score: Signal<Vec<Score>>,
+    mut error_message: Signal<ErrorMessageMode>,
+    mut score_message: Signal<ScoreMessageMode>,
+) {
+    let leg_order = leg_signal().leg_order;
+    let prev_leg_maybe = legs_signal().into_iter().find(|leg| leg.leg_order == (leg_order - 1));
+    if let Some(prev_leg) = prev_leg_maybe {
+        switch_leg(&mut leg_signal, &mut score, &mut error_message, &prev_leg);
+        score_message.set(parse_score_message(prev_leg.status))
+    }
+}
+
+
 async fn new_next_leg(
     mut set_signal: Signal<Set>,
     mut leg_signal: Signal<Leg>,
@@ -304,9 +330,6 @@ async fn new_next_leg(
     mut error_message: Signal<ErrorMessageMode>,
     mut score_message: Signal<ScoreMessageMode>,
 ) -> Option<Leg> {
-    error_message.set(ErrorMessageMode::None);
-    score_message.set(NewShot);
-    score.write().clear();
     let start_score = leg_signal().start_score;
     let next_order_val = if leg_signal().status == LegStatus::Cancelled.display() {
         leg_signal().leg_order
@@ -321,12 +344,8 @@ async fn new_next_leg(
     .await;
     match new_leg_res {
         Ok(new_leg) => {
-            let new_leg_id = new_leg.id;
-            set_signal.set(set_signal());
-            leg_signal.set(new_leg.clone());
-            score.set(vec![get_init_score(501, new_leg_id)]);
-            document::eval(&"document.getElementById('numberField').value = ' '".to_string());
-            document::eval(&"document.getElementById('numberField').select()".to_string());
+            switch_leg(&mut leg_signal, &mut score, &mut error_message, &new_leg);
+            score_message.set(NewShot);
             Some(new_leg)
         }
         _ => {
@@ -335,6 +354,15 @@ async fn new_next_leg(
         }
     }
 }
+
+fn switch_leg(leg_signal: &mut Signal<Leg>, score: &mut Signal<Vec<Score>>, error_message: &mut Signal<ErrorMessageMode>, new_leg: &Leg) {
+    error_message.set(ErrorMessageMode::None);
+    leg_signal.set(new_leg.clone());
+    score.set(vec![get_init_score(new_leg.start_score, new_leg.id)]);
+    document::eval(&"document.getElementById('numberField').value = ' '".to_string());
+    document::eval(&"document.getElementById('numberField').select()".to_string());
+}
+
 async fn cancel_leg(
     mut leg_signal: Signal<Leg>,
     mut error_message: Signal<ErrorMessageMode>,

@@ -1,6 +1,6 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
 use crate::components::score_component::enter_panel::{
-    NewCancelButton, NumberFieldError, OkUndoButton,
+    LegSelectButtons, NumberFieldError, OkUndoButton,
 };
 use crate::components::score_component::score_display::ScoreDisplay;
 use crate::components::score_component::score_statistic::ScoreStatistic;
@@ -122,11 +122,12 @@ pub fn ScoreComponent(match_signal: Signal<Match>, set_input: Set, leg_signal: S
                         div {
                             id: "CancelUndoButton",
                             class: "col-span-1 grid bg-base-100 border-y-4 shadow-md rounded px-8 py-4",
-                            NewCancelButton {
+                            LegSelectButtons {
                                 match_id: match_signal().id,
                                 scores,
                                 set_signal,
                                 leg_signal,
+                                legs_signal,
                                 error_message,
                                 score_message,
                             }
