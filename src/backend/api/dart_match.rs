@@ -1,7 +1,9 @@
+use std::error::Error;
 use dioxus::html::completions::CompleteWithBraces::map;
 use crate::domain::{Match, Metric, Set};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
+use itertools::Itertools;
 use tracing::debug;
 
 #[cfg(feature = "server")]
@@ -12,6 +14,7 @@ mod server_deps {
     pub use crate::schema_manual::guard::dartmatch::dsl::dartmatch;
     pub use diesel::prelude::*;
     pub use diesel::{QueryDsl, RunQueryDsl, SelectableHelper};
+    pub use polars::prelude::*;
 }
 
 #[cfg(feature = "server")]
@@ -74,4 +77,31 @@ pub async fn get_match_by_id(id_input: u16) -> Result<Match, ServerFnError> {
     let db_result = dartmatch.find(id_input as i32).first::<DartMatch>(conn_ref)?;
     let set = dart_match::map_db_to_domain(db_result);
     Ok(set)
+}
+
+#[server]
+pub async fn get_polars_test() -> Result<String, ServerFnError> {
+    use crate::schema_manual::guard::dartmatch::dsl::*;
+    let mut conn = DB2.lock()?; // Lock to get mutable access
+    let conn_ref = &mut *conn;
+
+    let match_db = dartmatch.select(DartMatch::as_select()).load(conn_ref)?;
+
+    let matches: Vec<Match> = match_db
+        .into_iter()
+        .map(map_db_to_domain)
+        .collect();
+
+    Ok("Ok".to_string())
+}
+
+
+#[cfg(feature = "server")]
+fn melt_matches_into_df(matches: Vec<Match>) -> Result<DataFrame,Box<dyn Error>>  {
+    let id_vec: Vec<u32> = matches.iter().map(|s| s.id as u32).collect();
+    let status_vec: Vec<String> = matches.iter().map(|s| s.status.clone()).collect();
+    let ids = polars::prelude::Column::new("id".into(), id_vec);
+    let status = polars::prelude::Column::new("status".into(), status_vec);
+    let df = DataFrame::new(vec![ids, status])?;
+    Ok(df)
 }
