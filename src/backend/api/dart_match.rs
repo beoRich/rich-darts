@@ -1,9 +1,7 @@
 use std::error::Error;
-use dioxus::html::completions::CompleteWithBraces::map;
 use crate::domain::{Match, Metric, Set};
 use dioxus::prelude::*;
 use dioxus::prelude::{server, ServerFnError};
-use itertools::Itertools;
 use tracing::debug;
 
 #[cfg(feature = "server")]
