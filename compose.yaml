@@ -5,7 +5,7 @@ services:
       - "--api.insecure=true"
       - "--providers.docker"
       - "--entrypoints.web.address=:80"
-      - "--entryPoints.websecure.address=:443"
+      - "--entrypoints.websecure.address=:443"
       - "--log.level=DEBUG"
       - "--log.filePath=/logs/traefik.log"
       - "--accesslog.filePath=/logs/access.log"
@@ -15,7 +15,7 @@ services:
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
       # The https port
-      - "433:433"
+      - "443:443"
       # The http port
       - "80:80"
       # Dashboard
@@ -31,9 +31,9 @@ services:
     labels:
       - "traefik.enable=true"
       # hack: using the url caused problems with forwarding of united domains
-      - "traefik.http.routers.rich-darts.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.rich-darts.rule=Host(`darts.rich-calculations.net`)"
       - "traefik.http.routers.rich-darts.entrypoints=websecure"
-      - "traefik.http.routers.rich-darts.tls.resolver=myresolver"
+      - "traefik.http.routers.rich-darts.tls.certresolver=myresolver"
       - "traefik.http.services.rich-darts.loadbalancer.server.port=8080"
     #ports:  
       #- "8080:8080"
