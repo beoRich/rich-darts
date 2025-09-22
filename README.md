@@ -2,6 +2,8 @@
 
 A webapp to track a Darts Game, written in Rust for frontend and backend via dioxus.
 Currently under development
+Can be visited here:
+https://darts.rich-calculations.net/
 
 
 ### Dioxus 
@@ -45,6 +47,10 @@ for local IP
 5. webbrowser <localIp>:8080 
 6. stop container: docker container stop test
 7. remove container: docker container rm test
+
+
+### Traefik 
+Using traefik for https certificate 
 
 
 ## Logs in Docker 
