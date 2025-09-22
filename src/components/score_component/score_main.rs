@@ -1,21 +1,19 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
 use crate::components::score_component::enter_panel::{
-    NewCancelButton, NumberFieldError, OkUndoButton,
+    LegSelectButtons, NumberFieldError, OkUndoButton,
 };
 use crate::components::score_component::score_display::ScoreDisplay;
 use crate::components::score_component::score_statistic::ScoreStatistic;
 use crate::domain::ErrorMessageMode::{CreateNewLeg, TechnicalError};
 use crate::domain::ScoreMessageMode::{LegCancelled, LegFinished, UndoLastShot};
-use crate::domain::{
-    parse_score_message, ErrorMessageMode, Leg, Score, ScoreMessageMode, Set, SetStatus,
-};
+use crate::domain::{parse_score_message, ErrorMessageMode, Leg, Match, Score, ScoreMessageMode, Set, SetStatus};
 use crate::{backend, Route};
 use dioxus::prelude::*;
 use dioxus_logger::tracing;
 use dioxus_logger::tracing::error;
 use tracing::debug;
 #[component]
-pub fn ScoreComponent(match_id: u16, set_input: Set, leg_signal: Signal<Leg>) -> Element {
+pub fn ScoreComponent(match_signal: Signal<Match>, set_input: Set, leg_signal: Signal<Leg>) -> Element {
     debug!("ScoreComponent leg {:?}", leg_signal());
     let set_signal = use_signal(|| set_input.clone());
     let mut legs_signal = use_signal(|| vec![]);
@@ -76,7 +74,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_signal: Signal<Leg>) ->
             div {
                 BreadCrumbComponent {
                     only_home: false,
-                    match_id,
+                    match_signal,
                     set_signal,
                     leg_signal,
                 }
@@ -92,6 +90,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_signal: Signal<Leg>) ->
                                 raw_input,
                                 set_signal,
                                 leg_signal,
+                                legs_signal,
                                 error_message,
                                 score_message,
                                 allow_score,
@@ -103,6 +102,7 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_signal: Signal<Leg>) ->
                                 raw_input,
                                 set_signal,
                                 leg_signal,
+                                legs_signal,
                                 error_message,
                                 score_message,
                                 allow_score,
@@ -124,11 +124,12 @@ pub fn ScoreComponent(match_id: u16, set_input: Set, leg_signal: Signal<Leg>) ->
                         div {
                             id: "CancelUndoButton",
                             class: "col-span-1 grid bg-base-100 border-y-4 shadow-md rounded px-8 py-4",
-                            NewCancelButton {
-                                match_id,
+                            LegSelectButtons {
+                                match_id: match_signal().id,
                                 scores,
                                 set_signal,
                                 leg_signal,
+                                legs_signal,
                                 error_message,
                                 score_message,
                             }

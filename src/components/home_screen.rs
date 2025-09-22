@@ -12,7 +12,7 @@ pub fn HomeScreen() -> Element {
     let mut latest_set_exists_signal = use_signal(|| false);
     let mut latest_match_exists_signal = use_signal(|| false);
     let _ = use_resource(move || async move {
-        let leg_exists = backend::api::dart_leg::get_latest_leg().await;
+        let leg_exists = backend::api::dart_leg::get_latest_ongoing_leg().await;
         latest_leg_exists_signal.set(leg_exists.is_ok());
         let set_exists = backend::api::dart_set::get_latest_set().await;
         latest_set_exists_signal.set(set_exists.is_ok());

@@ -1,13 +1,13 @@
 use crate::components::breadcrumb::BreadCrumbComponent;
-use crate::domain::{parse_leg_status, Leg, Set};
+use crate::domain::{parse_leg_status, Leg, Match, Set};
 use crate::{backend, Route};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
 use tracing::debug;
 #[component]
-pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
-    let match_signal = use_signal(|| match_id);
+pub fn DisplayLegs(match_input: Match, set_input: Set) -> Element {
+    let match_signal = use_signal(|| match_input);
     let set_signal = use_signal(|| set_input.clone());
     let mut legs_signal = use_signal(|| vec![]);
     let mut new_legs_missing_signal = use_signal(|| 0);
@@ -47,7 +47,7 @@ pub fn DisplayLegs(match_id: u16, set_input: Set) -> Element {
             div {
                 BreadCrumbComponent {
                     only_home: false,
-                    match_id,
+                    match_signal,
                     set_signal,
                 }
                 div {
@@ -138,7 +138,7 @@ async fn new_legs(
 }
 #[component]
 pub fn LegTable(
-    match_signal: Signal<u16>,
+    match_signal: Signal<Match>,
     set_signal: Signal<Set>,
     legs_signal: Signal<Vec<Leg>>,
 ) -> Element {
@@ -186,7 +186,7 @@ pub fn LegTable(
                                     li {
                                         Link {
                                             to: Route::WrapDisplayScore {
-                                                matchval: match_signal(),
+                                                match_id: match_signal().id,
                                                 set_id: set_signal().id,
                                                 leg_id: leg.id,
                                             },
